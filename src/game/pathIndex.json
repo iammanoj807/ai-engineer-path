@@ -1,0 +1,1664 @@
+{
+ "foundations": [
+  {
+   "id": "toolkit",
+   "number": 0,
+   "title": "Your toolkit",
+   "short": "Toolkit",
+   "accent": "#90a4ae",
+   "goal": "Get fast with the tools you will use every day. This phase is short. Do it in the same two weeks as the start of Phase 1.",
+   "topics": [
+    {
+     "id": "f0-t6",
+     "name": "Meet machine learning: the big picture",
+     "definition": "Machine learning is getting a computer to learn a pattern from examples, instead of a person writing the rules by hand.",
+     "problem": "Some rules are too hard to write down. Try writing exact rules for \"is this email spam?\" or \"what is this house worth?\": there are too many cases and exceptions. But examples are easy to collect: thousands of emails already marked as spam or not, thousands of houses with their sale prices. Machine learning turns those examples into a working rule."
+    },
+    {
+     "id": "f0-t1",
+     "name": "NumPy arrays, shapes and indexing",
+     "definition": "A NumPy array is a grid of numbers, all of the same type, with a shape that says how long it is in each direction.",
+     "problem": "ML is arithmetic on huge piles of numbers: a dataset is a table, an image is a grid of pixels, and a batch of images is a stack of grids. Python lists are slow for this and have no idea of rows and columns. NumPy arrays keep the numbers packed together in memory, run maths on all of them at once in fast compiled code, and let you pick out any row, column or block with one short expression."
+    },
+    {
+     "id": "f0-t2",
+     "name": "Broadcasting and vectorisation",
+     "definition": "Vectorisation means doing maths on whole arrays in one operation; broadcasting is NumPy's rule for combining arrays of different shapes by stretching any direction of size 1.",
+     "problem": "Python loops are slow, because the interpreter handles one number at a time. ML needs the same operation on millions of numbers, such as adding a bias to every row of a batch. Vectorised NumPy runs the whole operation in compiled code instead, and broadcasting saves you from building big copies by hand just to make shapes match."
+    },
+    {
+     "id": "f0-t3",
+     "name": "Plotting results with Matplotlib",
+     "definition": "Matplotlib is the standard Python library for drawing charts; in ML you use it mostly to see loss curves, data and predictions.",
+     "problem": "Training prints thousands of numbers, and you can't spot a trend by reading them. Is the loss still falling? Did it blow up at step 400? Is the model overfitting? A picture answers those questions in a second. Many training bugs are found by looking at a plot, not by reading the code."
+    },
+    {
+     "id": "f0-t4",
+     "name": "Git and GitHub for your projects",
+     "definition": "Git saves snapshots of your project, called commits, so you can go back, branch off and merge; GitHub stores those repositories online.",
+     "problem": "Without version control you end up with files like model_final_v3_REALLY_final.py, and no idea which version gave your best result. One bad edit can break working code with no way back. Git records every change with a message, lets you try ideas safely on a branch, and GitHub backs it all up and shows employers your work."
+    },
+    {
+     "id": "f0-t5",
+     "name": "Testing numerical code (np.allclose, pytest)",
+     "definition": "A test is a small program that runs your code on a case where you already know the answer, and fails loudly if the result is wrong; for decimals, it compares with a small tolerance.",
+     "problem": "ML code fails quietly. A wrong axis, a sign error or a broadcasting slip still runs and still prints a loss. It just learns worse, and you may never notice. Tests catch these bugs the moment you make them, when they are cheap to fix. And because computers round decimals, the tests have to allow tiny differences."
+    }
+   ]
+  },
+  {
+   "id": "math",
+   "number": 1,
+   "title": "Math foundations",
+   "short": "Math",
+   "accent": "#66bb6a",
+   "goal": "The language of ML. You will see matrices as movements of space, gradients as directions, and loss functions as probabilities.",
+   "topics": [
+    {
+     "id": "f1-t1",
+     "name": "Vectors, span and basis",
+     "definition": "A vector is a list of numbers you can draw as an arrow; the span of some vectors is every point you can reach by scaling and adding them, and a basis is a smallest set whose span is the whole space.",
+     "problem": "Every piece of data in ML becomes a vector: a house is [size, rooms, age], a word is a list of 768 numbers, an image is a long list of pixel values. To reason about data you need to know what you can build from a few vectors, and whether a feature carries new information or just repeats what you already have."
+    },
+    {
+     "id": "f1-t2",
+     "name": "Matrices as transformations; matrix multiplication",
+     "definition": "A matrix is a recipe for moving every vector in space at once; multiplying two matrices means doing one movement after the other.",
+     "problem": "A neural network layer, a rotation of an image, a change of units, squeezing data down to fewer features: all of these are \"do the same linear thing to every vector\". A matrix stores that movement in a small grid of numbers, and matrix multiplication lets a computer apply it to millions of vectors, or chain several movements, very fast."
+    },
+    {
+     "id": "f1-t3",
+     "name": "Determinants",
+     "definition": "The determinant of a square matrix is one number: how much the matrix scales area (or volume), with a minus sign if it flips space over.",
+     "problem": "You often need to know at a glance whether a matrix squashes space flat, because then it can't be undone and Ax = b has no unique answer. The determinant tells you: zero means squashed. It also appears whenever probabilities are moved through a transformation, as in the formula for a multivariate Gaussian and in normalising flows."
+    },
+    {
+     "id": "f1-t4",
+     "name": "Inverse, rank and solving Ax = b",
+     "definition": "The inverse A⁻¹ undoes what A does; the rank is how many independent directions survive A; and when the rank is full, Ax = b has exactly one solution.",
+     "problem": "Many ML problems end in \"solve these equations\": the best weights of linear regression satisfy XᵀX w = Xᵀy. You need to know when there is exactly one answer, when there is none or infinitely many, and how to compute it safely. Rank and the inverse answer exactly those questions."
+    },
+    {
+     "id": "f1-t5",
+     "name": "Dot product, projection and orthogonality",
+     "definition": "The dot product multiplies two vectors entry by entry and adds the results; it measures how much they point the same way, and it gives the length of one vector's shadow on another.",
+     "problem": "ML constantly asks \"how similar are these two things?\": two documents in search, a query and a key in attention, an input and a neuron's weights. The dot product answers with one cheap number. Projection, built from the dot product, keeps only the part of a vector that lies along a direction, which is the idea behind least squares and PCA."
+    },
+    {
+     "id": "f1-t6",
+     "name": "Eigenvalues and eigenvectors",
+     "definition": "An eigenvector of a matrix is a direction the matrix does not turn, only stretches; its eigenvalue is how much it stretches: Av = λv.",
+     "problem": "A matrix moves vectors in a confusing mix of turning and stretching. Eigenvectors find the special directions where it acts like plain multiplication, which makes the matrix easy to understand. They give the main directions of variation in data (PCA), tell you whether repeated multiplication explodes or fades (RNNs, Markov chains), and explain how fast gradient descent converges."
+    },
+    {
+     "id": "f1-t7",
+     "name": "SVD, and the maths behind PCA",
+     "definition": "SVD splits any matrix into rotate → stretch → rotate (A = UΣVᵀ); PCA uses it to find the directions along which data varies most, so you can keep a few and drop the rest.",
+     "problem": "Real data has many features, and many move together: height and weight, or neighbouring pixels. Working in fewer dimensions is faster, easier to plot and often less noisy. PCA finds the few directions that keep most of the information, and SVD is the reliable way to compute them for any matrix, square or not."
+    },
+    {
+     "id": "f1-t8",
+     "name": "Derivatives and the chain rule",
+     "definition": "A derivative is the rate at which an output changes when you nudge the input; the chain rule says that for a function inside a function, you multiply the rates.",
+     "problem": "Training needs to know, for every weight: \"if I nudge this a little, does the loss go up or down, and how fast?\" That is a derivative. A network is functions nested inside functions, many layers deep, so the chain rule is what turns one loss into a derivative for every weight. Backpropagation is the chain rule, organised efficiently."
+    },
+    {
+     "id": "f1-t9",
+     "name": "Partial derivatives, gradients and Jacobians",
+     "definition": "A partial derivative is the rate of change when you nudge one input and hold the rest still; the gradient stacks all of them into a vector that points in the direction of steepest increase.",
+     "problem": "A loss depends on many weights at once, often millions. You need to know how it changes with each one, and which combined direction makes it fall fastest. The gradient packages exactly that, and gradient descent simply steps the other way. Jacobians extend the idea to functions with many outputs, like a whole network layer."
+    },
+    {
+     "id": "f1-t10",
+     "name": "Gradient descent and the learning rate",
+     "definition": "Gradient descent minimises a function by repeatedly stepping against its gradient, w ← w − η·∇f(w), where the learning rate η sets the size of each step.",
+     "problem": "For most models there is no formula that gives the best weights directly, and for neural networks there certainly isn't. But you can always compute the gradient. Gradient descent turns \"which way is downhill?\" into an algorithm that walks to a minimum one small step at a time. Choosing the step size well is the difference between fast training, slow training and no training at all."
+    },
+    {
+     "id": "f1-t11",
+     "name": "Random variables, distributions, expectation and variance",
+     "definition": "A random variable is a number decided by chance; its distribution says how likely each value is, its expectation is the long-run average, and its variance measures how spread out it is.",
+     "problem": "Data is noisy and models are never certain. Classifiers output probabilities, starting weights are drawn at random, mini-batches are random samples, and generated text is sampled. To reason about any of it — how big an error might be, how much results vary from run to run — you need the language of distributions, averages and spread."
+    },
+    {
+     "id": "f1-t12",
+     "name": "Conditional probability and Bayes’ rule",
+     "definition": "Conditional probability P(A | B) is the chance of A once you know B happened; Bayes' rule turns P(B | A) into P(A | B) using how common A was to begin with.",
+     "problem": "People and models constantly update beliefs from evidence: is this email spam given these words, is this patient sick given a positive test? The probability you know (how often the test is positive for sick people) is usually not the one you want (how likely you are sick given a positive test). Bayes' rule converts one into the other, and ignoring the starting rate is one of the most common reasoning errors there is."
+    },
+    {
+     "id": "f1-t13",
+     "name": "Maximum likelihood estimation",
+     "definition": "Maximum likelihood estimation chooses the parameter values that make the data you actually observed as probable as possible.",
+     "problem": "A model has unknown parameters: the bias of a coin, the mean of a Gaussian, the weights of a network. You need a principled rule for choosing them from data. Maximum likelihood is that rule, and it explains where the standard loss functions come from: squared error and cross-entropy are both maximum likelihood in disguise."
+    },
+    {
+     "id": "f1-t14",
+     "name": "Statistics: sampling, confidence intervals, hypothesis tests",
+     "definition": "Statistics measures how far a result from a sample can be trusted: a confidence interval gives a plausible range for the true value, and a hypothesis test asks whether a difference could just be luck.",
+     "problem": "Every accuracy you report comes from a finite test set, so it is an estimate with noise. Model B beating model A by 1% might be real, or might vanish on another test set. Without confidence intervals and tests you will chase noise, ship worse models and over-claim results."
+    },
+    {
+     "id": "f1-t15",
+     "name": "Entropy, cross-entropy and KL divergence",
+     "definition": "Entropy measures how uncertain a distribution is; cross-entropy measures how surprised a model q is by data that really comes from p; KL divergence is the extra surprise caused by using q instead of p.",
+     "problem": "A classifier outputs probabilities, and you need a loss that rewards putting high probability on the right answer and punishes confident mistakes hard. Cross-entropy is that loss, and nearly every classifier and every language model is trained on it. KL divergence measures how far apart two distributions are, and it shows up in VAEs, knowledge distillation and RLHF."
+    },
+    {
+     "id": "f1-t16",
+     "name": "Convex optimisation: constraints, Lagrange multipliers and duality",
+     "definition": "A convex function is bowl-shaped, so any local minimum is the global minimum; constrained problems are solved by adding the constraint with a Lagrange multiplier, and duality views the same problem from the constraint's side.",
+     "problem": "Gradient descent only promises a local minimum. For convex problems that is enough: the answer is the best possible and doesn't depend on where you start. Knowing which models are convex (linear and logistic regression, SVMs) tells you when to trust the optimiser. Constraints like \"weights must add up to 1\" or \"every point on the right side of the margin\" need Lagrange multipliers, and SVMs are usually trained through their dual problem."
+    }
+   ]
+  },
+  {
+   "id": "classical-ml",
+   "number": 2,
+   "title": "Classical ML, built by you",
+   "short": "Classic ML",
+   "accent": "#64b5f6",
+   "goal": "Build every classic algorithm yourself in NumPy. After this phase, a library is only a shortcut for something you already understand.",
+   "topics": [
+    {
+     "id": "f2-t1",
+     "name": "The ML setup: features, labels, loss, train/validation/test",
+     "definition": "Supervised learning turns examples (features plus a label) into a model by minimising a loss on a training set, tuning choices on a validation set, and measuring the final result once on a test set.",
+     "problem": "A model that scores well on the data it learned from may still fail on anything new; it may simply have memorised. To know how it will really behave, you must measure it on data it never saw, and you must not let that data influence any of your choices. The three-way split is the simplest honest way to do that."
+    },
+    {
+     "id": "f2-t2",
+     "name": "Linear regression: normal equation and gradient descent",
+     "definition": "Linear regression predicts a number as a weighted sum of the features, ŷ = Xw + b, choosing the weights that make the mean squared error as small as possible.",
+     "problem": "Many questions ask for a number: a price, a temperature, a delivery time. Linear regression is the simplest model that learns how each feature pushes the answer up or down. It trains in a fraction of a second, its weights are easy to read, and it is the baseline every fancier model must beat. Its two training routes, a formula and gradient descent, are the same two routes used everywhere else in ML."
+    },
+    {
+     "id": "f2-t3",
+     "name": "Logistic regression and the sigmoid",
+     "definition": "Logistic regression answers yes/no questions: it computes a score z = Xw + b, turns it into a probability with the sigmoid σ(z) = 1 / (1 + e⁻ᶻ), and is trained with cross-entropy loss.",
+     "problem": "Many questions have a yes/no answer: spam or not, fraud or not, pass or fail. A straight line gives numbers below 0 and above 1, which can't be probabilities. Logistic regression keeps the simple weighted sum but squashes it into a probability, so it can say \"83% likely\". It is the standard first model for classification, and the single neuron at the heart of every neural network."
+    },
+    {
+     "id": "f2-t4",
+     "name": "Regularisation: L1 and L2",
+     "definition": "Regularisation adds a penalty for large weights to the loss: L2 (λΣw²) shrinks every weight, while L1 (λΣ|w|) pushes the weak ones to exactly zero.",
+     "problem": "A flexible model with many features can fit the training data too well, using huge weights that balance each other out on noise. It then does badly on new data. Regularisation tells the model \"simple explanations are better\": it trades a little training error for much smaller weights, which usually generalise better. L1 also picks features for you."
+    },
+    {
+     "id": "f2-t5",
+     "name": "Bias–variance trade-off and overfitting",
+     "definition": "Bias is error from a model too simple to capture the pattern; variance is error from a model so flexible it chases the noise in its training data; good models balance the two.",
+     "problem": "Every model choice — degree, depth, number of features, k — moves you between underfitting and overfitting. Without this picture you can't tell whether to make a model bigger or smaller, or whether to collect more data. The bias–variance trade-off is the map for those decisions."
+    },
+    {
+     "id": "f2-t6",
+     "name": "Metrics: precision, recall, F1, ROC-AUC, confusion matrix",
+     "definition": "Classification metrics count the four outcomes (true and false positives and negatives) and summarise them: precision, recall, F1, accuracy, and ROC-AUC across all thresholds.",
+     "problem": "Accuracy can lie. If 1% of transactions are fraud, a model that never flags anything is 99% accurate and completely useless. Different jobs care about different mistakes: a cancer screen must not miss cases (recall), a spam filter must not bin real email (precision). The right metric is what tells you whether a model does the job."
+    },
+    {
+     "id": "f2-t7",
+     "name": "Cross-validation and data leakage",
+     "definition": "Cross-validation scores a model by rotating which slice of the data is held out, so every row is tested once; data leakage is any way information from the held-out data sneaks into training.",
+     "problem": "One train/validation split can be lucky or unlucky, especially with small datasets, so a single score can mislead you by several percent. Cross-validation gives a steadier score and tells you how much it wobbles. Leakage is the most common reason a model that looked brilliant in testing fails in real use, so you need to know where it hides."
+    },
+    {
+     "id": "f2-t8",
+     "name": "Feature scaling and encoding",
+     "definition": "Feature scaling puts numeric features on similar ranges, and encoding turns categories into numbers, so that models treat every feature fairly and don't invent orders that aren't there.",
+     "problem": "Models only see numbers. A feature measured in thousands drowns out one measured in single digits in any distance or gradient, and coding \"red, green, blue\" as 1, 2, 3 tells the model green sits between the other two. Getting this wrong quietly ruins k-NN, SVMs, regularised models and neural networks, while trees barely notice."
+    },
+    {
+     "id": "f2-t9",
+     "name": "k-nearest neighbours",
+     "definition": "k-nearest neighbours predicts by finding the k training points closest to a new point and letting them vote (or averaging their values, for regression).",
+     "problem": "Sometimes the simplest idea is enough: things that are close together tend to be alike. k-NN needs no training, adapts to any shape of boundary, and makes a strong baseline. Learning it also teaches you why distances, scaling and the curse of dimensionality matter for every method that compares points, including vector search for LLMs."
+    },
+    {
+     "id": "f2-t10",
+     "name": "Decision trees: entropy and Gini",
+     "definition": "A decision tree predicts by asking a sequence of yes/no questions about single features, each chosen to make the resulting groups as pure as possible.",
+     "problem": "Many real datasets are tables with mixed feature types and rules like \"if income is low and the loan is large, risk is high\". Trees learn such rules automatically, need no feature scaling, and can be read by a person. They are also the building block of random forests and gradient boosting, which win most competitions on tabular data."
+    },
+    {
+     "id": "f2-t11",
+     "name": "Ensembles: bagging, random forests, gradient boosting",
+     "definition": "Ensembles combine many models: bagging and random forests average trees trained on random resamples to cut variance, while boosting adds small trees one after another, each correcting the errors left so far, to cut bias.",
+     "problem": "A single deep tree is unstable: change a few rows and it changes completely. A single shallow tree is too simple. Ensembles get the best of both, and gradient-boosted trees (XGBoost, LightGBM) and random forests are still the strongest models for most tabular data in industry."
+    },
+    {
+     "id": "f2-t12",
+     "name": "Support vector machines: margin and hinge loss",
+     "definition": "A support vector machine separates two classes with the line (or plane) that leaves the widest possible margin to the nearest points, trained with the hinge loss.",
+     "problem": "Many lines can separate two classes, but the one that hugs some points will misclassify slightly different new points. The SVM picks the boundary with the most room to spare, which tends to generalise well. Its maths — margins, hinge loss, the dual problem and kernels — also introduced ideas used all over ML."
+    },
+    {
+     "id": "f2-t13",
+     "name": "Naive Bayes",
+     "definition": "Naive Bayes classifies with Bayes' rule, assuming the features are independent once you know the class, so each feature's evidence can simply be multiplied in.",
+     "problem": "Text has thousands of word features but often little labelled data. Naive Bayes trains in a single counting pass, works well with small datasets, and makes a hard-to-beat baseline for spam filtering and document classification. It is also the clearest real use of Bayes' rule in ML."
+    },
+    {
+     "id": "f2-t14",
+     "name": "k-means clustering",
+     "definition": "k-means groups unlabelled points into k clusters by repeating two steps: assign every point to its nearest centre, then move each centre to the average of its points.",
+     "problem": "Often there are no labels at all: customers, documents or images that you want to group by similarity. k-means is the simplest and fastest clustering method, a standard first look at unlabelled data, and a building block elsewhere: compressing colours, initialising other models, and building the codebooks behind vector quantisation."
+    },
+    {
+     "id": "f2-t15",
+     "name": "PCA in practice",
+     "definition": "In practice, PCA is used to compress features, remove noise, speed up other models and plot high-dimensional data, keeping just enough components to hold most of the variance.",
+     "problem": "You now know how PCA works; the hard part is using it well. How many components should you keep? Should you scale first? When does it help a downstream model, and when does it throw away the very signal you need? Those practical choices decide whether PCA helps or hurts."
+    },
+    {
+     "id": "f2-t16",
+     "name": "Gaussian mixture models and EM",
+     "definition": "A Gaussian mixture model describes data as a blend of several bell curves, and the EM algorithm fits it by alternating soft assignment of points (E-step) with refitting each curve (M-step).",
+     "problem": "Real data is often a mix of hidden groups: delivery times from two routes, heights of two populations, colours in an image. You don't know which group each point came from, and the groups overlap, so hard clustering is too crude. A mixture model gives each point a probability of belonging to each group, and EM is the classic way to fit models with hidden variables like this."
+    },
+    {
+     "id": "f2-t17",
+     "name": "Generalisation: VC dimension and double descent",
+     "definition": "Generalisation is doing well on unseen data; the VC dimension measures a model family's capacity to fit any labelling, and double descent is the surprise that test error can fall again as models grow past the point of fitting the training data exactly.",
+     "problem": "Classical theory says bigger models need more data or they overfit. Yet today's best models have far more parameters than training examples and still generalise well. To reason about model size and data size — and to read modern research — you need both the classical picture and the newer one."
+    }
+   ]
+  },
+  {
+   "id": "deep-learning",
+   "number": 3,
+   "title": "Deep learning foundations",
+   "short": "Deep learning",
+   "accent": "#ff8a65",
+   "goal": "Build neural networks from a single neuron up. Write backprop by hand first. Then you can trust PyTorch, because you know what it does.",
+   "topics": [
+    {
+     "id": "f3-t1",
+     "name": "The neuron and the multi-layer perceptron",
+     "definition": "A neuron computes a weighted sum of its inputs plus a bias and passes it through an activation, a = f(w·x + b); a multi-layer perceptron (MLP) stacks layers of these, each feeding the next.",
+     "problem": "Linear and logistic regression can only draw straight boundaries and fit straight trends. Real patterns — handwriting, speech, prices driven by many interacting factors — are curved and tangled. Stacking many simple neurons in layers lets a model build complicated functions out of simple pieces, and every modern network, transformers included, is built from this unit."
+    },
+    {
+     "id": "f3-t2",
+     "name": "Activation functions, and why non-linearity matters",
+     "definition": "An activation function is the non-linear step applied after each layer's weighted sum; without it, any number of layers collapses into a single linear layer.",
+     "problem": "The whole point of depth is to build curved, complicated functions. But a matrix times a matrix is just another matrix, so stacked linear layers can never do more than one linear layer. The activation is the small non-linear bend that makes depth useful. Your choice also decides whether gradients flow well through many layers."
+    },
+    {
+     "id": "f3-t3",
+     "name": "Backpropagation by hand",
+     "definition": "Backpropagation computes the gradient of the loss with respect to every weight by applying the chain rule from the output backwards, reusing each intermediate result.",
+     "problem": "Gradient descent needs one gradient per weight, and a network can have billions of weights. Nudging each weight separately to measure its effect would need billions of forward passes. Backprop gets every gradient at the cost of about one extra pass, which is what makes training deep networks possible at all."
+    },
+    {
+     "id": "f3-t4",
+     "name": "Autograd and computational graphs",
+     "definition": "Autograd records every operation into a computational graph as your code runs, then loss.backward() walks the graph in reverse to fill in every gradient automatically.",
+     "problem": "Writing backward passes by hand is slow and error-prone, and real models have thousands of operations. Autograd removes that work: you write only the forward computation and get exact gradients for free. Knowing how it works explains PyTorch's rules — why gradients add up, why you call zero_grad(), why no_grad() saves memory."
+    },
+    {
+     "id": "f3-t5",
+     "name": "Softmax and cross-entropy loss",
+     "definition": "Softmax turns a vector of raw scores (logits) into probabilities that sum to 1; cross-entropy loss is −log of the probability given to the correct class; together their gradient is simply p − y.",
+     "problem": "A classifier's last layer outputs arbitrary numbers, but you want probabilities, and a loss that strongly punishes confident wrong answers. Softmax plus cross-entropy is the standard pairing for every multi-class classifier and every language model, which predicts the next token from a softmax over tens of thousands of options."
+    },
+    {
+     "id": "f3-t6",
+     "name": "Optimisers: SGD, momentum, Adam; learning-rate schedules",
+     "definition": "Optimisers decide how to turn gradients into weight updates: SGD steps straight down the gradient, momentum adds velocity, and Adam also adapts the step size for every weight; a learning-rate schedule changes the step size over training.",
+     "problem": "Real loss surfaces have long narrow valleys, flat plateaus and noisy gradients from small batches. Plain SGD zig-zags across steep valleys and crawls along flat ones. Better optimisers converge in far fewer steps and are much less fussy about the learning rate, which saves days of compute on large models."
+    },
+    {
+     "id": "f3-t7",
+     "name": "Weight initialisation; vanishing and exploding gradients",
+     "definition": "Weight initialisation chooses the random starting weights so that signals and gradients keep roughly the same size from layer to layer, instead of vanishing towards zero or exploding towards infinity.",
+     "problem": "In a deep network the signal is multiplied by a weight matrix at every layer, and the gradient again on the way back. If each layer shrinks it a little, after 50 layers nothing is left; if each grows it a little, it overflows. Bad initialisation can make a network untrainable before it has seen a single example. Good initialisation, plus normalisation and residual connections, is what makes depth work."
+    },
+    {
+     "id": "f3-t8",
+     "name": "Batch norm and layer norm",
+     "definition": "Normalisation layers rescale activations to mean 0 and variance 1, then let the network re-scale and shift them with learned γ and β; batch norm normalises each feature across the batch, layer norm normalises each example across its features.",
+     "problem": "As earlier layers learn, the values reaching later layers keep changing scale, so each layer chases a moving target and training needs tiny learning rates. Normalisation keeps activations in a steady range, which allows bigger learning rates, makes deep networks far easier to train, and reduces sensitivity to initialisation. Every modern architecture uses one of these layers."
+    },
+    {
+     "id": "f3-t9",
+     "name": "Regularisation: dropout, weight decay, augmentation, early stopping",
+     "definition": "Regularisation in deep learning is any trick that stops a network memorising its training data: dropout, weight decay, data augmentation and early stopping are the main ones.",
+     "problem": "Neural networks have so many parameters that they can memorise their training set exactly, even with random labels, and then fail on new data. Regularisation makes memorising harder or less attractive, so the network learns patterns that generalise. On small datasets it is often the difference between a useful model and a useless one."
+    },
+    {
+     "id": "f3-t10",
+     "name": "PyTorch: nn.Module, DataLoader and the training loop",
+     "definition": "In PyTorch, an nn.Module holds the layers and weights, a DataLoader serves shuffled mini-batches, and the training loop repeats the same few steps: forward, loss, zero_grad, backward, step.",
+     "problem": "Every deep-learning project, from MNIST to fine-tuning an LLM, uses this same skeleton. Getting its details wrong — no zero_grad, no eval mode, the wrong device — causes silent bugs that waste days. Knowing the loop cold lets you read any training script and write your own quickly."
+    },
+    {
+     "id": "f3-t11",
+     "name": "Convolutional networks: convolution, pooling, receptive field",
+     "definition": "A convolutional layer slides small learned filters across an image, computing a dot product at every position, so the same pattern detector is reused everywhere; stacking layers builds up from edges to whole objects.",
+     "problem": "A fully connected layer on a 224 × 224 colour image would need about 150,000 weights per neuron, and would have to learn \"cat\" separately in every corner. Convolutions share a few weights across all positions, which saves enormous numbers of parameters and builds in the fact that a pattern means the same thing wherever it appears."
+    },
+    {
+     "id": "f3-t12",
+     "name": "Residual connections (ResNet)",
+     "definition": "A residual connection adds a block's input to its output, y = x + F(x), so the block only learns a change and gradients get a direct path back through the network.",
+     "problem": "Before residuals, making a network deeper often made it worse, even on training data: the signal and gradients degraded through many layers, and optimisation got stuck. Residual connections fixed this so well that every modern deep architecture, including every transformer, uses them. Without them, today's 100-layer models would not train."
+    },
+    {
+     "id": "f3-t13",
+     "name": "RNNs, and why long sequences are hard",
+     "definition": "A recurrent neural network reads a sequence one step at a time, updating a hidden state hₜ = tanh(W·hₜ₋₁ + U·xₜ + b) that acts as its memory, with the same weights at every step.",
+     "problem": "Text, audio and time series come in order, with any length. A fixed-size MLP can't handle that, and it can't share what it learns across positions. RNNs were the first neural answer to sequences, and understanding their limits — fading memory and vanishing gradients through time — explains why LSTMs and then transformers took over."
+    },
+    {
+     "id": "f3-t14",
+     "name": "Embeddings: representing things as vectors",
+     "definition": "An embedding maps each discrete item — a word, a token, a user, a product — to a learned vector of numbers, stored as one row of a table, so that similar items end up close together.",
+     "problem": "Networks need numbers, but words and ids are just labels. One-hot vectors are huge, sparse and treat every pair of items as equally different. Embeddings give each item a small dense vector that training shapes to be useful, so \"cat\" and \"dog\" end up close. They are the input layer of every language model and the basis of semantic search and recommendations."
+    },
+    {
+     "id": "f3-t15",
+     "name": "Debugging training: overfit one batch, read loss curves",
+     "definition": "Debugging training means checking, in a fixed order, that the model can learn at all — sensible starting loss, overfitting one small batch — before reading the loss curves of real runs.",
+     "problem": "Neural network bugs rarely crash. A shuffled label, a missing zero_grad or a wrong axis gives code that runs, prints a falling loss and quietly produces a worse model. Without a routine you can lose days tuning hyperparameters on top of a bug. A few cheap checks catch most problems in minutes."
+    },
+    {
+     "id": "f3-t16",
+     "name": "LSTMs and GRUs: gates for long memory",
+     "definition": "An LSTM is a recurrent cell with a separate memory line (the cell state) and three learned gates — forget, input and output — that decide what to erase, what to write and what to reveal; a GRU does the same job with two gates.",
+     "problem": "Plain RNNs forget quickly, because the gradient is multiplied by the same factor at every step back in time. LSTMs add a memory path that is updated by adding rather than by repeated multiplication, so information and gradients can survive for hundreds of steps. They powered speech recognition and translation before transformers, and the gating idea lives on in many models."
+    }
+   ]
+  },
+  {
+   "id": "llms",
+   "number": 4,
+   "title": "Transformers and LLMs",
+   "short": "LLMs",
+   "accent": "#4db6ac",
+   "goal": "Build a small GPT from scratch: tokenizer, attention, training and fine-tuning. This is how modern AI works inside.",
+   "topics": [
+    {
+     "id": "f4-t1",
+     "name": "Tokenisation and byte-pair encoding (BPE)",
+     "definition": "Tokenisation splits text into the units a language model reads, called tokens; byte-pair encoding (BPE) builds those units by starting from single characters (or bytes) and repeatedly merging the most frequent neighbouring pair.",
+     "problem": "A model needs a fixed vocabulary of ids. Whole words give a huge vocabulary and no way to handle new or misspelled words. Single characters make sequences very long and slow. BPE sits in between: common words become one token, rare words break into familiar pieces, and nothing is ever \"unknown\". Tokens are also how LLM context and cost are measured."
+    },
+    {
+     "id": "f4-t2",
+     "name": "Token embeddings and positional encoding",
+     "definition": "Token embeddings turn each token id into a learned vector, and positional encodings add information about where each token sits, because attention on its own ignores order.",
+     "problem": "Attention compares every token with every other token, but it treats the input as an unordered set: shuffle the words and each output just moves with its word. \"dog bites man\" and \"man bites dog\" would look the same. Position information fixes that, and how you encode positions decides how well a model handles long contexts."
+    },
+    {
+     "id": "f4-t3",
+     "name": "Self-attention: queries, keys and values",
+     "definition": "Self-attention lets every token build its new representation as a weighted average of all the tokens' value vectors, with weights from how well its query matches each token's key: softmax(QKᵀ/√d)·V.",
+     "problem": "The meaning of a word depends on other words, often far away: \"it\" depends on what \"it\" refers to, and \"bank\" depends on \"river\" or \"money\". RNNs pass information step by step and forget. Attention lets every word look directly at every other word in one step, in parallel, and learn which ones matter. It is the core operation of every transformer."
+    },
+    {
+     "id": "f4-t4",
+     "name": "Multi-head attention and the transformer block",
+     "definition": "Multi-head attention runs several smaller attentions in parallel and joins their results; a transformer block wraps attention and an MLP, each with layer norm and a residual connection, and a model stacks many identical blocks.",
+     "problem": "One attention pattern per layer is limiting: a word may need to look at its subject, its object and the previous word all at once. Several heads can each specialise. And attention alone only mixes information between tokens; the MLP then processes it inside each token. The block is the repeating unit of every transformer, so knowing it means you can read any model's architecture."
+    },
+    {
+     "id": "f4-t5",
+     "name": "GPT-style models and next-token prediction",
+     "definition": "A GPT is a stack of transformer blocks with a causal mask, trained to predict the next token; it generates text by predicting a token, appending it and repeating.",
+     "problem": "Next-token prediction needs no labels: any text is its own training data, so models can learn from trillions of tokens. And one simple loop — predict, append, repeat — turns that single skill into writing, answering, summarising and coding. Every chat assistant is built on this."
+    },
+    {
+     "id": "f4-t6",
+     "name": "Encoder models (BERT) vs decoder models (GPT)",
+     "definition": "Encoder models (like BERT) let every token attend in both directions and are trained to fill in masked words, which suits understanding tasks; decoder models (like GPT) attend only backwards and are trained to predict the next word, which suits generation.",
+     "problem": "Different jobs need different views of the text. Classifying a review or building a search embedding benefits from seeing the whole sentence at once. Writing text one word at a time needs a model that never peeks ahead. Knowing which family a model belongs to tells you what it is good for and how to use it."
+    },
+    {
+     "id": "f4-t13",
+     "name": "Vision transformers and CLIP",
+     "definition": "A vision transformer (ViT) cuts an image into patches and runs them through a standard transformer as if they were tokens; CLIP trains an image encoder and a text encoder together so matching pictures and captions get similar vectors.",
+     "problem": "CNNs needed hand-designed structure for images, and every vision task needed its own labelled data. ViT showed the same transformer recipe works for images given enough data, unifying vision and language architectures. CLIP links the two worlds, so you can search photos with words, classify images with no task-specific training, and give language models eyes."
+    },
+    {
+     "id": "f4-t7",
+     "name": "Sampling: greedy, temperature, top-k, top-p",
+     "definition": "Decoding turns the model's next-token probabilities into an actual choice: greedy takes the top token, temperature reshapes the distribution, and top-k and top-p cut off unlikely tokens before sampling.",
+     "problem": "The same model can sound dull and repetitive or creative and unhinged depending only on how you pick tokens. Greedy decoding tends to loop; pure sampling sometimes picks absurd words from the long tail. Decoding settings are the cheapest, most-used control you have over an LLM's output."
+    },
+    {
+     "id": "f4-t8",
+     "name": "KV cache and the cost of generation",
+     "definition": "The KV cache stores the keys and values of every token already processed, so generating each new token only computes its own keys and values instead of recomputing them for the whole sequence.",
+     "problem": "Each new token attends to all earlier tokens. Recomputing every earlier key and value at every step makes generation cost grow with the square of the length, which is far too slow for long replies. The cache makes each step cheap, but its memory grows with every token, layer and user, and it often limits how many users a GPU can serve and how long a context can be."
+    },
+    {
+     "id": "f4-t9",
+     "name": "Pretraining data and scaling laws",
+     "definition": "Pretraining is next-token prediction on an enormous text collection, and scaling laws describe how the resulting loss falls smoothly and predictably as model size, data and compute grow.",
+     "problem": "Training a large model costs millions, so you need to predict, before spending, how big to make it and how much data to use. Scaling laws let labs fit small experiments and extrapolate. They also explain the shape of the field: why models kept growing, why data quality became the bottleneck, and why small models are now trained on far more data than \"optimal\"."
+    },
+    {
+     "id": "f4-t12",
+     "name": "Mixture of experts",
+     "definition": "A mixture-of-experts (MoE) layer replaces one big MLP with many expert MLPs and a router that sends each token to only a few of them, so the model has many parameters but uses only a fraction per token.",
+     "problem": "Bigger models know more, but every parameter normally runs for every token, so cost grows with size. MoE breaks that link: total knowledge can grow while compute per token stays modest. Many frontier models use it, and it changes how you think about model size, memory and serving."
+    },
+    {
+     "id": "f4-t10",
+     "name": "Fine-tuning and LoRA",
+     "definition": "Fine-tuning continues training a pretrained model on your own data; LoRA does it cheaply by freezing the original weights W and training a small low-rank update, so the layer uses W + B·A.",
+     "problem": "Pretrained models are general; you often need a specific style, format or domain. Full fine-tuning updates billions of weights, needs optimiser memory for all of them, and produces a whole new model copy per task. LoRA trains well under 1% of the parameters, fits on a single GPU, and produces small adapters you can swap in and out of one base model."
+    },
+    {
+     "id": "f4-t11",
+     "name": "Instruction tuning and preference tuning (RLHF, DPO)",
+     "definition": "Instruction tuning trains a pretrained model on example conversations so it follows requests, and preference tuning (RLHF or DPO) then trains it on pairs of answers so it prefers the better one.",
+     "problem": "A pretrained model is a brilliant autocomplete, not an assistant: ask it a question and it may continue with more questions. Instruction tuning teaches the format and habit of helpful answering; preference tuning sharpens qualities that are easy to judge but hard to demonstrate, like helpfulness, honesty and harmlessness. This is the step that turned GPT-3 into ChatGPT."
+    },
+    {
+     "id": "f4-t14",
+     "name": "Reasoning models and test-time compute",
+     "definition": "Reasoning models are trained to write out intermediate steps before answering, and test-time compute means spending more computation at answer time — longer reasoning, or many samples plus a vote — to get better answers.",
+     "problem": "Some problems can't be solved in a single forward pass: multi-step maths, tricky code, planning. Letting the model work step by step, and spend more tokens on harder questions, greatly improves accuracy. It gives a new knob — accuracy versus cost per query — alongside model size, and it is behind the jump in maths and coding ability of recent models."
+    }
+   ]
+  },
+  {
+   "id": "ai-engineering",
+   "number": 5,
+   "title": "AI engineering",
+   "short": "AI engineering",
+   "accent": "#b39ddb",
+   "goal": "Turn foundation models into real products: retrieval, evaluation, agents and deployment. This is the core of most AI engineer jobs.",
+   "topics": [
+    {
+     "id": "f5-t1",
+     "name": "Prompting: clear instructions, examples, structured output",
+     "definition": "Prompting is writing the instructions, context and examples an LLM receives on each call; a good prompt is a complete, specific briefing that leaves the model little to guess.",
+     "problem": "The model knows nothing about your task, your users or your data except what is in the prompt. Vague prompts get vague, inconsistent answers that code can't parse. Prompting is the cheapest and fastest lever you have: improve it before reaching for RAG or fine-tuning, and measure the improvement on many inputs."
+    },
+    {
+     "id": "f5-t10",
+     "name": "Structured outputs and function calling",
+     "definition": "Structured output makes the model reply in a fixed, machine-readable format (usually JSON matching a schema); function calling lets the model reply with a request to run one of your functions, with arguments, which your code executes.",
+     "problem": "Free-form text is hard for programs to use reliably: a missing field or an extra sentence breaks parsing. And models can't look things up or take actions by themselves. Structured outputs make answers reliable to parse, and tool calling connects the model to live data and real actions — the basis of every agent."
+    },
+    {
+     "id": "f5-t2",
+     "name": "Embeddings and semantic search",
+     "definition": "Semantic search finds texts with similar meaning by turning texts into embedding vectors and returning the ones whose vectors are closest to the query's vector.",
+     "problem": "Keyword search fails when users and documents use different words for the same thing: \"can't sign in\" versus \"forgot my login\". Embedding-based search matches meaning, which makes help centres, document search and RAG far better. It is also the retrieval half of almost every LLM application."
+    },
+    {
+     "id": "f5-t11",
+     "name": "Vector databases and approximate nearest-neighbour search",
+     "definition": "A vector database stores embeddings with their metadata and an approximate nearest-neighbour (ANN) index, such as HNSW or IVF, that finds almost-the-closest vectors without comparing the query with every vector.",
+     "problem": "Exact search compares the query with every stored vector. With millions of vectors and many users, that is too slow and too expensive. ANN indexes search only a small, well-chosen part of the data, giving answers in milliseconds while keeping recall high. Choosing and tuning them is a core part of building retrieval at scale."
+    },
+    {
+     "id": "f5-t3",
+     "name": "RAG: chunking, retrieval and re-ranking",
+     "definition": "Retrieval-augmented generation (RAG) answers questions by retrieving relevant pieces of your documents and giving them to the model in the prompt, so it answers from that evidence.",
+     "problem": "Models don't know your private documents or anything after their training cut-off, and they make things up when they don't know. Fine-tuning facts in is slow, costly and unreliable. RAG keeps knowledge in documents you can update at any time, lets the model cite its sources, and is the most common pattern in real LLM products."
+    },
+    {
+     "id": "f5-t12",
+     "name": "Context engineering: long context and memory",
+     "definition": "Context engineering is choosing exactly what goes into the model's context window on each call — instructions, examples, retrieved documents, history and tool results — to give it what it needs and nothing that distracts it.",
+     "problem": "Context windows are large but not free: every token adds cost and delay, and models use information buried in the middle of very long inputs less reliably. Long chats and agents keep piling up history and tool output. Deciding what to keep, summarise or drop is now one of the main skills in building reliable LLM apps."
+    },
+    {
+     "id": "f5-t4",
+     "name": "Evaluation: test sets, LLM-as-judge, error analysis",
+     "definition": "Evaluation measures whether an LLM system does its job, using a fixed test set of real inputs, automatic checks or judges for scoring, and careful reading of the failures to find what to fix.",
+     "problem": "LLM apps change constantly — prompts, models, retrieval settings — and every change can quietly break something else. Without evals you are guessing from a few hand-picked examples. A good eval set turns \"it feels better\" into a number you can compare, and error analysis tells you which fix will help most."
+    },
+    {
+     "id": "f5-t5",
+     "name": "Agents and tool use",
+     "definition": "An agent is an LLM running in a loop: it decides an action (usually a tool call), sees the result, and decides again, until the task is done or a limit is reached.",
+     "problem": "Many tasks need several steps whose order isn't known in advance: look something up, calculate, check, try again. A single prompt can't do that. Agents let a model plan and adapt as results come in. They are powerful, but they fail in new ways — loops, wrong tools, compounding errors — so they need limits, logging and evaluation."
+    },
+    {
+     "id": "f5-t13",
+     "name": "MCP: connecting models to tools and data",
+     "definition": "The Model Context Protocol (MCP) is an open standard that lets any AI application connect to tools and data through MCP servers, so each integration is built once and works with every MCP-compatible app.",
+     "problem": "Without a standard, every AI app needs its own custom integration with every tool — a separate connector for files, GitHub, databases and calendars in each app. MCP turns that many-to-many mess into one plug: write a server for your system once, and any MCP client can use it."
+    },
+    {
+     "id": "f5-t6",
+     "name": "Choosing between prompting, RAG and fine-tuning",
+     "definition": "Prompting, RAG and fine-tuning are three ways to adapt an LLM: prompting changes the instructions, RAG supplies knowledge at question time, and fine-tuning changes the model's weights to change its behaviour.",
+     "problem": "Teams often jump to fine-tuning when a better prompt or retrieval would do, wasting weeks, or try to prompt their way around missing knowledge. Choosing the right tool — or the right combination — saves cost and time and gives better results."
+    },
+    {
+     "id": "f5-t14",
+     "name": "Dataset engineering for fine-tuning",
+     "definition": "Dataset engineering is designing, collecting, cleaning and checking the examples you fine-tune on, because a fine-tuned model learns exactly what its data shows, mistakes included.",
+     "problem": "When you fine-tune, the data is the product. A few hundred excellent, varied examples often beat thousands of messy ones, and every bad example — rude, wrong, duplicated — is actively taught. Most fine-tuning failures are data failures, so the data deserves most of the effort."
+    },
+    {
+     "id": "f5-t7",
+     "name": "Serving: APIs, Docker, latency and cost",
+     "definition": "Serving puts a model behind an API so applications can use it, packaged (often in a Docker container) with everything it needs, and measured for latency, throughput and cost.",
+     "problem": "A model in a notebook helps nobody. Real users need a reliable endpoint that answers quickly, handles many requests at once, and doesn't cost more than it earns. Serving is where your model meets real traffic, and where latency and cost decisions are made."
+    },
+    {
+     "id": "f5-t15",
+     "name": "Caching, model routing and cost control",
+     "definition": "Cost control for LLM apps uses caching (reuse answers or processed prompts), routing (send easy requests to cheaper models) and budgets (limits, timeouts and per-request cost tracking).",
+     "problem": "LLM costs scale with every token and every user, and the biggest model is often far more than most requests need. Without control, a successful product can become unaffordable, and slow. Caching and routing commonly cut costs by large factors with little or no loss in quality, if you measure that quality."
+    },
+    {
+     "id": "f5-t16",
+     "name": "Observability: tracing and debugging LLM apps",
+     "definition": "Observability means recording what your LLM app did on every request — prompts, retrieved chunks, tool calls, outputs, tokens, time and cost — as a trace you can inspect, search and learn from.",
+     "problem": "LLM apps fail in quiet, specific ways: the wrong chunk retrieved, a tool error swallowed, an answer cut off. Without traces, a bad answer is a mystery, and you end up tweaking prompts at random. With traces, you can point at the step that went wrong, see where time and money go, and turn real failures into eval cases."
+    },
+    {
+     "id": "f5-t8",
+     "name": "Safety: guardrails and prompt injection",
+     "definition": "Prompt injection is text hidden inside data the model reads (a web page, email or document) that tries to override its instructions; guardrails are the checks, permission limits and approvals that limit the damage.",
+     "problem": "LLMs read instructions and data as one stream of text and can't reliably tell them apart. Once an app reads emails, browses the web or uses tools, anyone who can put text in front of it can try to take control: leak data, send messages, run actions. There is no complete fix yet, so safe design is about limiting what a fooled model can do."
+    },
+    {
+     "id": "f5-t9",
+     "name": "ML system design: pipelines, training vs serving, drift",
+     "definition": "ML system design is building everything around a model — data collection, labelling, features, training, serving, monitoring and retraining — so it keeps working in production as the world changes.",
+     "problem": "In production the model is a small part of the system. Most failures come from the data and pipelines: features computed differently in training and serving, labels arriving late, and the world drifting away from the training data. A model that was 95% accurate at launch can quietly decay with no error message."
+    }
+   ]
+  },
+  {
+   "id": "systems",
+   "number": 6,
+   "title": "Systems and scale",
+   "short": "Systems",
+   "accent": "#ffca28",
+   "goal": "Make models fast and cheap. Understand what limits speed and memory on a GPU, and how training works across many GPUs.",
+   "topics": [
+    {
+     "id": "f6-t1",
+     "name": "How a GPU works: compute vs memory",
+     "definition": "A GPU runs thousands of simple cores in parallel, and how fast your code runs depends on whether it is limited by the maths (compute-bound) or by moving data to the cores (memory-bound).",
+     "problem": "Deep learning is only practical because GPUs do enormous amounts of arithmetic in parallel. But many operations barely use that power: they spend their time waiting for data. Knowing which kind of operation you have tells you which optimisation can help — mixed precision, fusion, batching, quantisation — and which will do nothing."
+    },
+    {
+     "id": "f6-t2",
+     "name": "Mixed precision: fp16 and bf16",
+     "definition": "Mixed precision trains with 16-bit numbers (bf16 or fp16) for most of the maths while keeping a few sensitive values in 32-bit, roughly halving memory traffic and greatly speeding up training.",
+     "problem": "32-bit floats are more precise than neural networks need for most operations, and they cost twice the memory and bandwidth of 16-bit — plus GPUs' tensor cores are far faster at 16-bit maths. Using 16-bit everywhere, though, can lose small updates or overflow. Mixed precision gets the speed while keeping training stable, and it is standard for every large model."
+    },
+    {
+     "id": "f6-t3",
+     "name": "Training memory: weights, gradients, optimiser states, activations",
+     "definition": "Training memory is the sum of the weights, the gradients, the optimiser states and the activations saved for backprop; with Adam and mixed precision it is about 16 bytes per parameter before activations.",
+     "problem": "Running out of GPU memory is the most common reason a training run won't start. Knowing where the bytes go lets you estimate whether a model fits before trying, and pick the right fix — a smaller batch, checkpointing, an 8-bit optimiser, or sharding across GPUs."
+    },
+    {
+     "id": "f6-t4",
+     "name": "Parallelism: data, tensor and pipeline (the ideas)",
+     "definition": "Parallelism spreads training across many GPUs: data parallelism splits the batch, tensor parallelism splits each layer's matrices, pipeline parallelism splits the layers, and FSDP/ZeRO shard the training state.",
+     "problem": "Large models don't fit on one GPU, and even when they do, one GPU would take years to train them. Splitting the work is the only way to train at scale, and choosing how to split it — given the model size and how fast the GPUs can talk to each other — decides how fast and how cheaply a model trains."
+    },
+    {
+     "id": "f6-t5",
+     "name": "Inference speed: batching, quantisation, FlashAttention",
+     "definition": "Inference is sped up by serving many requests together (batching), storing weights in fewer bits (quantisation), and computing attention without writing the full score matrix to memory (FlashAttention).",
+     "problem": "Generating text is mostly memory-bound: every token requires reading all the weights and the KV cache. Serving cost and speed decide whether a model is affordable to deploy. These three techniques are the main reasons modern models can be served cheaply and quickly, and on smaller hardware."
+    },
+    {
+     "id": "f6-t6",
+     "name": "Profiling PyTorch code",
+     "definition": "Profiling measures where time is actually spent in your code — CPU, GPU, data loading, copies — so you optimise the real bottleneck instead of guessing.",
+     "problem": "Intuition about performance is often wrong: the slow part of training may be data loading, a tiny operation called thousands of times, or a hidden copy between CPU and GPU. Optimising the wrong thing wastes days. A profiler shows the timeline and tells you exactly where to look."
+    },
+    {
+     "id": "f6-t7",
+     "name": "GPU kernels with Triton",
+     "definition": "A GPU kernel is a function that runs as many parallel instances on the GPU; Triton lets you write kernels in Python-like code, and the biggest win is usually fusion — doing several steps in one kernel so data leaves slow memory only once.",
+     "problem": "Many deep-learning operations are memory-bound chains of small steps (normalise, activate, scale). Run as separate PyTorch operations, each one reads and writes the full tensor in slow memory. A fused kernel can be several times faster. Triton makes writing such kernels possible without learning CUDA C++, and it is what torch.compile uses under the hood."
+    },
+    {
+     "id": "f6-t8",
+     "name": "Pruning and distillation",
+     "definition": "Pruning removes weights, neurons or heads that matter little; distillation trains a small student model to imitate a large teacher's full output probabilities; both make models smaller and cheaper to run.",
+     "problem": "The best models are often too large, slow or expensive for phones, high-traffic services or tight latency budgets. Many of their parameters contribute little, and much of a big model's knowledge can be transferred into a smaller one. Pruning and distillation, alongside quantisation, are the standard ways to shrink models for deployment."
+    },
+    {
+     "id": "f6-t9",
+     "name": "Speculative decoding",
+     "definition": "Speculative decoding speeds up generation by letting a small draft model propose several tokens, which the large model then verifies in a single pass, keeping exactly the output the large model would have produced.",
+     "problem": "Large models generate one token per forward pass, and each pass is slow because it is memory-bound: the GPU spends its time reading weights, not computing. Checking several proposed tokens costs about the same as generating one. Speculative decoding turns that spare capacity into speed, with no change in output quality."
+    }
+   ]
+  },
+  {
+   "id": "generative-rl",
+   "number": 7,
+   "title": "Generative models and reinforcement learning",
+   "short": "Gen & RL",
+   "accent": "#f48fb1",
+   "goal": "Models that create new data, and models that learn by trial and error. These ideas power image generators, and the reinforcement learning behind RLHF.",
+   "topics": [
+    {
+     "id": "f7-t1",
+     "name": "Autoencoders and VAEs (the ELBO)",
+     "definition": "An autoencoder compresses data into a small code and rebuilds it; a variational autoencoder (VAE) makes the code a probability distribution pulled towards a simple bell curve, so you can sample new codes and decode them into new data.",
+     "problem": "A plain autoencoder learns good compression, but its codes are scattered with gaps, so a random code decodes into nonsense and it can't generate anything new. VAEs fix that by shaping the code space, giving a principled generative model with a smooth latent space. The same encoder–decoder idea is inside modern image generators, which run diffusion in a VAE's compact latent space."
+    },
+    {
+     "id": "f7-t2",
+     "name": "Diffusion models",
+     "definition": "A diffusion model generates data by learning to remove noise: it is trained to predict the noise added to real data, then generates by starting from pure noise and denoising step by step.",
+     "problem": "Generating high-quality images, audio and video is hard: GANs are unstable to train and VAEs are blurry. Diffusion models train with a simple, stable loss and produce state-of-the-art images (Stable Diffusion, DALL·E, Imagen) and video. Their main cost is slow generation, which much current research tries to cut."
+    },
+    {
+     "id": "f7-t3",
+     "name": "Reinforcement learning basics: states, actions, rewards, values",
+     "definition": "In reinforcement learning, an agent takes actions in an environment, receives rewards, and learns a policy — what to do in each state — that maximises the total (discounted) reward over time.",
+     "problem": "Many problems have no labelled \"right answers\", only outcomes: win or lose a game, finish a task, keep a robot upright. Reinforcement learning learns from those outcomes by trial and error. It powers game-playing systems, robotics, recommendation tuning, and the RLHF and reasoning training of modern language models."
+    },
+    {
+     "id": "f7-t4",
+     "name": "Policy gradients and PPO",
+     "definition": "Policy-gradient methods train a policy network directly by making actions that led to better-than-expected returns more likely; PPO adds a clipped objective that keeps each update small and safe.",
+     "problem": "Value-based methods like Q-learning struggle with huge or continuous action spaces — and a language model's \"action\" is a choice among tens of thousands of tokens. Policy gradients optimise the policy itself and handle such spaces naturally. PPO made them stable enough to use widely, including in classic RLHF for chat models."
+    }
+   ]
+  }
+ ],
+ "sql": [
+  {
+   "id": "start-here",
+   "number": 0,
+   "title": "Start here: databases, tables and SQL",
+   "short": "Start here",
+   "accent": "#90a4ae",
+   "goal": "Know what a database is, what a table, a row and a key are, and the six practice tables you will use in every lesson.",
+   "topics": [
+    {
+     "id": "sql0-t1",
+     "name": "What a database, a table and SQL are",
+     "definition": "A relational database stores data in tables of rows and columns, and SQL (Structured Query Language) is the language you use to ask it questions and to change what it holds.",
+     "problem": "A spreadsheet works for a few hundred rows and one person. An app with thousands of users needs data that many people can read and change at the same time, safely, without losing anything, and fast enough to answer in milliseconds. A database does that job, and SQL is how you talk to it."
+    },
+    {
+     "id": "sql0-t2",
+     "name": "Meet the practice database",
+     "definition": "Six small tables — departments, employees, customers, orders, products and order_items — that every example and exercise in this course uses.",
+     "problem": "Learning SQL on a different made-up table in every lesson means learning new data each time. With one small database you get to know the rows by heart, so you can check any result by eye. That habit is what catches wrong queries, at work and in interviews."
+    },
+    {
+     "id": "sql0-t3",
+     "name": "Keys and relationships: primary keys, foreign keys, one-to-many, many-to-many",
+     "definition": "A primary key is a column whose value identifies exactly one row; a foreign key is a column that holds another table's primary key, and those links are how tables relate: one-to-many, many-to-many or one-to-one.",
+     "problem": "If every order repeated the customer's name, email and city, changing an email would mean editing every one of their orders — and one missed row would leave two different emails. Splitting data into tables linked by keys stores each fact once. Keys are also what joins use to put the rows back together."
+    },
+    {
+     "id": "sql0-t4",
+     "name": "Data types: numbers, text, dates and true/false",
+     "definition": "Every column has a data type — such as INTEGER, a decimal number, TEXT, a date or a boolean — which decides what values it can hold and how they compare, sort and calculate.",
+     "problem": "The same value acts differently by type. The text '10' sorts before '9', because text compares letter by letter. Integer 7 divided by integer 2 gives 3, not 3.5. Knowing the types explains a whole class of \"why is my answer wrong?\" bugs."
+    }
+   ]
+  },
+  {
+   "id": "reading-data",
+   "number": 1,
+   "title": "Reading data: SELECT, WHERE and sorting",
+   "short": "Reading data",
+   "accent": "#4dd0e1",
+   "goal": "Pick the columns you want, keep only the rows you want, sort them, and handle the missing values that trip everyone up.",
+   "topics": [
+    {
+     "id": "sql1-t1",
+     "name": "SELECT and FROM: choosing columns",
+     "definition": "SELECT lists the columns (or calculations) you want in the result, and FROM names the table they come from.",
+     "problem": "A table can have dozens of columns, and you usually need two or three. You also often need values that are not stored at all — a salary after a raise, a name and city joined into one label. SELECT lets you choose and calculate exactly the columns you need."
+    },
+    {
+     "id": "sql1-t2",
+     "name": "WHERE: keeping only the rows you want",
+     "definition": "WHERE keeps only the rows for which a condition is true, using comparisons such as =, <>, <, > and the words AND, OR and NOT.",
+     "problem": "Tables hold every row ever stored, and you almost always want a slice: one department, orders over £100, everyone hired this year. WHERE is how you say which rows count."
+    },
+    {
+     "id": "sql1-t3",
+     "name": "IN, BETWEEN and LIKE: shorter conditions",
+     "definition": "IN checks a value against a list, BETWEEN checks a range (both ends included), and LIKE matches text against a pattern with % (any number of characters) and _ (exactly one).",
+     "problem": "`status = 'shipped' OR status = 'pending' OR status = 'cancelled'` is long and easy to get wrong. Questions like \"names starting with P\" or \"orders in February\" come up all the time. These three words make such conditions short and readable."
+    },
+    {
+     "id": "sql1-t4",
+     "name": "NULL: the missing value",
+     "definition": "NULL means \"no value\" or \"unknown\"; any comparison with it — even `NULL = NULL` — is unknown rather than true, so you test for it with IS NULL and replace it with COALESCE.",
+     "problem": "Real data has gaps: an employee with no manager, an order with no amount. NULL causes more wrong answers than anything else in SQL, because it doesn't behave like a normal value. Rows quietly vanish from filters, and sums and averages change, without any error message."
+    },
+    {
+     "id": "sql1-t5",
+     "name": "ORDER BY, LIMIT and OFFSET: sorting and top N",
+     "definition": "ORDER BY sorts the result by one or more columns (ASC for smallest first, DESC for largest first), and LIMIT keeps only the first n rows, with OFFSET to skip some first.",
+     "problem": "\"The 3 highest salaries\", \"the newest orders first\", \"page 2 of the results\" — order matters to people. And without ORDER BY, the database may return rows in any order it likes, which can change from one run to the next."
+    },
+    {
+     "id": "sql1-t6",
+     "name": "DISTINCT: removing duplicate rows",
+     "definition": "SELECT DISTINCT removes duplicate rows from the result, where two rows are duplicates only if every selected column is the same.",
+     "problem": "\"Which cities do our departments sit in?\" lists London twice. \"Which customers ordered in January?\" lists Priya three times. DISTINCT gives each answer once."
+    },
+    {
+     "id": "sql1-t7",
+     "name": "CASE WHEN: if-then logic inside a query",
+     "definition": "CASE WHEN condition THEN value … ELSE value END returns a value chosen by the first condition that is true, so a query can label, group or tidy values row by row.",
+     "problem": "Data often needs sorting into buckets — salary bands, \"open\" or \"closed\" orders, \"new\" or \"returning\" customers — and those labels aren't stored anywhere. CASE builds them inside the query. It is also the key to counting several things in one pass (Phase 2) and to pivoting."
+    },
+    {
+     "id": "sql1-t8",
+     "name": "Built-in functions for text, numbers and dates",
+     "definition": "Functions such as UPPER, LENGTH, SUBSTR, ROUND and the date functions transform a value inside a query — one value in, one value out, for each row.",
+     "problem": "Data rarely arrives in the shape you need: names in mixed case, prices that need rounding, dates you want as \"2024-03\" or as \"how many days ago\". Functions do these small transformations inside the query."
+    }
+   ]
+  },
+  {
+   "id": "summarising",
+   "number": 2,
+   "title": "Summarising data: aggregates, GROUP BY and HAVING",
+   "short": "Summarising",
+   "accent": "#ffb74d",
+   "goal": "Turn many rows into answers — totals, averages, counts per group — and know exactly which rows each number is built from.",
+   "topics": [
+    {
+     "id": "sql2-t1",
+     "name": "Aggregate functions: COUNT, SUM, AVG, MIN and MAX",
+     "definition": "An aggregate function turns many rows into one value — COUNT counts, SUM adds, AVG averages, MIN and MAX find the smallest and largest — and every one except `COUNT(*)` skips NULLs.",
+     "problem": "Nobody wants to read 10 million orders. They want \"how many?\", \"how much in total?\", \"what is the average?\". Aggregates answer those in one line — but the NULL rules quietly change the answers if you don't know them."
+    },
+    {
+     "id": "sql2-t2",
+     "name": "GROUP BY: one result row per group",
+     "definition": "GROUP BY splits the rows into groups that share the same value in the listed columns, and the aggregates then return one row per group.",
+     "problem": "One total is rarely enough. Managers ask for \"revenue per month\", \"headcount per department\", \"orders per customer\". GROUP BY gives you a total for every group in one query, instead of one query per group."
+    },
+    {
+     "id": "sql2-t3",
+     "name": "HAVING: filtering groups, and how it differs from WHERE",
+     "definition": "HAVING filters groups after GROUP BY, using aggregates such as `COUNT(*) > 1`, while WHERE filters single rows before any grouping happens.",
+     "problem": "\"Customers with more than one order\", \"departments whose average salary is over 55000\". You can't test those in WHERE, because the counts and averages don't exist until the rows are grouped. HAVING is the filter that runs after grouping."
+    },
+    {
+     "id": "sql2-t4",
+     "name": "Conditional aggregation: counting several things at once",
+     "definition": "Putting CASE inside an aggregate — `SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END)` — counts or sums only the rows that match, so one query can produce several different totals, or turn rows into columns (a pivot).",
+     "problem": "\"For each customer, how many orders were delivered and how many weren't?\" Running two queries and gluing them together is slow and messy. Interviewers love this pattern because it shows you understand that aggregates work on whatever values you give them."
+    },
+    {
+     "id": "sql2-t5",
+     "name": "The order a query really runs in",
+     "definition": "A query is written SELECT, FROM, WHERE, GROUP BY, HAVING, ORDER BY, LIMIT, but the database works it out in a different order — FROM, WHERE, GROUP BY, HAVING, SELECT, DISTINCT, ORDER BY, LIMIT — and that order explains most \"why doesn't this work?\" errors.",
+     "problem": "Why can't WHERE use the alias you made in SELECT? Why can ORDER BY use it? Why can't WHERE use COUNT? Without the run order these look like random rules. With it, they are obvious — and interviewers ask about it directly."
+    }
+   ]
+  },
+  {
+   "id": "joins",
+   "number": 3,
+   "title": "Joins: combining tables",
+   "short": "Joins",
+   "accent": "#81c784",
+   "goal": "Put rows from two or more tables side by side, keep or drop the rows that have no match on purpose, and spot the joins that quietly double your totals.",
+   "topics": [
+    {
+     "id": "sql3-t1",
+     "name": "Joins, and INNER JOIN",
+     "definition": "A JOIN combines rows from two tables wherever a condition (usually matching keys) is true, and INNER JOIN keeps only the rows that found a match on both sides.",
+     "problem": "The employees table knows Ben is in department 1, but not that department 1 is called Engineering. That lives in departments. To show \"Ben — Engineering\" you need columns from both tables in one row. That is a join."
+    },
+    {
+     "id": "sql3-t2",
+     "name": "LEFT JOIN: keep every row from one side",
+     "definition": "A LEFT JOIN keeps every row from the left (first) table, joins matching rows from the right table, and fills the right-hand columns with NULL where there is no match.",
+     "problem": "\"Show every department with its headcount\" must include HR with 0. \"Every customer and what they spent\" must include Omar, who spent nothing. An INNER JOIN silently drops them. LEFT JOIN keeps them."
+    },
+    {
+     "id": "sql3-t3",
+     "name": "Finding what is missing: anti-joins",
+     "definition": "An anti-join returns rows from one table that have no match in another — written as `LEFT JOIN … WHERE right.key IS NULL`, or as `WHERE NOT EXISTS (…)`.",
+     "problem": "\"Customers who never ordered\", \"products that never sold\", \"employees with no manager on file\" — finding what is absent is one of the most common interview questions and real tasks. You can't find it with WHERE alone, because the missing rows aren't there to filter."
+    },
+    {
+     "id": "sql3-t4",
+     "name": "Self joins: a table joined to itself",
+     "definition": "A self join joins a table to itself under two different aliases, so a row can be compared with another row of the same table — such as an employee with their manager.",
+     "problem": "manager_id points into the same employees table. To show \"Hana reports to Ben\", you need Hana's row and Ben's row side by side. There is only one table, so you use it twice."
+    },
+    {
+     "id": "sql3-t5",
+     "name": "Joining three or more tables",
+     "definition": "You join more than two tables by adding one JOIN … ON per table, walking along the keys — orders to customers, orders to order_items, order_items to products — so each row can hold columns from all of them.",
+     "problem": "\"What did each customer buy?\" needs the customer's name (customers), the order (orders), the line items (order_items) and the product names (products). That is four tables. Many-to-many relationships always need at least three."
+    },
+    {
+     "id": "sql3-t6",
+     "name": "FULL OUTER JOIN and CROSS JOIN",
+     "definition": "A FULL OUTER JOIN keeps every row from both tables, with NULLs wherever either side has no match; a CROSS JOIN pairs every row of one table with every row of the other.",
+     "problem": "Comparing two lists — \"which employees have no department, and which departments have no employees?\" — needs the unmatched rows from both sides at once. Building a report grid — every customer × every month, zeros included — needs every combination. These two joins do those jobs."
+    },
+    {
+     "id": "sql3-t7",
+     "name": "Join traps: double counting, and ON versus WHERE",
+     "definition": "The two classic join bugs are fan-out — joining a \"many\" table repeats the \"one\" side, so its numbers get summed several times — and putting a right-table filter in WHERE, which silently turns a LEFT JOIN into an INNER JOIN.",
+     "problem": "Both bugs return a result with no error, and the numbers look believable. The total revenue comes out as 1131 instead of 793; customers with no delivered orders quietly vanish from an \"all customers\" report. Interviewers test for exactly these."
+    }
+   ]
+  },
+  {
+   "id": "subqueries",
+   "number": 4,
+   "title": "Subqueries, CTEs and set operations",
+   "short": "Subqueries & CTEs",
+   "accent": "#ba68c8",
+   "goal": "Use the result of one query inside another, break hard questions into named steps with WITH, walk trees with recursion, and stack results with UNION.",
+   "topics": [
+    {
+     "id": "sql4-t1",
+     "name": "Subqueries: a query inside a query",
+     "definition": "A subquery is a SELECT inside another query, in brackets: it can return one value (to compare with), a list (for IN), or a whole table (to select FROM).",
+     "problem": "\"Who earns more than the average?\" needs the average first, then a comparison. \"What is the average customer's total spend?\" needs a total per customer first, then an average of those. Each needs two steps, and a subquery puts both steps into one query."
+    },
+    {
+     "id": "sql4-t2",
+     "name": "Correlated subqueries, EXISTS, and the NOT IN trap",
+     "definition": "A correlated subquery refers to a column of the outer row, so it is worked out once per outer row; EXISTS asks \"does the subquery return any row at all?\", which makes it the safe way to test for a match.",
+     "problem": "\"Each customer's latest order\", \"employees paid above their own department's average\", \"customers with at least one delivered order\" — the comparison changes for every row. And the obvious way to find \"no match\", NOT IN, has a trap that returns nothing at all when NULLs are around."
+    },
+    {
+     "id": "sql4-t3",
+     "name": "CTEs: naming each step with WITH",
+     "definition": "A CTE (common table expression) is a named, temporary result written at the top of a query with WITH name AS (…), which later parts of the query can use like a table.",
+     "problem": "Subqueries inside subqueries read inside-out and quickly become unreadable. In an interview, the person watching needs to follow your thinking. CTEs let you write a hard query as a list of small, named steps, in the order you would explain them."
+    },
+    {
+     "id": "sql4-t4",
+     "name": "Recursive CTEs: walking trees and filling in dates",
+     "definition": "A recursive CTE refers to itself: an anchor query gives the starting rows, and a recursive part, joined with UNION ALL, keeps adding rows from the previous round until no new rows appear.",
+     "problem": "An org chart can be any number of levels deep, so a fixed number of self joins can't walk it. The same goes for folder trees, category trees and \"every day in this range, including days with no orders\". Recursion handles any depth."
+    },
+    {
+     "id": "sql4-t5",
+     "name": "UNION, UNION ALL, INTERSECT and EXCEPT",
+     "definition": "Set operators stack the results of two queries: UNION ALL keeps every row, UNION removes duplicates, INTERSECT keeps rows found in both, and EXCEPT keeps rows in the first but not the second.",
+     "problem": "Sometimes the rows you need come from two places: every city mentioned by departments or customers; cities that have both a department and a customer. Joins put tables side by side; set operators put results on top of each other."
+    }
+   ]
+  },
+  {
+   "id": "window-functions",
+   "number": 5,
+   "title": "Window functions: ranking, running totals and comparing rows",
+   "short": "Window functions",
+   "accent": "#ff8a65",
+   "goal": "Calculate across related rows — rank them, compare each with the one before, keep running totals — without losing the individual rows the way GROUP BY does.",
+   "topics": [
+    {
+     "id": "sql5-t1",
+     "name": "What a window function is: OVER and PARTITION BY",
+     "definition": "A window function calculates a value for each row from a set of related rows (its \"window\"), defined by OVER (PARTITION BY … ORDER BY …), and — unlike GROUP BY — keeps every row in the result.",
+     "problem": "\"Show each employee with their department's average salary next to them.\" GROUP BY gives you the averages but throws away the employees; joining the averages back is clumsy. A window function puts the group's number on every row in one step."
+    },
+    {
+     "id": "sql5-t2",
+     "name": "Ranking: ROW_NUMBER, RANK and DENSE_RANK",
+     "definition": "ROW_NUMBER numbers rows 1, 2, 3, 4 with no ties; RANK gives ties the same number and then skips (1, 2, 2, 4); DENSE_RANK gives ties the same number without skipping (1, 2, 2, 3).",
+     "problem": "\"Top 3 per department\", \"the second-highest salary\", \"each customer's first order\" — ranking questions are the most common window-function questions in interviews. The only hard part is ties, and the three functions differ exactly there."
+    },
+    {
+     "id": "sql5-t3",
+     "name": "LAG and LEAD: comparing with the previous or next row",
+     "definition": "`LAG(column)` returns the value from the previous row and `LEAD(column)` the value from the next row, in the order set by OVER (… ORDER BY …), so a row can be compared with its neighbour.",
+     "problem": "\"How much did revenue change since last month?\", \"how many days between a customer's orders?\", \"did the price go up?\" — each compares a row with the one before it. Without LAG, that means a tricky self join on \"the previous date\". With LAG it is one line."
+    },
+    {
+     "id": "sql5-t4",
+     "name": "Running totals and moving averages: window frames",
+     "definition": "With ORDER BY inside OVER, SUM and AVG become running totals; a frame such as `ROWS BETWEEN 2 PRECEDING AND CURRENT ROW` limits the window to nearby rows, giving a moving average.",
+     "problem": "\"Cumulative revenue by day\", \"7-day moving average of sign-ups\" — growth charts are built on these. They also hide a classic trap: the default frame treats tied rows as one, which surprises almost everyone."
+    },
+    {
+     "id": "sql5-t5",
+     "name": "Share of total, NTILE and FIRST_VALUE",
+     "definition": "`x / SUM(x) OVER ()` gives each row's share of the total; `NTILE(n)` splits ordered rows into n roughly equal buckets; FIRST_VALUE and LAST_VALUE pull a value from the first or last row of the window.",
+     "problem": "\"What percentage of revenue does each category bring?\", \"put customers into spending quartiles\", \"show the top earner's name next to everyone in their department\" — all common analytics asks that window functions answer in one line."
+    }
+   ]
+  },
+  {
+   "id": "changing-data",
+   "number": 6,
+   "title": "Building tables and changing data",
+   "short": "Building & changing",
+   "accent": "#4fc3f7",
+   "goal": "Create tables with the right rules, add, change and remove rows safely, group changes into transactions, and design tables that don't contradict themselves.",
+   "topics": [
+    {
+     "id": "sql6-t1",
+     "name": "CREATE TABLE and ALTER TABLE",
+     "definition": "CREATE TABLE defines a new table — its name, its columns, their types and rules — and ALTER TABLE changes an existing table, for example by adding a column.",
+     "problem": "Before data can be stored, the database needs to know its shape. Choosing the columns, types and keys well at the start saves painful fixes later, when the table holds millions of rows."
+    },
+    {
+     "id": "sql6-t2",
+     "name": "Constraints: the rules that keep bad data out",
+     "definition": "Constraints are rules the database enforces on every write — PRIMARY KEY, FOREIGN KEY, UNIQUE, NOT NULL, CHECK and DEFAULT — so that rows which break them are refused instead of stored.",
+     "problem": "Application code has bugs, and data arrives from many places. Tom could sign up twice because nothing said emails must be unique. A rule in the database is checked on every insert and update, from every program, every time."
+    },
+    {
+     "id": "sql6-t3",
+     "name": "INSERT, UPDATE and DELETE",
+     "definition": "INSERT adds new rows, UPDATE changes values in existing rows, and DELETE removes rows — and both UPDATE and DELETE act on every row their WHERE matches, or on every row of the table if there is no WHERE.",
+     "problem": "A database is only useful if it can be kept up to date: new customers, price changes, cancelled orders. These three statements do all of that — and one missing WHERE can change or wipe every row, so they deserve care."
+    },
+    {
+     "id": "sql6-t4",
+     "name": "Transactions and ACID",
+     "definition": "A transaction groups several statements into one all-or-nothing unit — BEGIN, then the changes, then COMMIT to keep them or ROLLBACK to undo them — and ACID names the four guarantees it gives: Atomic, Consistent, Isolated, Durable.",
+     "problem": "Moving money means taking £100 from one account and adding it to another. If the system crashes between the two, £100 vanishes. Transactions make sure either both changes happen or neither does — and that two people working at once don't corrupt each other's changes."
+    },
+    {
+     "id": "sql6-t5",
+     "name": "Normalisation: designing tables that don't contradict themselves",
+     "definition": "Normalisation is designing tables so each fact is stored in exactly one place — usually to third normal form (3NF): one value per cell, and every column depends on the key, the whole key, and nothing but the key.",
+     "problem": "If every order row stored the customer's email, changing Priya's email means updating five rows — miss one and the database says two different things. That is an update anomaly. Normalisation designs it out, and it is a favourite interview question."
+    },
+    {
+     "id": "sql6-t6",
+     "name": "Views: saved queries you can use like tables",
+     "definition": "A view is a named, saved SELECT that you query like a table; it stores no data of its own, so it always shows the current data, while a materialised view stores the result and must be refreshed.",
+     "problem": "The same \"customer totals\" query gets copied into ten reports, and when the rule changes, nine get fixed. A view keeps one definition in the database that everyone uses. Views can also hide columns people shouldn't see."
+    },
+    {
+     "id": "sql6-t7",
+     "name": "DDL, DML, DCL, TCL — and DELETE versus TRUNCATE versus DROP",
+     "definition": "SQL commands fall into four families — DDL changes structure (CREATE, ALTER, DROP), DML changes data (INSERT, UPDATE, DELETE), DCL controls access (GRANT, REVOKE) and TCL controls transactions (COMMIT, ROLLBACK) — and DELETE, TRUNCATE and DROP remove rows, all rows, or the whole table.",
+     "problem": "\"What is the difference between DELETE, TRUNCATE and DROP?\" is one of the most asked SQL theory questions. Knowing the four families answers it neatly, because the three belong to different families."
+    }
+   ]
+  },
+  {
+   "id": "performance",
+   "number": 7,
+   "title": "Performance: indexes and query plans",
+   "short": "Performance",
+   "accent": "#dce775",
+   "goal": "Know why a query is slow, read the plan the database chose, and write queries and indexes that let it find rows without reading the whole table.",
+   "topics": [
+    {
+     "id": "sql7-t1",
+     "name": "Indexes: how a B-tree makes lookups fast",
+     "definition": "An index is a separate, sorted copy of one or more columns — usually a B-tree — with pointers back to the rows, so the database can jump to matching rows instead of scanning the whole table.",
+     "problem": "Without an index, `WHERE order_date = '2024-02-12'` must read every row and check it: a full table scan. On 100 million rows that is slow, and it gets slower as the table grows. An index turns it into a few quick steps."
+    },
+    {
+     "id": "sql7-t2",
+     "name": "Reading a query plan with EXPLAIN",
+     "definition": "EXPLAIN shows the plan the database chose for a query — which tables it scans, which indexes it searches, how it joins and sorts — without (or, with ANALYZE, while) running it.",
+     "problem": "\"This query is slow — what do you do?\" The first answer is always: look at the plan. Guessing wastes time; the plan tells you whether the database is scanning a huge table, missing an index, or sorting millions of rows."
+    },
+    {
+     "id": "sql7-t3",
+     "name": "Index-friendly queries: sargable filters and composite indexes",
+     "definition": "A filter is sargable when the database can use an index for it — the indexed column stands alone on one side of the comparison — and a composite index on (a, b) helps queries that filter on a, or on a and b, but not on b alone.",
+     "problem": "An index can exist and still not be used. `WHERE strftime('%Y-%m', order_date) = '2024-02'` reads every row even with an index on order_date. Knowing the rules lets you write the same filter in a way that uses the index."
+    },
+    {
+     "id": "sql7-t4",
+     "name": "How a database runs a join: nested loop, hash join, merge join",
+     "definition": "Databases use three main join methods — a nested loop (for each row of one table, look up matches in the other), a hash join (build a hash table of one side, probe it with the other), and a merge join (walk two sorted inputs together) — and the optimiser picks one per join.",
+     "problem": "In senior interviews you may be asked why a join is slow or what a plan line like \"Hash Join\" means. Knowing the three methods tells you which index or memory setting will help."
+    }
+   ]
+  },
+  {
+   "id": "interview-problems",
+   "number": 8,
+   "title": "SQL interview problems, from easy to hard",
+   "short": "Interview problems",
+   "accent": "#f06292",
+   "goal": "Solve the classic SQL interview questions from a blank page, explain your approach while you write, and name the edge cases before the interviewer does.",
+   "topics": [
+    {
+     "id": "sql8-t1",
+     "name": "How to answer any SQL interview question",
+     "definition": "A repeatable method: restate the question, look at the tables and their grain, ask about edge cases, plan the steps out loud, write the query as small CTEs, then check the result against a few rows you can work out by hand.",
+     "problem": "Under pressure, people jump straight into typing, write one giant query, and miss the NULLs or ties the interviewer planted. Interviewers grade the process as much as the answer: do you clarify, structure, and verify?"
+    },
+    {
+     "id": "sql8-t2",
+     "name": "Quick-fire SQL theory questions",
+     "definition": "Short \"what is the difference between…\" questions that open many SQL interviews; each is best answered with a one-line definition of both sides, the key difference, and when you would use each.",
+     "problem": "These questions take thirty seconds each but set the tone for the interview. A crisp answer shows you really understand the tool; a vague one makes the interviewer dig deeper. They are collected here so you can revise them in one place."
+    },
+    {
+     "id": "sql8-p1",
+     "name": "The second highest salary (and the Nth)",
+     "definition": "Return the second highest salary from employees. If there is no second highest salary, return NULL.",
+     "problem": "Whether you think about ties and about \"no answer\". LIMIT 1 OFFSET 1 is wrong when two people share the top salary, and many answers return no row at all instead of NULL."
+    },
+    {
+     "id": "sql8-p2",
+     "name": "Employees who earn more than their manager",
+     "definition": "Find every employee who earns more than their own manager. Show the employee's name and salary, and the manager's name and salary.",
+     "problem": "Whether you can treat one table as two — a self join — and read a self-referencing key the right way round."
+    },
+    {
+     "id": "sql8-p3",
+     "name": "Customers who have never had an order delivered",
+     "definition": "List every customer who has never had an order delivered — including customers who have never ordered at all.",
+     "problem": "Anti-joins, and the classic trap of putting a condition on the right-hand table in WHERE after a LEFT JOIN, which silently removes the customers you are looking for."
+    },
+    {
+     "id": "sql8-p4",
+     "name": "Find duplicate emails, then remove the duplicates",
+     "definition": "Find every email that belongs to more than one customer, with how many sign-ups it has. Then delete the duplicates, keeping the row with the lowest customer_id.",
+     "problem": "GROUP BY with HAVING, the ROW_NUMBER pattern for picking one row per group, and writing a safe DELETE."
+    },
+    {
+     "id": "sql8-p5",
+     "name": "The highest-paid employee in each department",
+     "definition": "For each department, return the employee (or employees, if tied) with the highest salary. Show the department name, the employee's name and their salary.",
+     "problem": "The most common window-function question: top N per group, including how to handle ties and how to filter on a window function."
+    },
+    {
+     "id": "sql8-p6",
+     "name": "Employees paid above their department's average",
+     "definition": "List employees whose salary is above the average salary of their own department, showing that average next to them.",
+     "problem": "Comparing a row with an aggregate of its own group — three valid ways (window function, join to a grouped subquery, correlated subquery) and knowing when each fits."
+    },
+    {
+     "id": "sql8-p7",
+     "name": "Month-over-month revenue growth",
+     "definition": "For each month, show the revenue and the percentage change from the previous month, rounded to one decimal place.",
+     "problem": "Aggregating to the right grain first, then LAG, then safe percentage maths — integer division and division by zero included."
+    },
+    {
+     "id": "sql8-p8",
+     "name": "Each customer's first order",
+     "definition": "For each customer who has ordered, show their first order — its id, date and amount — and how many days after signing up they placed it.",
+     "problem": "Picking exactly one row per group (the first event per user) with ROW_NUMBER, and joining back for extra columns. Used for activation, onboarding and funnel questions."
+    },
+    {
+     "id": "sql8-p9",
+     "name": "Streaks: orders on consecutive days (gaps and islands)",
+     "definition": "Find every streak where a customer ordered on two or more consecutive days. Show the customer, the first and last day of the streak, and its length in days.",
+     "problem": "The \"gaps and islands\" technique, which turns consecutive runs into groups — a favourite hard question for login streaks, consecutive wins and uninterrupted sessions."
+    },
+    {
+     "id": "sql8-p10",
+     "name": "Products bought together",
+     "definition": "Find every pair of different products that appear in the same order, and count how many orders contain each pair. List each pair once.",
+     "problem": "A self join on a link table, and the trick for listing each pair once — the basis of \"customers who bought this also bought…\"."
+    },
+    {
+     "id": "sql8-p11",
+     "name": "Which products make up 80% of revenue? (share of total)",
+     "definition": "Show each product's revenue, its percentage of total revenue, and the running (cumulative) percentage from the best seller down. Then list the products that bring in the first 80% of revenue.",
+     "problem": "Window aggregates over the whole result (share of total), a running total with an explicit ROWS frame, and turning a cumulative share into a filter — the classic Pareto analysis."
+    },
+    {
+     "id": "sql8-p12",
+     "name": "Retention: who came back within 30 days?",
+     "definition": "Of the customers who placed an order, what percentage placed another order within 30 days of their first one?",
+     "problem": "Cohort-style thinking: anchor each user on their first event, look for a later event within a window, and compute a rate — the core of product and growth analytics interviews."
+    },
+    {
+     "id": "sql8-p13",
+     "name": "The median salary",
+     "definition": "Find the median salary of all employees, and then the median salary in each department.",
+     "problem": "Whether you can build a statistic that SQL doesn't always provide, using row numbers and counts — and handle both odd and even group sizes."
+    },
+    {
+     "id": "sql8-p14",
+     "name": "Customers who bought every product in a category",
+     "definition": "Find the customers who have bought every product in the Stationery category.",
+     "problem": "\"Every\" questions — relational division — which can't be answered with a plain join. They test counting distinct matches against a total, or thinking in double negatives."
+    }
+   ]
+  }
+ ],
+ "system_design": [
+  {
+   "id": "interview-basics",
+   "number": 0,
+   "title": "How system design interviews work",
+   "short": "Interview basics",
+   "accent": "#90a4ae",
+   "goal": "Learn the step-by-step way to answer any design question before you learn the parts. Without a method, even good knowledge comes out messy under pressure.",
+   "topics": [
+    {
+     "id": "sd0-t4",
+     "name": "Meet the building blocks: a map of a typical web system",
+     "definition": "Most large web systems are built from the same dozen parts — clients, DNS, a CDN, load balancers, app servers, caches, databases, queues, workers and object storage — connected in a familiar shape.",
+     "problem": "System design questions use many technical words at once. If you don't know what each part does, answers sound like a list of jargon. Learning the map first makes every later topic easier, because each one is a closer look at one box on this map."
+    },
+    {
+     "id": "sd0-t1",
+     "name": "The high-level design interview: a step-by-step answer framework",
+     "definition": "A repeatable order of steps for answering any 'Design X' question in about 45 minutes.",
+     "problem": "Under pressure, most people either freeze or start drawing boxes before they understand the question. Both lose marks. A fixed method gives you something to do in every minute, and shows the interviewer how you think."
+    },
+    {
+     "id": "sd0-t2",
+     "name": "Back-of-the-envelope estimation",
+     "definition": "Quick, rough maths to estimate traffic, storage and bandwidth, so your design decisions are based on scale.",
+     "problem": "Without numbers you can't tell whether one server is enough or you need a hundred. Estimation turns a vague 'big app' into numbers that decide the design."
+    },
+    {
+     "id": "sd0-t3",
+     "name": "The low-level design interview: a step-by-step approach",
+     "definition": "A repeatable way to answer 'Design the classes for X' (a parking lot, an elevator, Splitwise) and write the key code.",
+     "problem": "LLD questions are open-ended: 'design a parking lot' could mean almost anything. Without a method you write random classes, or code that breaks the moment the interviewer adds a requirement."
+    }
+   ]
+  },
+  {
+   "id": "networking",
+   "number": 1,
+   "title": "Networking and APIs",
+   "short": "Networking",
+   "accent": "#4fc3f7",
+   "goal": "Understand how a request travels from a phone or browser to your servers and back, and how to design the API it calls.",
+   "topics": [
+    {
+     "id": "sd1-t1",
+     "name": "Client–server, DNS, and what happens when you type a URL",
+     "definition": "Clients (browsers, apps) send requests; servers process them and send responses. DNS turns a name like example.com into an IP address the client can connect to.",
+     "problem": "Computers find each other by IP address, but people remember names. Between typing a name and seeing a page there are several steps, and each can be slow or fail. Knowing them lets you explain latency, failover and where caching helps."
+    },
+    {
+     "id": "sd1-t2",
+     "name": "HTTP and REST API design",
+     "definition": "HTTP is the request–response protocol of the web. REST is a style of API design built around resources (nouns) and standard methods (GET, POST, PUT, PATCH, DELETE).",
+     "problem": "Clients and servers are often built by different teams, or even different companies. They need a clear, stable contract for asking and answering; otherwise every change breaks somebody."
+    },
+    {
+     "id": "sd1-t3",
+     "name": "Real-time communication: polling, long polling, WebSockets, SSE",
+     "definition": "Ways for a server to get new data to a client quickly: the client keeps asking (polling), waits on an open request (long polling), keeps a two-way connection open (WebSockets), or receives a one-way stream (server-sent events, SSE).",
+     "problem": "Normal HTTP lets the client ask but not the server tell. Chat, notifications, live prices and multiplayer games need updates pushed to the user within a fraction of a second."
+    },
+    {
+     "id": "sd1-t4",
+     "name": "CDN (content delivery network)",
+     "definition": "A network of servers around the world that caches static content (images, video, scripts) close to users.",
+     "problem": "Distance costs time: a user in Sydney fetching from London waits around a quarter of a second for each round trip, and every byte you send costs bandwidth. Big files and users all over the world make this much worse."
+    },
+    {
+     "id": "sd1-t5",
+     "name": "Proxies, reverse proxies and API gateways",
+     "definition": "A reverse proxy sits in front of your servers and receives requests on their behalf. An API gateway is a reverse proxy with API features: authentication, rate limiting and routing to the right service.",
+     "problem": "With many services, every client would need to know every service's address, and every service would repeat the same login checks, rate limits and logging. That's duplicated, inconsistent work."
+    }
+   ]
+  },
+  {
+   "id": "core-concepts",
+   "number": 2,
+   "title": "Core concepts: scale, reliability and speed",
+   "short": "Core concepts",
+   "accent": "#66bb6a",
+   "goal": "The ten ideas every high-level design uses: scalability, availability, fault tolerance, load balancing, caching, consistency and CAP, rate limiting, asynchronous processing, and observability.",
+   "topics": [
+    {
+     "id": "sd2-t1",
+     "name": "Scalability: vertical vs horizontal",
+     "definition": "Scalability is a system's ability to handle more load by adding resources.",
+     "problem": "A system that works for 100 users can fall over at 100,000. You need a way to add capacity without rewriting everything."
+    },
+    {
+     "id": "sd2-t2",
+     "name": "Availability: nines, SLAs and redundancy",
+     "definition": "Availability is the share of time a system works and responds correctly, usually written in 'nines', like 99.9%.",
+     "problem": "Machines, disks, networks and whole datacentres fail. If your system has only one copy of anything important, that one failure takes everything down."
+    },
+    {
+     "id": "sd2-t3",
+     "name": "Fault tolerance: timeouts, retries, circuit breakers",
+     "definition": "Fault tolerance means the system keeps working, perhaps in a reduced way, when parts of it fail.",
+     "problem": "In a system of many services, something is always slow or broken. Without protection, one slow dependency makes its callers wait, they run out of threads, and the failure spreads until everything is down."
+    },
+    {
+     "id": "sd2-t4",
+     "name": "Load balancing",
+     "definition": "A load balancer spreads incoming requests across several servers and stops sending traffic to unhealthy ones.",
+     "problem": "One server can only handle so much, and if it dies, everyone using it is affected. You need to spread requests across many servers and route around the broken ones."
+    },
+    {
+     "id": "sd2-t5",
+     "name": "Caching",
+     "definition": "A cache keeps a copy of frequently used data in fast storage, usually memory, so it can be served without repeating slow work.",
+     "problem": "Reading from a database on disk, or recalculating a result, is slow and expensive compared with reading memory. When the same data is read again and again, repeating the work is waste."
+    },
+    {
+     "id": "sd2-t6",
+     "name": "Consistency, CAP and PACELC",
+     "definition": "Consistency (in distributed systems) means every read sees the latest write. The CAP theorem says that during a network partition, a system must choose between consistency and availability.",
+     "problem": "To survive failures and be fast for users everywhere, you keep copies of data on several machines. But copies can't all change at exactly the same instant, and the network between them can break. You must decide what users see in that gap."
+    },
+    {
+     "id": "sd2-t7",
+     "name": "Rate limiting and backpressure",
+     "definition": "Rate limiting caps how many requests a client can make in a time window. Backpressure is a system telling the senders upstream to slow down when it's overloaded.",
+     "problem": "Without limits, one buggy script, scraper or attacker can send so many requests that everyone else gets errors. And a system that accepts more work than it can do eventually collapses for everyone."
+    },
+    {
+     "id": "sd2-t8",
+     "name": "Asynchronous processing and message queues (Kafka, SQS)",
+     "definition": "Asynchronous processing means doing slow work later, outside the user's request. A message queue holds the work, or events, between the service that produces them and the services that consume them.",
+     "problem": "Some work is slow (encoding video, sending emails) or comes in bursts (a sale doubles traffic). Doing it inside the user's request makes them wait, and a burst can overwhelm the services behind it."
+    },
+    {
+     "id": "sd2-t9",
+     "name": "Observability: logs, metrics and traces",
+     "definition": "Observability is how well you can understand what a system is doing from the outside, using logs, metrics and traces.",
+     "problem": "When something goes wrong in a system of many services, you can't attach a debugger to production. Without data coming out of the system, you're guessing."
+    }
+   ]
+  },
+  {
+   "id": "data",
+   "number": 3,
+   "title": "Data: databases, storage and scaling data",
+   "short": "Data",
+   "accent": "#ffb74d",
+   "goal": "Choose the right database, keep data correct with transactions, make queries fast with indexes, and scale data with replication and sharding.",
+   "topics": [
+    {
+     "id": "sd3-t1",
+     "name": "SQL vs NoSQL: choosing a database",
+     "definition": "SQL (relational) databases store data in tables with a fixed schema and support joins and transactions. NoSQL is a family of other models: key-value, document, wide-column and graph.",
+     "problem": "Different data and different access patterns need different storage. A wrong choice hurts later: slow queries, joins you can't do, or a database that can't keep up with the writes."
+    },
+    {
+     "id": "sd3-t2",
+     "name": "ACID transactions and isolation levels",
+     "definition": "A transaction groups several operations so they succeed or fail together. ACID stands for Atomic, Consistent, Isolated, Durable.",
+     "problem": "Real operations change several things at once: take money from A, give it to B. If the system crashes halfway, or two users act at the same moment, money can be created or destroyed."
+    },
+    {
+     "id": "sd3-t3",
+     "name": "Database indexing",
+     "definition": "An index is an extra data structure that lets the database find rows without scanning the whole table.",
+     "problem": "Finding one row among 100 million by checking every row takes seconds. Users and other services can't wait that long, and the database burns CPU doing it."
+    },
+    {
+     "id": "sd3-t4",
+     "name": "Replication",
+     "definition": "Replication keeps copies of the same data on several machines.",
+     "problem": "One copy of your data is a single point of failure, and one machine can only answer so many reads. You need copies — and then you have to keep them in agreement."
+    },
+    {
+     "id": "sd3-t5",
+     "name": "Partitioning and sharding",
+     "definition": "Sharding splits a large dataset across several databases (shards), each holding part of the data.",
+     "problem": "Even the biggest single database has limits on storage and write speed. When your data or writes outgrow it, you have to split the data across machines."
+    },
+    {
+     "id": "sd3-t6",
+     "name": "Consistent hashing",
+     "definition": "Consistent hashing assigns keys to servers so that adding or removing a server moves only a small share of the keys.",
+     "problem": "If you place keys with hash(key) % N, adding or removing one server changes N and almost every key moves. For a cache, that means almost every request suddenly misses at once."
+    },
+    {
+     "id": "sd3-t7",
+     "name": "Object storage (S3) for files and media",
+     "definition": "Object storage keeps files ('objects') such as images, videos and backups as a key pointing to bytes plus metadata, in a cheap, very durable, almost unlimited store like Amazon S3.",
+     "problem": "Photos, videos, backups and documents are big and numerous. Storing them in a database bloats it, slows backups and costs a lot; storing them on one server's disk breaks scaling."
+    },
+    {
+     "id": "sd3-t8",
+     "name": "Search: inverted indexes and Elasticsearch",
+     "definition": "Full-text search finds the documents that contain some words and ranks them by relevance. It's built on an inverted index: a map from each word to the documents containing it.",
+     "problem": "Users type words, not IDs, and they expect the best matches first, even with typos. Normal database indexes can't do that efficiently."
+    },
+    {
+     "id": "sd3-t9",
+     "name": "Unique ID generation",
+     "definition": "Generating IDs that are unique across many servers, without one shared database counter.",
+     "problem": "Every order, message and user needs an ID that never repeats. With many servers creating records at the same moment, one shared counter becomes a bottleneck and a single point of failure."
+    }
+   ]
+  },
+  {
+   "id": "distributed",
+   "number": 4,
+   "title": "Distributed systems and security",
+   "short": "Distributed",
+   "accent": "#ba68c8",
+   "goal": "How services split up and stay correct across a network, how machines agree, and how to keep users and data secure.",
+   "topics": [
+    {
+     "id": "sd4-t1",
+     "name": "Monolith vs microservices",
+     "definition": "A monolith is one deployable application. Microservices split the system into small services, each owning one business capability and its own data, talking over the network.",
+     "problem": "As a product and team grow, one big codebase becomes slow to build, risky to deploy and hard for many teams to work on at once. But splitting it creates network and data problems."
+    },
+    {
+     "id": "sd4-t2",
+     "name": "Distributed transactions: sagas and the outbox pattern",
+     "definition": "A saga runs a business process across several services as a series of local transactions, with a compensating action to undo each step if a later step fails.",
+     "problem": "An order needs stock reserved, a card charged and a shipment booked, in three different services with three databases. No single transaction can cover all three, but you still can't leave an order half done."
+    },
+    {
+     "id": "sd4-t3",
+     "name": "Consensus and leader election (Raft)",
+     "definition": "Consensus is getting several machines to agree on a value — such as who the leader is, or the order of operations — even when some of them fail.",
+     "problem": "Several machines need to agree, even when some crash or messages are delayed. If two of them both believe they're in charge, data gets corrupted."
+    },
+    {
+     "id": "sd4-t4",
+     "name": "Security basics: authentication, authorisation, OAuth and JWT",
+     "definition": "Authentication checks who you are. Authorisation checks what you're allowed to do.",
+     "problem": "Every system must know who is calling and what they may do, and must keep data safe even if something leaks. Mistakes here are the most expensive kind."
+    }
+   ]
+  },
+  {
+   "id": "oop-solid",
+   "number": 5,
+   "title": "Low-level design: OOP and SOLID",
+   "short": "OOP & SOLID",
+   "accent": "#4db6ac",
+   "goal": "The building blocks of good class design: the four pillars of OOP, composition over inheritance, the five SOLID principles, class diagrams, and the concurrency basics LLD questions expect.",
+   "topics": [
+    {
+     "id": "sd5-t1",
+     "name": "OOP: the four pillars",
+     "definition": "Object-oriented programming organises code into objects that bundle data and behaviour. Its four pillars are encapsulation, abstraction, inheritance and polymorphism.",
+     "problem": "Large programs written as one long list of functions and shared variables become impossible to change safely. OOP groups data with the code that's allowed to change it."
+    },
+    {
+     "id": "sd5-t2",
+     "name": "Composition over inheritance, and interfaces",
+     "definition": "Composition means building a class out of other objects it has ('has-a'), instead of inheriting from a parent ('is-a').",
+     "problem": "Inheritance looks like free reuse, but every subclass is tied to its parent's details. With several independent features, the number of subclasses explodes."
+    },
+    {
+     "id": "sd5-t3",
+     "name": "SOLID: S — Single Responsibility Principle",
+     "definition": "A class should have one reason to change: one job.",
+     "problem": "When one class does several jobs, unrelated changes collide: a change to the email wording risks breaking the tax calculation, and every change means retesting everything."
+    },
+    {
+     "id": "sd5-t4",
+     "name": "SOLID: O — Open/Closed Principle",
+     "definition": "Code should be open for extension but closed for modification: add new behaviour by adding code, not by editing code that already works.",
+     "problem": "Every time a new type of thing appears (a new payment method, a new discount), developers edit the same big if/else, and each edit risks breaking cases that already worked."
+    },
+    {
+     "id": "sd5-t5",
+     "name": "SOLID: L — Liskov Substitution Principle",
+     "definition": "Objects of a subclass must work anywhere the parent class is expected, without breaking the program.",
+     "problem": "Polymorphism only works if every subtype really behaves like its parent. One misbehaving subclass forces callers to add special cases, and bugs appear far away from their cause."
+    },
+    {
+     "id": "sd5-t6",
+     "name": "SOLID: I — Interface Segregation Principle",
+     "definition": "Clients shouldn't be forced to depend on methods they don't use. Prefer several small, focused interfaces over one big one.",
+     "problem": "Big 'do-everything' interfaces force classes to implement methods that make no sense for them, and every change to the big interface touches classes that don't care."
+    },
+    {
+     "id": "sd5-t7",
+     "name": "SOLID: D — Dependency Inversion Principle",
+     "definition": "High-level code should depend on abstractions, not on concrete low-level details.",
+     "problem": "When business logic creates its own database connection or email client, it's welded to them. You can't test it without a real database, and switching providers means rewriting business code."
+    },
+    {
+     "id": "sd5-t8",
+     "name": "UML class diagrams and relationships",
+     "definition": "A class diagram shows the classes, their fields and methods, and how they relate to each other.",
+     "problem": "In an interview, you need to show the structure of your design quickly, before coding. A clear diagram lets the interviewer follow you and correct you early."
+    },
+    {
+     "id": "sd5-t9",
+     "name": "Concurrency basics: threads, locks and race conditions",
+     "definition": "Concurrency is several tasks making progress at the same time. A race condition is a bug where the result depends on the exact timing between them.",
+     "problem": "Real systems serve many users at once. When two of them change the same data at the same moment, results can be silently wrong, like one seat sold twice."
+    }
+   ]
+  },
+  {
+   "id": "patterns",
+   "number": 6,
+   "title": "Design patterns",
+   "short": "Patterns",
+   "accent": "#f06292",
+   "goal": "Ten patterns that come up again and again in LLD interviews and real code: three for creating objects, three for structuring them, and four for behaviour.",
+   "topics": [
+    {
+     "id": "sd6-t1",
+     "name": "Singleton",
+     "definition": "Makes sure a class has only one instance, and gives one global way to reach it.",
+     "problem": "Some things should exist exactly once per program, like one configuration or one connection pool. Creating several wastes resources or causes conflicting settings."
+    },
+    {
+     "id": "sd6-t2",
+     "name": "Factory: Factory Method and Abstract Factory",
+     "definition": "A factory creates objects for you, so the calling code asks for 'a notifier' without knowing which concrete class gets built.",
+     "problem": "If the code that uses an object also decides which concrete class to create, every new type means editing that code in many places."
+    },
+    {
+     "id": "sd6-t3",
+     "name": "Builder",
+     "definition": "Builds a complex object step by step, instead of using a constructor with a dozen parameters.",
+     "problem": "Objects with many optional settings lead to long, confusing constructors, where it's easy to pass arguments in the wrong order."
+    },
+    {
+     "id": "sd6-t4",
+     "name": "Adapter",
+     "definition": "Lets two incompatible interfaces work together, by wrapping one so it looks like the other.",
+     "problem": "You often need a library or old system whose interface doesn't match the one your code expects, and you can't (or shouldn't) change either side."
+    },
+    {
+     "id": "sd6-t5",
+     "name": "Decorator",
+     "definition": "Adds behaviour to an object by wrapping it in another object with the same interface, without changing the original class.",
+     "problem": "You want to add extras like logging, caching or retries to some objects, in different combinations, without writing a subclass for every combination."
+    },
+    {
+     "id": "sd6-t6",
+     "name": "Facade",
+     "definition": "Gives one simple interface to a complicated set of classes.",
+     "problem": "Using a complex subsystem directly means every caller must know many classes and the right order to call them, and that knowledge gets copied everywhere."
+    },
+    {
+     "id": "sd6-t7",
+     "name": "Strategy",
+     "definition": "Puts a family of interchangeable algorithms behind one interface, so you can choose one at runtime.",
+     "problem": "When an algorithm can vary (pricing, sorting, routing), putting every variant in one method with if/else makes it long, hard to test and risky to extend."
+    },
+    {
+     "id": "sd6-t8",
+     "name": "Observer",
+     "definition": "Lets objects subscribe to another object's events, and get notified automatically when something happens.",
+     "problem": "When one event must trigger several reactions, the code that raises the event ends up calling every reacting component directly, so adding a new reaction means editing it."
+    },
+    {
+     "id": "sd6-t9",
+     "name": "Chain of Responsibility",
+     "definition": "Passes a request along a chain of handlers; each one either deals with it or passes it on to the next.",
+     "problem": "A request may need to pass several checks, or be handled by one of several handlers depending on its details. Hard-coding that sequence in one function makes it long and rigid."
+    },
+    {
+     "id": "sd6-t10",
+     "name": "State",
+     "definition": "Lets an object change its behaviour when its internal state changes, by putting each state's behaviour in its own class.",
+     "problem": "Objects with modes (an order that's paid or shipped, a machine that's idle or dispensing) often end up with if/else on a status field in every method, and invalid actions slip through."
+    }
+   ]
+  },
+  {
+   "id": "lld-practice",
+   "number": 7,
+   "title": "Low-level design questions",
+   "short": "LLD practice",
+   "accent": "#aed581",
+   "goal": "Practise the classic LLD questions end to end: requirements, classes, patterns, the key code and concurrency.",
+   "topics": [
+    {
+     "id": "sd7-t1",
+     "name": "Design a parking lot",
+     "definition": "Design the classes for a multi-floor car park that assigns spots, issues tickets and charges fees.",
+     "problem": "It's the classic first LLD question: the entities are clear, there are natural places for patterns (pricing, spot assignment), and there's a real concurrency problem."
+    },
+    {
+     "id": "sd7-t2",
+     "name": "Design an elevator system",
+     "definition": "Design the classes and scheduling logic for a building's lifts.",
+     "problem": "It tests state machines, scheduling and concurrency, and there's no single right answer, so your reasoning is what gets marked."
+    },
+    {
+     "id": "sd7-t3",
+     "name": "Design Splitwise (expense sharing)",
+     "definition": "Design an expense-sharing app where friends split bills and can see who owes whom.",
+     "problem": "It tests clean modelling of money, validation, and a small algorithm (debt simplification), and it catches people who use floats for money."
+    },
+    {
+     "id": "sd7-t4",
+     "name": "Design a vending machine",
+     "definition": "Design a vending machine that sells items, accepts coins and gives change.",
+     "problem": "It's the clearest test of the State pattern: every action means something different depending on the machine's state."
+    },
+    {
+     "id": "sd7-t5",
+     "name": "Design an LRU cache",
+     "definition": "Design a fixed-size cache that removes the least recently used item when full, with get and put in O(1).",
+     "problem": "It tests data-structure design under a strict time limit (O(1) operations), and it's asked both as a coding question and as a design question."
+    },
+    {
+     "id": "sd7-t6",
+     "name": "Design an order-matching engine (stock exchange)",
+     "definition": "Design the core of a stock exchange: an order book that matches buy and sell orders.",
+     "problem": "It tests data structures (heaps and queues), fairness rules, and why a single-threaded design can be both the fastest and the safest."
+    }
+   ]
+  },
+  {
+   "id": "hld-practice",
+   "number": 8,
+   "title": "High-level design questions",
+   "short": "HLD practice",
+   "accent": "#64b5f6",
+   "goal": "Practise the classic HLD questions with the full framework: requirements, estimates, API, data model, design, deep dives and trade-offs.",
+   "topics": [
+    {
+     "id": "sd8-t1",
+     "name": "Design a URL shortener (like bit.ly)",
+     "definition": "Turn long URLs into short links, like bit.ly/x7Kp2a, that redirect to the original.",
+     "problem": "It's the classic first HLD question: small enough to finish, and it covers APIs, unique IDs, caching, database choice and read-heavy scaling."
+    },
+    {
+     "id": "sd8-t2",
+     "name": "Design a distributed rate limiter",
+     "definition": "A service that limits how many requests each client can make, enforced consistently across many API servers.",
+     "problem": "It tests algorithms (token bucket and windows), shared state across servers, atomic updates and failure handling, all in one small system."
+    },
+    {
+     "id": "sd8-t3",
+     "name": "Design a notification system",
+     "definition": "Send notifications (mobile push, SMS, email) to users reliably, at large scale.",
+     "problem": "It tests queues, priorities, third-party integrations, retries and avoiding duplicates — everyday problems in real products."
+    },
+    {
+     "id": "sd8-t4",
+     "name": "Design a chat app (like WhatsApp)",
+     "definition": "One-to-one and group messaging, with delivery receipts and online status.",
+     "problem": "It tests real-time connections, routing between servers, storage for enormous write volumes, ordering and offline delivery."
+    },
+    {
+     "id": "sd8-t5",
+     "name": "Design a news feed (like Twitter or Instagram)",
+     "definition": "Show each user a feed of recent posts from the people they follow.",
+     "problem": "It tests the fan-out trade-off — do the work when posting or when reading — plus caching and the celebrity problem."
+    },
+    {
+     "id": "sd8-t6",
+     "name": "Design a video streaming platform (like YouTube or Netflix)",
+     "definition": "Upload, process and stream videos to millions of viewers.",
+     "problem": "It tests large-file handling, background processing pipelines, CDNs and adaptive streaming — dealing with petabytes, not just requests."
+    },
+    {
+     "id": "sd8-t7",
+     "name": "Design a ride-hailing app (like Uber)",
+     "definition": "Match riders with nearby drivers in real time, track trips and charge fares.",
+     "problem": "It tests geospatial search, very high-volume updates, real-time matching and preventing double-booking."
+    },
+    {
+     "id": "sd8-t8",
+     "name": "Design a payment system",
+     "definition": "Process payments reliably: charge customers, record every money movement, and never lose money or charge twice.",
+     "problem": "It tests correctness under failure — retries, timeouts, idempotency, transactions and audit trails — where a small bug means real money."
+    },
+    {
+     "id": "sd8-t9",
+     "name": "Design search autocomplete",
+     "definition": "Suggest the top completions as the user types into a search box.",
+     "problem": "It tests data structures at scale (tries), precomputing results, caching, and separating serving from data processing."
+    },
+    {
+     "id": "sd8-t10",
+     "name": "Design a real-time leaderboard",
+     "definition": "Show live rankings of players by score, including each player's own rank.",
+     "problem": "It tests choosing the right data structure (a sorted set), and keeping a fast in-memory view in step with durable storage."
+    },
+    {
+     "id": "sd8-t11",
+     "name": "Design a distributed cache",
+     "definition": "A shared in-memory key-value cache, like Redis or Memcached, spread across many machines.",
+     "problem": "It tests partitioning, consistent hashing, eviction, replication and failure handling — the building blocks of most large systems."
+    }
+   ]
+  },
+  {
+   "id": "ai-ml-design",
+   "number": 9,
+   "title": "AI and ML system design",
+   "short": "AI/ML design",
+   "accent": "#b39ddb",
+   "goal": "The design questions AI and ML engineer interviews ask: RAG assistants, recommendations, fraud detection, LLM serving, and the pipeline that trains and ships models.",
+   "topics": [
+    {
+     "id": "sd9-t1",
+     "name": "Design a RAG assistant over company documents",
+     "definition": "A chat assistant that answers employees' questions from the company's own documents, with sources.",
+     "problem": "It's the most common AI-engineering design question: it tests retrieval, prompting, permissions, evaluation and cost control together."
+    },
+    {
+     "id": "sd9-t2",
+     "name": "Design a recommendation system",
+     "definition": "Recommend items (videos, products, posts) that each user is likely to engage with.",
+     "problem": "It tests the two-stage pattern (retrieve, then rank), feature consistency, feedback loops, and how to measure success."
+    },
+    {
+     "id": "sd9-t3",
+     "name": "Design a real-time fraud detection system",
+     "definition": "Score every card transaction for fraud within milliseconds, and block or flag the risky ones.",
+     "problem": "It tests real-time ML: low-latency features, imbalanced data, thresholds based on costs, labels that arrive late, and drift."
+    },
+    {
+     "id": "sd9-t4",
+     "name": "Design an LLM serving platform",
+     "definition": "Serve large language models to many applications with low latency and cost.",
+     "problem": "It tests modern AI infrastructure: GPU cost, batching, memory limits, streaming, and fairness between teams."
+    },
+    {
+     "id": "sd9-t5",
+     "name": "Design an ML training and feature pipeline",
+     "definition": "The platform that turns raw data into trained, deployed and monitored models, again and again.",
+     "problem": "It tests whether you see a model as a product with a lifecycle — data, features, training, deployment and monitoring — repeated forever."
+    }
+   ]
+  }
+ ]
+}

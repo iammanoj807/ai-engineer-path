@@ -1,0 +1,21 @@
+rules_version = '2';
+
+// AI Engineer Path: each signed-in learner reads and writes only their own
+// progress, at users/{uid}/progress/{doc}. Everything else is refused.
+//
+// Deploy with: firebase deploy --only firestore:rules
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /users/{uid}/progress/{docId} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == uid
+                         && docId in ['foundations', 'system_design', 'sql', 'sql_queries', 'activity'];
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
