@@ -9,7 +9,8 @@ import { Alert, Box, Button, Dialog, DialogContent, Snackbar, Stack, Typography 
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
 import LocalFireDepartmentRoundedIcon from '@mui/icons-material/LocalFireDepartmentRounded';
-import { allTopicsOf, courseById, topicLink, unitOf, type CourseInfo, type PathTopic, type PathUnit } from '../../game/courses';
+import { allTopicsOf, courseById, unitOf, type CourseInfo, type PathTopic, type PathUnit } from '../../game/courses';
+import { topicPath } from '../../game/addresses';
 import { checksDocOf, useGameStats } from '../../game/useProgress';
 import { XP_PER_CHECK, XP_TOPIC_BONUS, checksPassedIn, readDailyGoal } from '../../game/xp';
 import { onCelebrate, onDayTick, type Celebration as CelebrationEvent } from '../../services/progress';
@@ -126,7 +127,7 @@ const Celebration = () => {
                                     variant="contained"
                                     size="large"
                                     onClick={() => {
-                                        const target = topicLink(shown.course, shown.next!.id);
+                                        const target = topicPath(shown.course, shown.next!.id);
                                         close();
                                         navigate(target);
                                     }}

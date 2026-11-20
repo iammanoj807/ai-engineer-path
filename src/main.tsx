@@ -3,7 +3,14 @@ import ReactDOM from 'react-dom/client';
 import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import App from './App';
 import { startAccount } from './services/account';
+import { addressFromHash } from './game/addresses';
+import { keepPrerendered } from './game/prerendered';
 import './index.css';
+
+// Old links keep the page after a # (/#/sql?topic=sql1-t1). Move them to the
+// page's own address before the app reads it.
+const moved = addressFromHash(window.location.hash);
+if (moved) window.history.replaceState(null, '', moved);
 
 // After a new deploy, a page left open asks for chunks that no longer exist.
 // Reload once onto the new deploy; the time check stops a reload loop.
@@ -51,7 +58,10 @@ const theme = createTheme({
     },
 });
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+const root = document.getElementById('root')!;
+keepPrerendered(window.location.pathname, moved ? '' : root.innerHTML);
+
+ReactDOM.createRoot(root).render(
     <React.StrictMode>
         <ThemeProvider theme={theme}>
             <CssBaseline />

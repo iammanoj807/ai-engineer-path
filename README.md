@@ -39,13 +39,19 @@ npm run build      # regenerates the path index, type-checks, builds to dist/
 
 `src/game/pathIndex.json` is a small index of topic names that the home page uses, so the first visit doesn't download every lesson. `npm run build` regenerates it, and a test fails if it is out of date (`npm run path-index` to fix).
 
+Every lesson has its own address, such as `/sql/group-by-one-result-row-per-group/` (`src/game/addresses.ts`). The same `npm run path-index` gives each new lesson its address in `src/game/lessonSlugs.json`, made from its name the first time. Commit that file, and never edit an address in it: renaming a lesson keeps the old address, so links and search results keep working.
+
 ## Deploy to GitHub Pages
 
 1. Push to `main` on GitHub.
 2. In the repo: **Settings → Pages → Source: GitHub Actions**.
 3. `.github/workflows/deploy.yml` runs the tests, builds and publishes on every push to `main`.
 
-The site is served at its own domain, **learn.hamropedia.com**: a DNS `CNAME` record (`learn` → `iammanoj807.github.io`) at the domain's DNS host, plus the custom domain in **Settings → Pages**. `vite.config.ts` uses a relative `base: './'`, so the same build also works at `iammanoj807.github.io/ai-engineer-path/`. It uses hash routes (`/#/sql`), because GitHub Pages has no fallback for unknown paths. Old `iammanoj807.github.io/ai-engineer-path/` links are forwarded to the custom domain by GitHub.
+The site is served at its own domain, **learn.hamropedia.com**: a DNS `CNAME` record (`learn` → `iammanoj807.github.io`) at the domain's DNS host, plus the custom domain in **Settings → Pages**. Old `iammanoj807.github.io/ai-engineer-path/` links are forwarded to the custom domain by GitHub, and old `/#/sql?topic=…` links are moved to the lesson's own address when the page opens.
+
+GitHub Pages has no fallback for unknown paths, so the build writes a real HTML page for every address (`vite.config.ts`): the home page, each course, unit guide and lesson, with its own title, description, canonical address and text. Search engines read those pages, and the app takes over once it loads. The build also writes `sitemap.xml`, `robots.txt` and a `404.html`. The page text comes from `npm run site-pages` (run by `npm run build`), which leaves out practice answers and SQL solutions, as the site does.
+
+If you change the custom domain, run the deploy workflow again afterwards: until a new deploy, GitHub can keep answering "Site not found" to browsers.
 
 ## Google sign-in
 

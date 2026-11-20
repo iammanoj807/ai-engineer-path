@@ -1,11 +1,12 @@
 // Learn mode on a course page. The address decides what shows:
-//   /sql               the path of every topic, unit by unit
-//   /sql?topic=<id>    one lesson, full page, with Back to path and Next
-//   /sql?unit=<id>     a unit's guide: its big picture and extra practice
-// So the browser's Back button works, and any lesson can be linked to.
+//   /sql/                  the path of every topic, unit by unit
+//   /sql/<lesson-slug>/    one lesson, full page, with Back to path and Next
+//   /sql/unit/<id>/        a unit's guide: its big picture and extra practice
+// So the browser's Back button works, any lesson can be linked to, and search
+// engines list each lesson on its own (see game/addresses.ts).
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
+import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { Box, Button, ButtonBase, InputAdornment, Stack, TextField, Typography } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
@@ -13,6 +14,7 @@ import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import { allTopicsOf, unitOf, type CourseInfo } from '../../game/courses';
 import { checksPassedIn, type ChecksDoc } from '../../game/xp';
 import { useCourseNav } from '../../game/useCourseNav';
+import { placeOf, topicPath } from '../../game/addresses';
 import { useTracksProgress } from '../../services/account';
 import CoursePath from './CoursePath';
 import GuestNote from './GuestNote';
@@ -31,16 +33,17 @@ const PathLearn = ({
     renderTopic: (topicId: string) => ReactNode;
     renderUnit: (unitId: string) => ReactNode;
 }) => {
-    const [params] = useSearchParams();
     const location = useLocation();
     const { openTopic, openUnit, backToPath } = useCourseNav(course);
     const [query, setQuery] = useState('');
     const tracking = useTracksProgress();
 
     const topics = allTopicsOf(course);
-    const topicId = params.get('topic');
+    const place = placeOf(location.pathname);
+    const here = place?.course.id === course.id ? place : undefined;
+    const topicId = here?.topicId;
     const topicIndex = topicId ? topics.findIndex(topic => topic.id === topicId) : -1;
-    const unitId = params.get('unit');
+    const unitId = here?.unitId;
     const unit = unitId ? course.units.find(u => u.id === unitId) : undefined;
     const from = (location.state as { from?: string } | null)?.from;
 
@@ -69,12 +72,12 @@ const PathLearn = ({
                 {renderTopic(topic.id)}
                 <Stack direction={{ xs: 'column-reverse', sm: 'row' }} justifyContent="space-between" spacing={1.5} sx={{ mt: 4, pb: 4 }}>
                     {previous ? (
-                        <Button variant="outlined" startIcon={<ArrowBackRoundedIcon />} onClick={() => openTopic(previous.id)} sx={{ minHeight: 48, justifyContent: 'flex-start', textAlign: 'left' }}>
+                        <Button variant="outlined" startIcon={<ArrowBackRoundedIcon />} component={RouterLink} to={topicPath(course, previous.id)} sx={{ minHeight: 48, justifyContent: 'flex-start', textAlign: 'left' }}>
                             {previous.name}
                         </Button>
                     ) : <Box />}
                     {next && (
-                        <Button variant="contained" endIcon={<ArrowForwardRoundedIcon />} onClick={() => openTopic(next.id)} sx={{ minHeight: 48, fontWeight: 800, justifyContent: 'flex-end', textAlign: 'right' }}>
+                        <Button variant="contained" endIcon={<ArrowForwardRoundedIcon />} component={RouterLink} to={topicPath(course, next.id)} sx={{ minHeight: 48, fontWeight: 800, justifyContent: 'flex-end', textAlign: 'right' }}>
                             Next: {next.name}
                         </Button>
                     )}

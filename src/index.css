@@ -64,3 +64,31 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* Each page's own text, written into its HTML by the build (vite.config.ts).
+   It shows before the app has loaded and while a course loads, so it follows
+   the app's dark theme. */
+.seo-page {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+  color: #d7d2ce;
+  font-family: "Plus Jakarta Sans", "Inter", "Roboto", "Helvetica", "Arial", sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.65;
+}
+#root > .seo-page {
+  background: #0B0E14;
+  min-height: 100vh;
+  max-width: none;
+  padding-left: max(16px, calc((100% - 820px) / 2));
+  padding-right: max(16px, calc((100% - 820px) / 2));
+}
+.seo-page h1 { font-size: 2rem; line-height: 1.2; margin: 0.4em 0 0.3em; color: #fff; }
+.seo-page h2 { font-size: 1.3rem; margin: 1.6em 0 0.4em; color: #fff; }
+.seo-page .seo-lead { font-size: 1.15rem; color: #b0bec5; }
+.seo-page a { color: #82b1ff; }
+.seo-page .seo-trail { font-size: 0.9rem; color: #b0bec5; }
+.seo-page .seo-lessons li { margin: 0.35em 0; }
+.seo-page .seo-next { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; margin: 2em 0 1em; }
+.seo-page pre { background: #151921; padding: 12px; border-radius: 8px; overflow-x: auto; }

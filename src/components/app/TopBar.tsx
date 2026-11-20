@@ -22,11 +22,18 @@ import RouteRoundedIcon from '@mui/icons-material/RouteRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import GoogleIcon from '@mui/icons-material/Google';
 import { COURSES } from '../../game/courses';
+import { coursePath, placeOf } from '../../game/addresses';
 import { useGameStats } from '../../game/useProgress';
 import { signIn, signOut, useAccount, useTracksProgress } from '../../services/account';
 import { FLAME, XP_GOLD } from './colours';
 
-const NAV = [{ to: '/', label: 'Path' }, ...COURSES.map(course => ({ to: course.route, label: course.title }))];
+const NAV = [{ to: '/', label: 'Path' }, ...COURSES.map(course => ({ to: coursePath(course), label: course.title }))];
+
+/** A course's menu item stays selected on its lessons and unit guides too. */
+const isCurrent = (pathname: string, to: string) => {
+    const place = placeOf(pathname);
+    return to === '/' ? !place : !!place && coursePath(place.course) === to;
+};
 
 const Stat = ({ icon, value, colour, label }: { icon: React.ReactNode; value: number; colour: string; label: string }) => (
     <Tooltip title={label}>
@@ -115,7 +122,7 @@ const TopBar = () => {
                     {NAV.map(item => (
                         <MenuItem
                             key={item.to}
-                            selected={pathname === item.to}
+                            selected={isCurrent(pathname, item.to)}
                             onClick={() => {
                                 setMenu(null);
                                 navigate(item.to);
@@ -142,7 +149,7 @@ const TopBar = () => {
 
                 <Stack direction="row" spacing={0.5} sx={{ display: { xs: 'none', md: 'flex' }, flex: 1 }}>
                     {NAV.map(item => {
-                        const active = pathname === item.to;
+                        const active = isCurrent(pathname, item.to);
                         return (
                             <Button
                                 key={item.to}

@@ -1,10 +1,13 @@
 import { lazy, Suspense, useEffect, type ReactNode } from 'react';
-import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { Box, CircularProgress, Link, Typography } from '@mui/material';
 import TopBar from './components/app/TopBar';
 import Celebration from './components/app/Celebration';
 import SignInNeeded from './components/app/SignInNeeded';
-import { courseByRoute, writeLastCourse } from './game/courses';
+import { writeLastCourse } from './game/courses';
+import { placeOf } from './game/addresses';
+import { absoluteUrl, metaFor } from './game/seo';
+import { prerenderedFor } from './game/prerendered';
 
 // Each course carries every lesson, animation and answer, so each loads as its
 // own chunk the first time it is opened.
@@ -13,18 +16,37 @@ const FoundationsPage = lazy(() => import('./components/FoundationsPage'));
 const SqlPage = lazy(() => import('./components/SqlPage'));
 const SystemDesignPage = lazy(() => import('./components/SystemDesignPage'));
 
-const PageLoading = () => (
-    <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
-        <CircularProgress aria-label="Loading" />
-    </Box>
-);
+/** While a course loads: the page's own text from the build if there is one, else a spinner. */
+const PageLoading = () => {
+    const { pathname } = useLocation();
+    const html = prerenderedFor(pathname);
+    if (html) return <Box dangerouslySetInnerHTML={{ __html: html }} />;
+    return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
+            <CircularProgress aria-label="Loading" />
+        </Box>
+    );
+};
 
-/** Remembers the course last opened, so the home page continues it. */
-const RememberCourse = () => {
+const setHead = (selector: string, attribute: string, value: string, create: () => HTMLElement) => {
+    const element = document.head.querySelector(selector) ?? document.head.appendChild(create());
+    element.setAttribute(attribute, value);
+};
+
+/**
+ * On every change of page: the tab title, description and canonical address
+ * follow the page (the build writes the same ones into each page's HTML), and
+ * the course is remembered so the home page continues it.
+ */
+const PageChange = () => {
     const { pathname } = useLocation();
     useEffect(() => {
-        const course = courseByRoute(pathname);
-        if (course) writeLastCourse(course.id);
+        const place = placeOf(pathname);
+        if (place) writeLastCourse(place.course.id);
+        const meta = metaFor(pathname);
+        document.title = meta.title;
+        setHead('meta[name="description"]', 'content', meta.description, () => Object.assign(document.createElement('meta'), { name: 'description' }));
+        setHead('link[rel="canonical"]', 'href', absoluteUrl(meta.path), () => Object.assign(document.createElement('link'), { rel: 'canonical' }));
         window.scrollTo(0, 0);
     }, [pathname]);
     return null;
@@ -33,16 +55,16 @@ const RememberCourse = () => {
 const Page = ({ children }: { children: ReactNode }) => <Suspense fallback={<PageLoading />}>{children}</Suspense>;
 
 const App = () => (
-    <HashRouter>
-        <RememberCourse />
+    <BrowserRouter>
+        <PageChange />
         <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
             <TopBar />
             <Box component="main" sx={{ flex: 1, minWidth: 0, pt: { xs: 3, md: 4 }, pb: 6, px: { xs: 2, sm: '5%', md: '8%' } }}>
                 <Routes>
                     <Route path="/" element={<Page><HomePage /></Page>} />
-                    <Route path="/foundations" element={<Page><FoundationsPage /></Page>} />
-                    <Route path="/sql" element={<Page><SqlPage /></Page>} />
-                    <Route path="/system-design" element={<Page><SystemDesignPage /></Page>} />
+                    <Route path="/foundations/*" element={<Page><FoundationsPage /></Page>} />
+                    <Route path="/sql/*" element={<Page><SqlPage /></Page>} />
+                    <Route path="/system-design/*" element={<Page><SystemDesignPage /></Page>} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </Box>
@@ -57,7 +79,7 @@ const App = () => (
         </Box>
         <Celebration />
         <SignInNeeded />
-    </HashRouter>
+    </BrowserRouter>
 );
 
 export default App;

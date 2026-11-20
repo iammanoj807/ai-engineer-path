@@ -77,18 +77,11 @@ export const COURSES: CourseInfo[] = [
 
 export const courseById = (id: Course): CourseInfo => COURSES.find(course => course.id === id)!;
 
-export const courseByRoute = (pathname: string): CourseInfo | undefined =>
-    COURSES.find(course => pathname === course.route);
-
 export const allTopicsOf = (course: CourseInfo): PathTopic[] => course.units.flatMap(unit => unit.topics);
 
 /** The unit a topic belongs to. */
 export const unitOf = (course: CourseInfo, topicId: string): PathUnit | undefined =>
     course.units.find(unit => unit.topics.some(topic => topic.id === topicId));
-
-/** A link that opens the course page on this topic. */
-export const topicLink = (course: CourseInfo, topicId: string) =>
-    `${course.route}?topic=${encodeURIComponent(topicId)}`;
 
 const LAST_COURSE_KEY = 'aep:v1:last-course';
 

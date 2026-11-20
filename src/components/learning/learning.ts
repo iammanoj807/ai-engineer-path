@@ -1,6 +1,7 @@
-import { createContext, useContext, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { createTheme, type Theme } from '@mui/material';
+import { coursePath, placeOf } from '../../game/addresses';
 
 // Shared by the study pages (ML Foundations, System Design): colours, sizes
 // and the text-size preference. The components that use these live in
@@ -111,15 +112,8 @@ export const useTextSizeChoice = () => {
  * with ?mode=interview; otherwise the page opens in the mode last used on
  * this device, or the first one.
  */
-/**
- * A query parameter from the address. The site uses hash routes for GitHub
- * Pages (/#/sql?mode=interview), so it is looked for after the # as well.
- */
-export const urlParam = (name: string): string | null => {
-    const hash = window.location.hash;
-    const inHash = hash.includes('?') ? new URLSearchParams(hash.slice(hash.indexOf('?') + 1)).get(name) : null;
-    return inHash ?? new URLSearchParams(window.location.search).get(name);
-};
+/** A query parameter from the address, such as ?mode=interview. */
+export const urlParam = (name: string): string | null => new URLSearchParams(window.location.search).get(name);
 
 export const readStudyMode = <M extends string>(key: string, modes: readonly M[]): M => {
     try {
@@ -143,20 +137,41 @@ export const writeStudyMode = (key: string, mode: string) => {
 
 /**
  * A study page's mode (Learn, Revise, Interview). `?mode=` in the address wins,
- * so a link such as /#/sql?mode=interview opens that mode even when the page is
+ * so a link such as /sql/?mode=interview opens that mode even when the page is
  * already showing; otherwise the mode last chosen on this device. Choosing a
  * mode drops `?mode=` from the address, so the choice sticks.
+ * A lesson or unit guide address always shows Learn: someone arriving from a
+ * search result must see the lesson, whatever mode they used last time.
  */
 export const useStudyMode = <M extends string>(key: string, modes: readonly M[]) => {
     const [params, setParams] = useSearchParams();
+    const { pathname } = useLocation();
+    const navigate = useNavigate();
     const [stored, setStored] = useState<M>(() => readStudyMode(key, modes));
+    const place = placeOf(pathname);
+    const learn = (modes as readonly string[]).includes('learn') ? ('learn' as M) : undefined;
+    const inLesson = !!learn && !!(place?.topicId || place?.unitId);
     const asked = params.get('mode');
-    const mode = asked && (modes as readonly string[]).includes(asked) ? (asked as M) : stored;
+    const mode = inLesson ? learn! : asked && (modes as readonly string[]).includes(asked) ? (asked as M) : stored;
+
+    // Opening a lesson means studying in Learn, so leaving it by Back to path
+    // shows the path, not the mode used before.
+    const [wasInLesson, setWasInLesson] = useState(inLesson);
+    if (wasInLesson !== inLesson) {
+        setWasInLesson(inLesson);
+        if (wasInLesson && asked === null && stored !== learn) setStored(learn!);
+    }
+    useEffect(() => {
+        if (inLesson) writeStudyMode(key, learn!);
+    }, [inLesson, learn, key]);
+
     const changeMode = (value: M | null) => {
         if (!value) return;
         setStored(value);
         writeStudyMode(key, value);
-        if (asked !== null) {
+        if (inLesson && value !== learn && place) {
+            navigate(`${coursePath(place.course)}?mode=${encodeURIComponent(value)}`);
+        } else if (asked !== null) {
             const next = new URLSearchParams(params);
             next.delete('mode');
             setParams(next, { replace: true });

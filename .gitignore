@@ -9,6 +9,8 @@ lerna-debug.log*
 
 node_modules
 dist
+# Written by npm run site-pages for the build
+generated
 dist-ssr
 *.local
 

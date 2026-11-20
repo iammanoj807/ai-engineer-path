@@ -21,7 +21,8 @@ import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import LocalFireDepartmentRoundedIcon from '@mui/icons-material/LocalFireDepartmentRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
-import { courseById, readLastCourse, topicLink, unitOf, writeLastCourse } from '../../game/courses';
+import { courseById, readLastCourse, unitOf, writeLastCourse } from '../../game/courses';
+import { topicPath, unitPath } from '../../game/addresses';
 import { checksDocOf, useGameStats, type CourseStats } from '../../game/useProgress';
 import { DAILY_GOALS, lastDays, readDailyGoal, writeDailyGoal } from '../../game/xp';
 import type { Course } from '../../services/progress';
@@ -194,7 +195,7 @@ const ContinueCard = ({ stats, tracking }: { stats: CourseStats; tracking: boole
                     variant="contained"
                     size="large"
                     startIcon={<PlayArrowRoundedIcon />}
-                    onClick={() => navigate(topicLink(course, next.id))}
+                    onClick={() => navigate(topicPath(course, next.id))}
                     sx={{ fontWeight: 800, px: 3, minHeight: 48 }}
                 >
                     {nextPassed > 0 ? 'Continue' : 'Start'}
@@ -264,6 +265,13 @@ const HomePage = () => {
 
     return (
         <Box sx={{ width: '100%', maxWidth: 940, mx: 'auto' }}>
+            {/* The page's main heading, for screen readers and search engines; the cards below say the same visually. */}
+            <Typography
+                component="h1"
+                sx={{ position: 'absolute', width: '1px', height: '1px', p: 0, m: '-1px', overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap', border: 0 }}
+            >
+                AI Engineer Path: learn ML foundations, SQL and system design for free
+            </Typography>
             {tracking && <GuestNote />}
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 4 }}>
                 <ContinueCard stats={selectedStats} tracking={tracking} />
@@ -280,8 +288,8 @@ const HomePage = () => {
                     key={course.id}
                     course={course}
                     doc={checksDocOf(progress, course.id)}
-                    onOpenTopic={topicId => navigate(topicLink(course, topicId))}
-                    onOpenUnit={unitId => navigate(`${course.route}?unit=${encodeURIComponent(unitId)}`)}
+                    onOpenTopic={topicId => navigate(topicPath(course, topicId))}
+                    onOpenUnit={unitId => navigate(unitPath(course, unitId))}
                 />
             </Box>
             <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 2 }}>
