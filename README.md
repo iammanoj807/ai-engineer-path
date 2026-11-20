@@ -3,7 +3,7 @@
 Learn **ML foundations, SQL and system design** from scratch, one step at a time.
 Free, in the browser. Sign in with Google to track your progress.
 
-**Live site:** https://iammanoj807.github.io/ai-engineer-path/
+**Live site:** https://learn.hamropedia.com/
 
 ## What's inside
 
@@ -32,7 +32,7 @@ Each course also has an **Interview questions** mode: full spoken answers, the t
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173/ai-engineer-path/
+npm run dev        # http://localhost:5173/
 npm test           # lesson, animation, glossary and answer checks
 npm run build      # regenerates the path index, type-checks, builds to dist/
 ```
@@ -45,7 +45,7 @@ npm run build      # regenerates the path index, type-checks, builds to dist/
 2. In the repo: **Settings → Pages → Source: GitHub Actions**.
 3. `.github/workflows/deploy.yml` runs the tests, builds and publishes on every push to `main`.
 
-The site uses hash routes (`/#/sql`), because GitHub Pages has no fallback for unknown paths. `vite.config.ts` sets `base: '/ai-engineer-path/'`; change it if the repo is renamed.
+The site is served at its own domain, **learn.hamropedia.com**: a DNS `CNAME` record (`learn` → `iammanoj807.github.io`) at the domain's DNS host, plus the custom domain in **Settings → Pages**. `vite.config.ts` uses a relative `base: './'`, so the same build also works at `iammanoj807.github.io/ai-engineer-path/`. It uses hash routes (`/#/sql`), because GitHub Pages has no fallback for unknown paths. Old `iammanoj807.github.io/ai-engineer-path/` links are forwarded to the custom domain by GitHub.
 
 ## Google sign-in
 
@@ -53,7 +53,7 @@ The live site uses the Firebase project `ai-engineer-path-807` (Auth with Google
 
 1. Create a project at https://console.firebase.google.com (the free Spark plan is enough).
 2. **Build → Authentication → Get started → Sign-in method → Google → Enable.**
-3. **Authentication → Settings → Authorized domains → Add domain:** `iammanoj807.github.io`.
+3. **Authentication → Settings → Authorized domains → Add domain:** the site's domain (here `learn.hamropedia.com`).
 4. **Build → Firestore Database → Create database** (production mode).
 5. Deploy the rules, so each person can only read and write their own progress:
    ```bash

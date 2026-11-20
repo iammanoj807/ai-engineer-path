@@ -1,11 +1,14 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// GitHub Pages serves the site at https://<user>.github.io/ai-engineer-path/,
-// so every built file is looked up under that folder. Routes are hash routes
-// (/#/sql), because Pages has no fallback for unknown paths.
+// The site's home is https://learn.hamropedia.com/ (a custom domain set in the
+// repo's Pages settings). Until that domain's DNS record exists it is served at
+// https://iammanoj807.github.io/ai-engineer-path/, and afterwards GitHub
+// forwards that address to the domain. A relative base makes the same build work
+// at both. Routes are hash routes (/#/sql), so the page itself is always the
+// site's index and relative asset paths always resolve.
 export default defineConfig({
-  base: '/ai-engineer-path/',
+  base: './',
   plugins: [react()],
   build: {
     sourcemap: false,
