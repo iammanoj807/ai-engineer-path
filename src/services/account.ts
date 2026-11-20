@@ -1,10 +1,11 @@
-// Google sign-in, optional. The site works fully without it: progress is kept
-// in the browser. Sign-in only appears when the build has a Firebase project
-// (the VITE_FIREBASE_* variables, see README), and then it keeps progress in
-// the learner's own account, the same on every device.
+// Google sign-in. When the build has a Firebase project (the VITE_FIREBASE_*
+// variables, see README), anyone can read the lessons, and ticking a check
+// needs a Google account: progress lives in the learner's own account, the
+// same on every device. Without a Firebase project (a fork), there is no
+// sign-in and progress is kept in the browser instead.
 
 import { useSyncExternalStore } from 'react';
-import { localBackend, switchBackend } from './progress';
+import { localBackend, requireSignInToSave, runPendingSave, switchBackend } from './progress';
 
 const config = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY as string | undefined,
@@ -29,6 +30,11 @@ export interface AccountState {
 let current: AccountState = { status: cloudConfigured ? 'loading' : 'off' };
 const listeners = new Set<() => void>();
 
+// With sign-in available, progress is saved only to an account. Without it
+// (a fork with no Firebase project), it is saved in the browser.
+// If sign-in itself fails to load ('off'), fall back to the browser rather than block every tick.
+if (cloudConfigured) requireSignInToSave(() => current.status === 'signed-in' || current.status === 'off');
+
 const set = (next: AccountState) => {
     current = next;
     listeners.forEach(fn => fn());
@@ -46,6 +52,7 @@ export const startAccount = () => {
             onSignedIn: (user, backend) => {
                 switchBackend(backend);
                 set({ status: 'signed-in', name: user.name, photo: user.photo });
+                runPendingSave();
             },
             onSignedOut: () => {
                 switchBackend(localBackend('guest'));

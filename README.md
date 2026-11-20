@@ -1,7 +1,7 @@
 # AI Engineer Path
 
 Learn **ML foundations, SQL and system design** from scratch, one step at a time.
-Free, in the browser, no account needed.
+Free, in the browser. Sign in with Google to track your progress.
 
 **Live site:** https://iammanoj807.github.io/ai-engineer-path/
 
@@ -24,10 +24,9 @@ Each course also has an **Interview questions** mode: full spoken answers, the t
 
 ## Where progress is saved
 
-- **Without signing in:** in your browser (localStorage). Clearing your browser data clears it.
-- **With Google sign-in:** in your own account, so your phone and laptop show the same progress. Anything you ticked before signing in moves into the account.
-
-Every learner starts from zero. Nobody else can see your progress.
+- **Reading is open to everyone.** Every lesson, animation, exercise answer and interview question works without an account, and SQL runs in the page.
+- **Tracking progress needs Google sign-in.** Ticking a check asks you to sign in first; the tick you made is saved as soon as you have. Progress, XP and streak live in your own account, so your phone and laptop show the same thing. Nobody else can see them.
+- A fork built without a Firebase project has no sign-in, and keeps progress in the browser instead.
 
 ## Run it locally
 

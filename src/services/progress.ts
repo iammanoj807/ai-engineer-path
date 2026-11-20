@@ -210,6 +210,68 @@ export const switchBackend = (next: Backend) => {
 
 const write = (name: DocName, patch: Patch) => backend.write(name, patch);
 
+// ============ SIGN-IN TO SAVE ============
+//
+// When the site has Google sign-in, anyone can read the lessons, but ticking a
+// check needs an account. A tick made while signed out is held, the page asks
+// the learner to sign in, and the held tick is saved once they have.
+
+let canSave: () => boolean = () => true;
+let pendingSave: (() => Promise<void>) | null = null;
+const signInNeededListeners = new Set<() => void>();
+
+/** account.ts sets this when sign-in exists: only a signed-in learner may save. */
+export const requireSignInToSave = (allowed: () => boolean) => {
+    canSave = allowed;
+};
+
+/** Called when a signed-out learner tries to tick something. */
+export const onSignInNeeded = (listener: () => void) => {
+    signInNeededListeners.add(listener);
+    return () => {
+        signInNeededListeners.delete(listener);
+    };
+};
+
+/** Resolves once a document has its first value from the current backend. */
+const whenLoaded = (name: DocName) =>
+    new Promise<void>(resolve => {
+        if (state[name] !== undefined) {
+            resolve();
+            return;
+        }
+        const holder: { stop?: () => void; fired: boolean } = { fired: false };
+        holder.stop = subscribe(name, () => {
+            holder.fired = true;
+            holder.stop?.();
+            resolve();
+        });
+        if (holder.fired) holder.stop();
+    });
+
+/** True when saving may go ahead now; otherwise keeps the action for after sign-in and asks for it. */
+const allowedOrAsk = (action: () => Promise<void>, docs: DocName[]): boolean => {
+    if (canSave()) return true;
+    pendingSave = async () => {
+        for (const name of docs) await whenLoaded(name);
+        await action();
+    };
+    signInNeededListeners.forEach(fn => fn());
+    return false;
+};
+
+/** After signing in: save the tick that asked for it. */
+export const runPendingSave = () => {
+    const action = pendingSave;
+    pendingSave = null;
+    if (action) action().catch(error => console.error('Could not save after sign-in:', error));
+};
+
+/** The learner chose not to sign in. */
+export const clearPendingSave = () => {
+    pendingSave = null;
+};
+
 /** Read-only access for the game layer (XP, streak, the path). */
 export const subscribeTo = subscribe;
 
@@ -237,7 +299,8 @@ const CHECKS_PER_TOPIC = 4;
  * Tick or untick one check. Counts towards today's goal when it is a tick, and
  * celebrates when it is the fourth check of a topic.
  */
-const saveCheck = async (course: Course, topicId: string, check: string, done: boolean) => {
+const saveCheck = async (course: Course, topicId: string, check: string, done: boolean): Promise<void> => {
+    if (!allowedOrAsk(() => saveCheck(course, topicId, check, done), [course, 'activity'])) return;
     const before = { ...(asObject((state[course] as { checks?: unknown } | undefined)?.checks)[topicId] as Record<string, boolean> | undefined ?? {}) };
     const passedBefore = Object.values(before).filter(Boolean).length;
     const after = { ...before, [check]: done };
@@ -285,7 +348,8 @@ export const subscribeToFoundations = (callback: (progress: FoundationsProgress)
 export const saveFoundationCheck = (topicId: string, check: FoundationCheckKey, done: boolean) =>
     saveCheck('foundations', topicId, check, done);
 
-export const saveFoundationBuild = async (buildId: string, done: boolean) => {
+export const saveFoundationBuild = async (buildId: string, done: boolean): Promise<void> => {
+    if (!allowedOrAsk(() => saveFoundationBuild(buildId, done), ['foundations', 'activity'])) return;
     const saving = write('foundations', { builds: { [buildId]: done } });
     if (done) void recordActivity();
     await saving;
@@ -314,11 +378,14 @@ export const subscribeToSqlQueries = (callback: (queries: SavedSqlQueries) => vo
 
 /** Save one run, and remove the given older ones, in a single write. */
 export const saveSqlQuery = async (id: string, query: SavedSqlQuery, removeIds: string[] = []) => {
+    // Running a query always works; signed out, it just isn't kept (and no prompt on every run).
+    if (!canSave()) return;
     const queries: Patch = { [id]: query as unknown as Patch };
     for (const old of removeIds) queries[old] = DELETE;
     await write('sql_queries', { queries });
 };
 
 export const deleteSqlQuery = async (id: string) => {
+    if (!canSave()) return;
     await write('sql_queries', { queries: { [id]: DELETE } });
 };

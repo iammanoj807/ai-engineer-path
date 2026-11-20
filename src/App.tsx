@@ -3,6 +3,7 @@ import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-d
 import { Box, CircularProgress, Link, Typography } from '@mui/material';
 import TopBar from './components/app/TopBar';
 import Celebration from './components/app/Celebration';
+import SignInNeeded from './components/app/SignInNeeded';
 import { courseByRoute, writeLastCourse } from './game/courses';
 
 // Each course carries every lesson, animation and answer, so each loads as its
@@ -55,6 +56,7 @@ const App = () => (
             </Box>
         </Box>
         <Celebration />
+        <SignInNeeded />
     </HashRouter>
 );
 

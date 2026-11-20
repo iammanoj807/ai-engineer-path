@@ -13,8 +13,6 @@ import { allTopicsOf, courseById, topicLink, unitOf, type CourseInfo, type PathT
 import { checksDocOf, useGameStats } from '../../game/useProgress';
 import { XP_PER_CHECK, XP_TOPIC_BONUS, checksPassedIn, readDailyGoal } from '../../game/xp';
 import { onCelebrate, onDayTick, type Celebration as CelebrationEvent } from '../../services/progress';
-import { signIn, useAccount } from '../../services/account';
-import GoogleIcon from '@mui/icons-material/Google';
 import { FLAME, XP_GOLD } from './colours';
 
 interface Shown {
@@ -38,7 +36,6 @@ const useWindowSize = () => {
 const Celebration = () => {
     const navigate = useNavigate();
     const { progress, streak } = useGameStats();
-    const account = useAccount();
     const { width, height } = useWindowSize();
     const [shown, setShown] = useState<Shown | null>(null);
     const [goalToast, setGoalToast] = useState(false);
@@ -121,18 +118,6 @@ const Celebration = () => {
                             </Box>
                         ) : (
                             <Typography sx={{ fontWeight: 700 }}>That was the last one: every {shown.course.title} topic is mastered.</Typography>
-                        )}
-
-                        {account.status === 'guest' && (
-                            <Box sx={{ mt: 2.5, p: 2, borderRadius: 3, textAlign: 'left', bgcolor: 'rgba(41,121,255,0.08)', border: '1px solid rgba(41,121,255,0.35)' }}>
-                                <Typography sx={{ fontWeight: 800 }}>Don't lose this progress</Typography>
-                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                                    Sign in with Google and we save it to your account, so you can see it on any device.
-                                </Typography>
-                                <Button variant="outlined" startIcon={<GoogleIcon />} onClick={() => void signIn()} sx={{ fontWeight: 800 }}>
-                                    Sign in with Google
-                                </Button>
-                            </Box>
                         )}
 
                         <Stack spacing={1} sx={{ mt: 3 }}>

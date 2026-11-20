@@ -2,10 +2,7 @@ import { Alert, Button } from '@mui/material';
 import GoogleIcon from '@mui/icons-material/Google';
 import { signIn, useAccount } from '../../services/account';
 
-/**
- * Tells a guest where their progress is kept, and invites them to sign in so
- * it is saved to their account and shows on every device.
- */
+/** Invites a signed-out learner to sign in, which is what saving progress needs. */
 const GuestNote = ({ compact = false }: { compact?: boolean }) => {
     const account = useAccount();
     if (account.status === 'off') {
@@ -31,8 +28,8 @@ const GuestNote = ({ compact = false }: { compact?: boolean }) => {
             }
         >
             {account.error ?? (compact
-                ? 'Sign in with Google to save your progress.'
-                : 'Want to see your progress on any device? Sign in with Google and we save it to your account. Until then it stays in this browser.')}
+                ? 'Sign in with Google to tick checks and save your progress.'
+                : 'Lessons are free to read. Sign in with Google to tick checks, keep your streak and see your progress on any device.')}
         </Alert>
     );
 };
