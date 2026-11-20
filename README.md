@@ -3,7 +3,7 @@
 Learn **ML foundations, SQL and system design** from scratch, one step at a time.
 Free, in the browser. Sign in with Google to track your progress.
 
-**Live site:** https://learn.hamropedia.com/
+**Live site:** https://learn.hamropedia.com
 
 ## What's inside
 
