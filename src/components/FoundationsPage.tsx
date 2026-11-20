@@ -4,8 +4,6 @@ import {
     Typography,
     Stack,
     Chip,
-    Tabs,
-    Tab,
     Accordion,
     AccordionSummary,
     AccordionDetails,
@@ -14,15 +12,12 @@ import {
     LinearProgress,
     Tooltip,
     Button,
-    TextField,
-    InputAdornment,
     ToggleButton,
     ToggleButtonGroup,
 } from '@mui/material';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import LaunchRoundedIcon from '@mui/icons-material/LaunchRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
-import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import {
     foundationPhases,
     allFoundationTopics,
@@ -52,12 +47,10 @@ import {
     isTopicConfident,
     confidentCount,
     buildsDone,
-    nextTopic,
-    topicsInProgress,
 } from '../utils/foundationsProgress';
 import type { FoundationsProgress } from '../services/progress';
 import { foundationsGlossary } from '../utils/foundationsGlossary';
-import { CONFIDENT, CYAN, TAP, px, readStudyMode, scrollToIdWhenSettled, stepId, useTextSize, useTextSizeChoice, writeStudyMode } from './learning/learning';
+import { CONFIDENT, CYAN, TAP, px, stepId, useStudyMode, useTextSize, useTextSizeChoice } from './learning/learning';
 import {
     LearningPageFrame,
     TextSizeControl,
@@ -80,9 +73,11 @@ import { GlossaryProvider, GlossaryTopic, NewWordsBox, ProseText } from './learn
 import { GlossaryDrawer } from './learning/GlossaryDrawer';
 import { MermaidDiagram } from './learning/MermaidDiagram';
 import { segmentSections } from './learning/glossaryContext';
-import { useOpenTopicFromLink } from './learning/useTopicLink';
+import PathLearn from './app/PathLearn';
+import { useCourseNav } from '../game/useCourseNav';
+import { courseById } from '../game/courses';
 
-const MAX_IN_PROGRESS = 8;
+const FOUNDATIONS_COURSE = courseById('foundations');
 
 type Mode = 'learn' | 'interview';
 const MODES: Mode[] = ['learn', 'interview'];
@@ -99,11 +94,6 @@ const WARNING = '#ffa726';
 
 const phaseIndexOf = (topicId: string) =>
     Math.max(0, foundationPhases.findIndex(phase => phase.topics.some(topic => topic.id === topicId)));
-
-const matchesQuery = (topic: FoundationTopic, query: string) => {
-    const q = query.trim().toLowerCase();
-    return !q || topic.name.toLowerCase().includes(q) || topic.definition.toLowerCase().includes(q);
-};
 
 const PhaseResource = ({ resource, accent }: { resource: FoundationResource; accent: string }) => (
     <Box sx={{ pl: 2, py: 1, borderLeft: '3px solid', borderColor: accent }}>
@@ -429,62 +419,40 @@ const TopicCard = ({
  */
 const FoundationsPage = () => {
     const { progress, toggleCheck, toggleBuild } = useFoundations();
-    const next = nextTopic(progress);
-    const inProgress = topicsInProgress(progress).filter(topic => topic.id !== next?.id);
 
     const { textSize, t, theme, changeTextSize } = useTextSizeChoice();
 
-    const [mode, setMode] = useState<Mode>(() => readStudyMode(MODE_KEY, MODES));
-    const changeMode = (value: Mode | null) => {
-        if (!value) return;
-        setMode(value);
-        writeStudyMode(MODE_KEY, value);
-    };
+    const [mode, changeMode] = useStudyMode(MODE_KEY, MODES);
 
-    // Until a tab is chosen, follow the next topic, so the page opens where the work is.
-    const [chosenTab, setChosenTab] = useState<number | null>(null);
-    const tab = chosenTab ?? (next ? phaseIndexOf(next.id) : 0);
-    const [expanded, setExpanded] = useState<string | null>(null);
     const [glossaryOpen, setGlossaryOpen] = useState(false);
 
-    // A search looks through every phase, since there is no "all phases" tab here.
-    const [query, setQuery] = useState('');
-    const searching = query.trim() !== '';
-    const matches = (topic: FoundationTopic) => matchesQuery(topic, query);
-    const matchCount = allFoundationTopics.filter(matches).length;
-
+    const { openTopic: showTopic } = useCourseNav(FOUNDATIONS_COURSE);
     const openTopic = (topicId: string) => {
-        const topic = allFoundationTopics.find(item => item.id === topicId);
-        // A search that hides the topic would leave nothing to open.
-        if (topic && !matches(topic)) setQuery('');
         changeMode('learn');
-        setChosenTab(phaseIndexOf(topicId));
-        setExpanded(topicId);
-        // Wait for the tab to render, and any card above to finish closing, before scrolling.
-        window.setTimeout(() => scrollToIdWhenSettled(`topic-${topicId}`), 120);
+        showTopic(topicId);
     };
-    useOpenTopicFromLink(openTopic, topicId => allFoundationTopics.some(topic => topic.id === topicId));
+
+    // One lesson on its own page, opened from the path.
+    const renderTopic = (topicId: string) => {
+        const phase = foundationPhases[phaseIndexOf(topicId)];
+        const index = phase.topics.findIndex(topic => topic.id === topicId);
+        const topic = phase.topics[index];
+        return (
+            <TopicCard
+                topic={topic}
+                number={index + 1}
+                accent={phase.accent}
+                progress={progress}
+                expanded
+                onExpand={() => {}}
+                onToggleCheck={check => { void toggleCheck(topic.id, check); }}
+            />
+        );
+    };
 
     const confident = confidentCount(progress, allFoundationTopics);
     const checksDone = allFoundationTopics.reduce((sum, topic) => sum + checksPassed(progress, topic.id), 0);
     const builds = buildsDone(progress, foundationPhases);
-    const phase = foundationPhases[tab];
-    const phaseConfident = confidentCount(progress, phase.topics);
-
-    const topicChip = (topic: FoundationTopic) => (
-        <Chip
-            key={topic.id}
-            label={topic.name}
-            onClick={() => openTopic(topic.id)}
-            sx={{
-                height: 'auto',
-                minHeight: TAP,
-                fontSize: px(t.small),
-                '& .MuiChip-label': { whiteSpace: 'normal', py: 0.75 },
-                bgcolor: 'rgba(255,255,255,0.06)',
-            }}
-        />
-    );
 
     return (
         <LearningPageFrame t={t} theme={theme}>
@@ -561,54 +529,10 @@ const FoundationsPage = () => {
                     ) : (
                         <>
 
-                        {/* ---- NEXT UP ---- the first topic in order that is not yet confident */}
-                        <Box sx={{ p: 2.5, borderRadius: 3, mb: 3, bgcolor: 'rgba(102,187,106,0.06)', border: '1px solid rgba(102,187,106,0.3)' }}>
-                            {next ? (
-                                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'flex-start', sm: 'center' }}>
-                                    <Box sx={{ flex: 1 }}>
-                                        <Typography variant="caption" sx={{ display: 'block', color: CONFIDENT, fontWeight: 800, letterSpacing: 1.2 }}>
-                                            NEXT UP · PHASE {phaseIndexOf(next.id)}
-                                        </Typography>
-                                        <Typography variant="h6" fontWeight="bold" color="text.primary">
-                                            {next.name}
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            {checksPassed(progress, next.id)} of 4 checks passed
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ color: 'text.primary', mt: 1 }}>
-                                            Open the topic and follow Steps 1 → 4.
-                                        </Typography>
-                                    </Box>
-                                    <Button
-                                        variant="contained"
-                                        onClick={() => openTopic(next.id)}
-                                        sx={{ minHeight: TAP, px: 2.5, textTransform: 'none', fontWeight: 700 }}
-                                    >
-                                        Open topic
-                                    </Button>
-                                </Stack>
-                            ) : (
-                                <Typography variant="body1" color="text.primary" fontWeight={700}>
-                                    Every topic is confident. Keep re-testing old ones every two weeks, and untick any you fail.
-                                </Typography>
-                            )}
-                            {inProgress.length > 0 && (
-                                <>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mt: 2.5, mb: 1 }}>
-                                        Also started, not finished:
-                                    </Typography>
-                                    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                                        {inProgress.slice(0, MAX_IN_PROGRESS).map(topicChip)}
-                                        {inProgress.length > MAX_IN_PROGRESS && (
-                                            <Typography variant="body2" color="text.secondary" sx={{ alignSelf: 'center' }}>
-                                                and {inProgress.length - MAX_IN_PROGRESS} more
-                                            </Typography>
-                                        )}
-                                    </Stack>
-                                </>
-                            )}
-                        </Box>
-
+                        <PathLearn
+                            course={FOUNDATIONS_COURSE}
+                            doc={progress}
+                            intro={<>
                         {/* ---- STATS ---- */}
                         <Stack direction="row" spacing={4} sx={{ mb: 3 }} flexWrap="wrap" useFlexGap>
                             {[
@@ -664,99 +588,12 @@ const FoundationsPage = () => {
                             </ReferencePanel>
                         </Box>
 
-                        {/* ---- SEARCH ---- */}
-                        <TextField
-                            type="search"
-                            value={query}
-                            onChange={event => setQuery(event.target.value)}
-                            placeholder="Search topics"
-                            sx={{ width: { xs: '100%', sm: 320 }, mb: 2, '& .MuiInputBase-root': { minHeight: TAP } }}
-                            slotProps={{
-                                htmlInput: { 'aria-label': 'Search topics by name or definition, in every phase' },
-                                input: {
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <SearchRoundedIcon sx={{ color: 'text.secondary' }} />
-                                        </InputAdornment>
-                                    ),
-                                },
-                            }}
-                        />
-
-                        {/* ---- PHASES ---- no tab is selected during a search, so any tab ends it */}
-                        <Tabs
-                            value={searching ? false : tab}
-                            onChange={(_, value) => { setChosenTab(value); setExpanded(null); setQuery(''); }}
-                            variant="scrollable"
-                            scrollButtons="auto"
-                            allowScrollButtonsMobile
-                            sx={{
-                                mb: 3,
-                                borderBottom: 1,
-                                borderColor: 'rgba(255,255,255,0.08)',
-                                '& .MuiTab-root': { textTransform: 'none', fontWeight: 700, fontSize: px(t.small), '&:focus': { outline: 'none' } },
-                            }}
-                        >
-                            {foundationPhases.map(p => (
-                                <Tab key={p.id} label={`${p.number} ${p.short} · ${confidentCount(progress, p.topics)}/${p.topics.length}`} />
-                            ))}
-                        </Tabs>
-
-                        {searching ? (
-                            <Box sx={{ pb: 6 }}>
-                                {matchCount > 0 ? (
-                                    <>
-                                        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
-                                            <Typography variant="body2" color="text.secondary">
-                                                {matchCount} {matchCount === 1 ? 'topic matches' : 'topics match'}, across every phase.
-                                            </Typography>
-                                            <Button onClick={() => setQuery('')} sx={{ minHeight: TAP, px: 1, textTransform: 'none', fontWeight: 700 }}>
-                                                Clear search
-                                            </Button>
-                                        </Stack>
-                                        {foundationPhases.map(p => {
-                                            if (!p.topics.some(matches)) return null;
-                                            return (
-                                                <Box key={p.id} sx={{ mb: 4 }}>
-                                                    <Typography variant="caption" sx={{ display: 'block', color: p.accent, fontWeight: 800, letterSpacing: 1.2 }}>
-                                                        PHASE {p.number}
-                                                    </Typography>
-                                                    <Typography variant="h5" fontWeight="bold" color="text.primary" sx={{ mt: 0.25, mb: 2 }}>
-                                                        {p.title}
-                                                    </Typography>
-                                                    <Stack spacing={1.25}>
-                                                        {/* Numbered by place in the phase, so a topic keeps its number. */}
-                                                        {p.topics.map((topic, index) =>
-                                                            matches(topic) && (
-                                                                <TopicCard
-                                                                    key={topic.id}
-                                                                    topic={topic}
-                                                                    number={index + 1}
-                                                                    accent={p.accent}
-                                                                    progress={progress}
-                                                                    expanded={expanded === topic.id}
-                                                                    onExpand={open => setExpanded(open ? topic.id : null)}
-                                                                    onToggleCheck={check => { void toggleCheck(topic.id, check); }}
-                                                                />
-                                                            )
-                                                        )}
-                                                    </Stack>
-                                                </Box>
-                                            );
-                                        })}
-                                    </>
-                                ) : (
-                                    <Box sx={{ p: 2.5, borderRadius: 2, border: '1px dashed rgba(255,255,255,0.15)' }}>
-                                        <Typography variant="body2" color="text.secondary">
-                                            No topics match "{query.trim()}".
-                                        </Typography>
-                                        <Button onClick={() => setQuery('')} sx={{ minHeight: TAP, mt: 1, px: 1, textTransform: 'none', fontWeight: 700 }}>
-                                            Clear search
-                                        </Button>
-                                    </Box>
-                                )}
-                            </Box>
-                        ) : (
+                            </>}
+                            renderTopic={renderTopic}
+                            renderUnit={unitId => {
+                                const phase = foundationPhases.find(p => p.id === unitId) ?? foundationPhases[0];
+                                const phaseConfident = confidentCount(progress, phase.topics);
+                                return (
                             <Box sx={{ pb: 6 }}>
                                 {/* Title and goal */}
                                 <Typography variant="caption" sx={{ color: phase.accent, fontWeight: 800, letterSpacing: 1.2 }}>
@@ -786,23 +623,6 @@ const FoundationsPage = () => {
                                         <strong style={{ color: phase.accent }}>The big picture.</strong> {phase.bigPicture}
                                     </Typography>
                                 </Box>
-
-                                {/* Topics */}
-                                <SectionLabel>TOPICS, IN ORDER</SectionLabel>
-                                <Stack spacing={1.25}>
-                                    {phase.topics.map((topic, index) => (
-                                        <TopicCard
-                                            key={topic.id}
-                                            topic={topic}
-                                            number={index + 1}
-                                            accent={phase.accent}
-                                            progress={progress}
-                                            expanded={expanded === topic.id}
-                                            onExpand={open => setExpanded(open ? topic.id : null)}
-                                            onToggleCheck={check => { void toggleCheck(topic.id, check); }}
-                                        />
-                                    ))}
-                                </Stack>
 
                                 {/* Mini-builds */}
                                 <SectionLabel>MINI-BUILDS</SectionLabel>
@@ -885,7 +705,9 @@ const FoundationsPage = () => {
                                     ))}
                                 </Stack>
                             </Box>
-                        )}
+                                );
+                            }}
+                        />
                         </>
                     )}
                 </Box>

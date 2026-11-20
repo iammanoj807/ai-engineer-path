@@ -1,4 +1,5 @@
 import { createContext, useContext, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { createTheme, type Theme } from '@mui/material';
 
 // Shared by the study pages (ML Foundations, System Design): colours, sizes
@@ -138,6 +139,30 @@ export const writeStudyMode = (key: string, mode: string) => {
     } catch {
         // Not remembered, but the switch still works for this visit.
     }
+};
+
+/**
+ * A study page's mode (Learn, Revise, Interview). `?mode=` in the address wins,
+ * so a link such as /#/sql?mode=interview opens that mode even when the page is
+ * already showing; otherwise the mode last chosen on this device. Choosing a
+ * mode drops `?mode=` from the address, so the choice sticks.
+ */
+export const useStudyMode = <M extends string>(key: string, modes: readonly M[]) => {
+    const [params, setParams] = useSearchParams();
+    const [stored, setStored] = useState<M>(() => readStudyMode(key, modes));
+    const asked = params.get('mode');
+    const mode = asked && (modes as readonly string[]).includes(asked) ? (asked as M) : stored;
+    const changeMode = (value: M | null) => {
+        if (!value) return;
+        setStored(value);
+        writeStudyMode(key, value);
+        if (asked !== null) {
+            const next = new URLSearchParams(params);
+            next.delete('mode');
+            setParams(next, { replace: true });
+        }
+    };
+    return [mode, changeMode] as const;
 };
 
 export const scrollToId = (id: string) =>

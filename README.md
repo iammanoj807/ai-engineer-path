@@ -17,7 +17,7 @@ Each course also has an **Interview questions** mode: full spoken answers, the t
 
 ## How it keeps you going
 
-- **A path, not a list.** Each course is drawn as a winding path of units and topics. The next topic is highlighted with a START button, so there is always one obvious next step.
+- **A path, not a list.** Each course is drawn as a winding path of units and topics, on the home page and on each course page. The next topic is highlighted with a START button, so there is always one obvious next step. Tap a topic to open its lesson on its own page, with **Back to path** and **Next**; each unit has a **Guide** with its big picture and extra practice.
 - **Mastery, not reading.** A topic is mastered when you pass all four checks without notes.
 - **XP, streak and a daily goal.** 10 XP per check, 20 more for mastering a topic. Pick a daily goal (1, 3, 5 or 8 checks), and keep your streak by ticking at least one check a day.
 - **What's next, and why it matters.** Mastering a topic shows the next one and the problem it solves, with one button to go straight there.
@@ -25,7 +25,7 @@ Each course also has an **Interview questions** mode: full spoken answers, the t
 ## Where progress is saved
 
 - **Without signing in:** in your browser (localStorage). Clearing your browser data clears it.
-- **With Google sign-in** (when the site is built with a Firebase project, see below): in your own account, so your phone and laptop show the same progress. Anything you ticked before signing in moves into the account.
+- **With Google sign-in:** in your own account, so your phone and laptop show the same progress. Anything you ticked before signing in moves into the account.
 
 Every learner starts from zero. Nobody else can see your progress.
 
@@ -48,9 +48,9 @@ npm run build      # regenerates the path index, type-checks, builds to dist/
 
 The site uses hash routes (`/#/sql`), because GitHub Pages has no fallback for unknown paths. `vite.config.ts` sets `base: '/ai-engineer-path/'`; change it if the repo is renamed.
 
-## Optional: Google sign-in
+## Google sign-in
 
-Without this, the site still works fully and keeps progress in each browser.
+The live site uses the Firebase project `ai-engineer-path-807` (Auth with Google, and Firestore with `firestore.rules`). Its web config is set as repository variables, so the deploy workflow builds it in. To set up your own project instead (for a fork), follow these steps. Without them the site still works fully and keeps progress in each browser.
 
 1. Create a project at https://console.firebase.google.com (the free Spark plan is enough).
 2. **Build → Authentication → Get started → Sign-in method → Google → Enable.**
