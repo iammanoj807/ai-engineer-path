@@ -87,6 +87,7 @@ import { AnswerQuery, ExampleBlock, ExampleOutcome, FloatingSqlBox, MONO, Practi
 import { roomForQuickBox } from './sql/quickBoxLayout';
 import { SqlQueriesContext, SqlTopicContext } from './sql/sqlContext';
 import PathLearn from './app/PathLearn';
+import { useTracksProgress } from '../services/account';
 import { useCourseNav } from '../game/useCourseNav';
 import { courseById } from '../game/courses';
 
@@ -762,6 +763,7 @@ const CheatSheet = () => {
  */
 const SqlPage = () => {
     const { progress, toggleCheck } = useSql();
+    const tracking = useTracksProgress();
     const savedQueries = useSqlQueries();
     const savedCount = Object.keys(savedQueries.queries).length;
     const next = nextTopic(progress);
@@ -915,6 +917,7 @@ const SqlPage = () => {
                                     doc={progress}
                                     intro={<>
                             {/* ---- STATS ---- */}
+                            {tracking && (
                             <Stack direction="row" spacing={4} sx={{ mb: 3 }} flexWrap="wrap" useFlexGap>
                                 {[
                                     { value: confident, total: allSqlTopics.length, label: 'TOPICS CONFIDENT', color: CONFIDENT },
@@ -932,6 +935,7 @@ const SqlPage = () => {
                                     </Box>
                                 ))}
                             </Stack>
+                            )}
 
                             {/* ---- REFERENCE ---- how to study, the practice tables, the cheat sheet */}
                             <Stack spacing={1.5} sx={{ mb: 3 }}>
@@ -988,6 +992,7 @@ const SqlPage = () => {
                                         {phase.goal}
                                     </Typography>
 
+                                    {tracking && (
                                     <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 2.5, maxWidth: 760 }}>
                                         <LinearProgress
                                             variant="determinate"
@@ -998,6 +1003,7 @@ const SqlPage = () => {
                                             {phaseConfident} of {phase.topics.length} confident
                                         </Typography>
                                     </Stack>
+                                    )}
 
                                     {/* Big picture */}
                                     <Box sx={{ mt: 3, p: 2, borderRadius: 2, maxWidth: 760, bgcolor: `${phase.accent}14`, borderLeft: '3px solid', borderColor: phase.accent }}>
@@ -1013,6 +1019,7 @@ const SqlPage = () => {
                             ) : (
                                 <>
                             {/* ---- STATS ---- */}
+                            {tracking && (
                             <Stack direction="row" spacing={4} sx={{ mb: 3 }} flexWrap="wrap" useFlexGap>
                                 {[
                                     { value: confident, total: allSqlTopics.length, label: 'TOPICS CONFIDENT', color: CONFIDENT },
@@ -1030,6 +1037,7 @@ const SqlPage = () => {
                                     </Box>
                                 ))}
                             </Stack>
+                            )}
 
                             {/* ---- REFERENCE ---- how to study, the practice tables, the cheat sheet */}
                             <Stack spacing={1.5} sx={{ mb: 3 }}>

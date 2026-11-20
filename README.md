@@ -17,7 +17,7 @@ Each course also has an **Interview questions** mode: full spoken answers, the t
 
 ## How it keeps you going
 
-- **A path, not a list.** Each course is drawn as a winding path of units and topics, on the home page and on each course page. The next topic is highlighted with a START button, so there is always one obvious next step. Tap a topic to open its lesson on its own page, with **Back to path** and **Next**; each unit has a **Guide** with its big picture and extra practice.
+- **A path, not a list.** Each course is drawn as a winding path of units and topics, on the home page and on each course page. The next topic is highlighted with a START button, so there is always one obvious next step. Only the unit you are working on is open, so there is little to scroll; tap another unit to open it. Tap a topic to open its lesson on its own page, with **Back to path** and **Next**; each unit has a **Guide** with its big picture and extra practice.
 - **Mastery, not reading.** A topic is mastered when you pass all four checks without notes.
 - **XP, streak and a daily goal.** 10 XP per check, 20 more for mastering a topic. Pick a daily goal (1, 3, 5 or 8 checks), and keep your streak by ticking at least one check a day.
 - **What's next, and why it matters.** Mastering a topic shows the next one and the problem it solves, with one button to go straight there.
@@ -25,7 +25,7 @@ Each course also has an **Interview questions** mode: full spoken answers, the t
 ## Where progress is saved
 
 - **Reading is open to everyone.** Every lesson, animation, exercise answer and interview question works without an account, and SQL runs in the page.
-- **Tracking progress needs Google sign-in.** Ticking a check asks you to sign in first; the tick you made is saved as soon as you have. Progress, XP and streak live in your own account, so your phone and laptop show the same thing. Nobody else can see them.
+- **Tracking progress needs Google sign-in.** Streak, XP, daily goal and progress counts appear once you sign in. Ticking a check asks you to sign in first; the tick you made is saved as soon as you have. Progress, XP and streak live in your own account, so your phone and laptop show the same thing. Nobody else can see them.
 - A fork built without a Firebase project has no sign-in, and keeps progress in the browser instead.
 
 ## Run it locally

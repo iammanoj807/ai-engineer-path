@@ -1,15 +1,20 @@
 // A course drawn as a winding path: each unit (phase) is a banner, each topic a
 // node to tap, with the next one marked START. Used on the home page and on
 // each course page.
+//
+// Kept short so it needs little scrolling: a topic's name sits beside its node,
+// and only the unit you are working on is open. Tap any other unit to open it.
 
 import { useEffect, useState } from 'react';
-import { Box, Button, ButtonBase, Popover, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, Button, ButtonBase, Collapse, Popover, Stack, Tooltip, Typography } from '@mui/material';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
+import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import type { CourseInfo, PathTopic, PathUnit } from '../../game/courses';
 import { checksPassedIn, type ChecksDoc } from '../../game/xp';
+import { useTracksProgress } from '../../services/account';
 import { MASTERED, XP_GOLD } from './colours';
 
 export const CARD = { p: { xs: 2, sm: 2.5 }, borderRadius: 3, bgcolor: 'background.paper', border: '1px solid rgba(255,255,255,0.08)' } as const;
@@ -32,7 +37,10 @@ const WIND = [0, 1, 1.6, 1, 0, -1, -1.6, -1];
 
 type NodeState = 'mastered' | 'current' | 'started' | 'upcoming';
 
-const NODE = 76;
+const NODE = 58;
+/** A row is the node plus its name; narrower on a phone. */
+const ROW = { xs: 180, sm: 220 };
+const STEP = { xs: 26, sm: 56 };
 
 const ProgressRing = ({ passed, colour }: { passed: number; colour: string }) => {
     const size = NODE + 10;
@@ -40,14 +48,14 @@ const ProgressRing = ({ passed, colour }: { passed: number; colour: string }) =>
     const c = 2 * Math.PI * r;
     return (
         <Box component="svg" viewBox={`0 0 ${size} ${size}`} sx={{ position: 'absolute', inset: -5, width: size, height: size, transform: 'rotate(-90deg)', pointerEvents: 'none' }}>
-            <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={6} />
+            <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={5} />
             <circle
                 cx={size / 2}
                 cy={size / 2}
                 r={r}
                 fill="none"
                 stroke={colour}
-                strokeWidth={6}
+                strokeWidth={5}
                 strokeLinecap="round"
                 strokeDasharray={`${(passed / 4) * c} ${c}`}
             />
@@ -77,45 +85,54 @@ const TopicNode = ({
         upcoming: '#252b36',
     }[state];
     const icon = {
-        mastered: <CheckRoundedIcon sx={{ fontSize: 38, color: '#0B0E14' }} />,
-        current: <PlayArrowRoundedIcon sx={{ fontSize: 42, color: '#0B0E14' }} />,
-        started: <Typography sx={{ fontWeight: 800, color: 'text.primary' }}>{passed}/4</Typography>,
-        upcoming: <MenuBookRoundedIcon sx={{ fontSize: 30, color: '#6b7380' }} />,
+        mastered: <CheckRoundedIcon sx={{ fontSize: 30, color: '#0B0E14' }} />,
+        current: <PlayArrowRoundedIcon sx={{ fontSize: 34, color: '#0B0E14' }} />,
+        started: <Typography sx={{ fontWeight: 800, fontSize: '0.9rem', color: 'text.primary' }}>{passed}/4</Typography>,
+        upcoming: <MenuBookRoundedIcon sx={{ fontSize: 24, color: '#6b7380' }} />,
     }[state];
+    // The name sits on the side away from the bend, so it never runs off the edge.
+    const labelLeft = offset > 0;
 
     return (
         <Stack
             id={`node-${topic.id}`}
+            direction={labelLeft ? 'row-reverse' : 'row'}
             alignItems="center"
+            spacing={1.5}
             sx={{
-                width: 200,
+                width: { xs: ROW.xs, sm: ROW.sm },
                 // Stack resets its children's margins, so centre with alignSelf, not mx: auto.
                 alignSelf: 'center',
                 scrollMarginTop: 160,
-                transform: { xs: `translateX(${offset * 38}px)`, sm: `translateX(${offset * 70}px)` },
+                // The node, not the whole row, follows the winding line.
+                transform: {
+                    xs: `translateX(${offset * STEP.xs + (labelLeft ? -1 : 1) * (ROW.xs / 2 - NODE / 2)}px)`,
+                    sm: `translateX(${offset * STEP.sm + (labelLeft ? -1 : 1) * (ROW.sm / 2 - NODE / 2)}px)`,
+                },
             }}
         >
-            <Box sx={{ position: 'relative', width: NODE, height: NODE, mt: state === 'current' ? 5 : 0 }}>
+            <Box sx={{ position: 'relative', width: NODE, height: NODE, flexShrink: 0 }}>
                 {state === 'current' && (
                     <Box
                         sx={{
                             position: 'absolute',
                             bottom: '100%',
                             left: '50%',
-                            mb: 1.25,
-                            px: 1.5,
-                            py: 0.5,
+                            mb: 1,
+                            px: 1.25,
+                            py: 0.25,
                             borderRadius: 2,
                             bgcolor: '#fff',
                             color: '#0B0E14',
                             fontWeight: 800,
-                            fontSize: '0.8rem',
+                            fontSize: '0.72rem',
                             letterSpacing: 1,
                             whiteSpace: 'nowrap',
+                            zIndex: 1,
                             animation: 'aepBob 1.6s ease-in-out infinite',
                             '@keyframes aepBob': {
                                 '0%, 100%': { transform: 'translate(-50%, 0)' },
-                                '50%': { transform: 'translate(-50%, -5px)' },
+                                '50%': { transform: 'translate(-50%, -4px)' },
                             },
                             '&::after': {
                                 content: '""',
@@ -123,7 +140,7 @@ const TopicNode = ({
                                 top: '100%',
                                 left: '50%',
                                 transform: 'translateX(-50%)',
-                                border: '6px solid transparent',
+                                border: '5px solid transparent',
                                 borderTopColor: '#fff',
                             },
                         }}
@@ -140,16 +157,16 @@ const TopicNode = ({
                         height: NODE,
                         borderRadius: '50%',
                         bgcolor: fill,
-                        boxShadow: state === 'upcoming' ? '0 6px 0 #161a22' : `0 6px 0 ${accent}88`,
+                        boxShadow: state === 'upcoming' ? '0 5px 0 #161a22' : `0 5px 0 ${accent}88`,
                         transition: 'transform 0.12s',
                         '&:hover': { transform: 'translateY(-2px)' },
                         '&:active': { transform: 'translateY(3px)', boxShadow: 'none' },
                         ...(state === 'current' && {
                             animation: 'aepPulse 2s ease-out infinite',
                             '@keyframes aepPulse': {
-                                '0%': { boxShadow: `0 6px 0 ${accent}88, 0 0 0 0 ${accent}88` },
-                                '70%': { boxShadow: `0 6px 0 ${accent}88, 0 0 0 16px ${accent}00` },
-                                '100%': { boxShadow: `0 6px 0 ${accent}88, 0 0 0 0 ${accent}00` },
+                                '0%': { boxShadow: `0 5px 0 ${accent}88, 0 0 0 0 ${accent}88` },
+                                '70%': { boxShadow: `0 5px 0 ${accent}88, 0 0 0 14px ${accent}00` },
+                                '100%': { boxShadow: `0 5px 0 ${accent}88, 0 0 0 0 ${accent}00` },
                             },
                         }),
                     }}
@@ -158,10 +175,16 @@ const TopicNode = ({
                 </ButtonBase>
             </Box>
             <Typography
-                variant="body2"
+                component="button"
+                onClick={(event: React.MouseEvent<HTMLElement>) => onOpen(event.currentTarget)}
+                tabIndex={-1}
                 sx={{
-                    mt: 1.5,
-                    textAlign: 'center',
+                    all: 'unset',
+                    cursor: 'pointer',
+                    flex: 1,
+                    minWidth: 0,
+                    textAlign: labelLeft ? 'right' : 'left',
+                    fontSize: '0.875rem',
                     fontWeight: state === 'current' ? 800 : 600,
                     color: state === 'upcoming' ? 'text.secondary' : 'text.primary',
                     display: '-webkit-box',
@@ -177,56 +200,81 @@ const TopicNode = ({
     );
 };
 
-const UnitBanner = ({ unit, mastered, onOpenUnit }: { unit: PathUnit; mastered: number; onOpenUnit?: () => void }) => (
-    <Box sx={{ ...CARD, borderLeft: `6px solid ${unit.accent}`, bgcolor: `${unit.accent}12`, mb: 4 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
-            <Box sx={{ minWidth: 0 }}>
-                <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: 1.2, color: unit.accent }}>
-                    UNIT {unit.number}
-                </Typography>
-                <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.25 }}>
-                    {unit.title}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                    {unit.goal}
-                </Typography>
-            </Box>
-            <Stack alignItems="flex-end" spacing={1} sx={{ flexShrink: 0 }}>
-                <Typography sx={{ fontWeight: 800, whiteSpace: 'nowrap', color: mastered === unit.topics.length ? MASTERED : 'text.secondary' }}>
-                    {mastered}/{unit.topics.length}
-                </Typography>
-                {onOpenUnit && (
-                    <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<MenuBookRoundedIcon />}
-                        onClick={onOpenUnit}
-                        sx={{ borderColor: `${unit.accent}88`, color: 'text.primary', whiteSpace: 'nowrap', minHeight: 36 }}
-                    >
-                        Guide
-                    </Button>
-                )}
-            </Stack>
+const UnitBanner = ({
+    unit,
+    mastered,
+    open,
+    tracking,
+    onToggle,
+    onOpenUnit,
+}: {
+    unit: PathUnit;
+    mastered: number;
+    open: boolean;
+    tracking: boolean;
+    onToggle: () => void;
+    onOpenUnit?: () => void;
+}) => (
+    <Box sx={{ ...CARD, p: 0, borderLeft: `6px solid ${unit.accent}`, bgcolor: `${unit.accent}12`, overflow: 'hidden' }}>
+        <Stack direction="row" alignItems="center" spacing={1}>
+            <ButtonBase
+                onClick={onToggle}
+                aria-expanded={open}
+                sx={{ flex: 1, minWidth: 0, display: 'block', textAlign: 'left', p: { xs: 1.75, sm: 2 } }}
+            >
+                <Stack direction="row" alignItems="center" spacing={1.5}>
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                        <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: 1.2, color: unit.accent }}>
+                            UNIT {unit.number} · {unit.topics.length} TOPICS
+                        </Typography>
+                        <Typography sx={{ fontWeight: 800, lineHeight: 1.25, fontSize: '1.05rem' }}>
+                            {unit.title}
+                        </Typography>
+                        {open && (
+                            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                {unit.goal}
+                            </Typography>
+                        )}
+                    </Box>
+                    {tracking && (
+                        <Typography sx={{ fontWeight: 800, whiteSpace: 'nowrap', color: mastered === unit.topics.length ? MASTERED : 'text.secondary' }}>
+                            {mastered}/{unit.topics.length}
+                        </Typography>
+                    )}
+                    <ExpandMoreRoundedIcon sx={{ color: 'text.secondary', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                </Stack>
+            </ButtonBase>
+            {onOpenUnit && (
+                <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<MenuBookRoundedIcon />}
+                    onClick={onOpenUnit}
+                    sx={{ borderColor: `${unit.accent}88`, color: 'text.primary', whiteSpace: 'nowrap', minHeight: 36, mr: { xs: 1.25, sm: 2 }, flexShrink: 0 }}
+                >
+                    Guide
+                </Button>
+            )}
         </Stack>
     </Box>
 );
 
 const UnitTrophy = ({ complete, unit, onOpenUnit }: { complete: boolean; unit: PathUnit; onOpenUnit?: () => void }) => (
-    <Stack alignItems="center" sx={{ my: 1 }}>
-        <Tooltip title={complete ? `Unit ${unit.number} complete` : `Master every topic in unit ${unit.number} to earn this`}>
+    <Stack alignItems="center">
+        <Tooltip title={complete ? `Unit ${unit.number} complete` : `Unit ${unit.number} review: its guide and practice questions`}>
             <ButtonBase
                 onClick={onOpenUnit}
                 disabled={!onOpenUnit}
                 aria-label={`Unit ${unit.number} review`}
                 sx={{
-                    width: 64,
-                    height: 64,
+                    width: 52,
+                    height: 52,
                     borderRadius: '50%',
                     bgcolor: complete ? `${XP_GOLD}26` : 'rgba(255,255,255,0.04)',
                     border: `3px solid ${complete ? XP_GOLD : 'rgba(255,255,255,0.1)'}`,
                 }}
             >
-                <EmojiEventsRoundedIcon sx={{ fontSize: 34, color: complete ? XP_GOLD : '#4a5160' }} />
+                <EmojiEventsRoundedIcon sx={{ fontSize: 28, color: complete ? XP_GOLD : '#4a5160' }} />
             </ButtonBase>
         </Tooltip>
     </Stack>
@@ -236,6 +284,7 @@ const TopicPopover = ({
     course,
     topic,
     passed,
+    tracking,
     anchor,
     onClose,
     onStart,
@@ -243,6 +292,7 @@ const TopicPopover = ({
     course: CourseInfo;
     topic: PathTopic;
     passed: number;
+    tracking: boolean;
     anchor: HTMLElement;
     onClose: () => void;
     onStart: () => void;
@@ -259,7 +309,7 @@ const TopicPopover = ({
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             {topic.definition}
         </Typography>
-        <CheckDots passed={passed} names={course.checkNames} colour={course.colour} />
+        {tracking && <CheckDots passed={passed} names={course.checkNames} colour={course.colour} />}
         <Button fullWidth variant="contained" onClick={onStart} sx={{ mt: 2, fontWeight: 800, minHeight: 44 }}>
             {passed >= 4 ? 'Review lesson' : passed > 0 ? 'Continue lesson' : 'Start lesson'}
         </Button>
@@ -281,60 +331,81 @@ const CoursePath = ({
     /** Scrolled into view when the path first shows, e.g. the lesson just left. */
     focusTopicId?: string;
 }) => {
-    const [open, setOpen] = useState<{ topic: PathTopic; el: HTMLElement } | null>(null);
+    const tracking = useTracksProgress();
+    const [popover, setPopover] = useState<{ topic: PathTopic; el: HTMLElement } | null>(null);
     const topics = course.units.flatMap(unit => unit.topics);
     const firstOpen = topics.find(topic => checksPassedIn(doc, topic.id) < 4)?.id;
     const order = new Map(topics.map((topic, i) => [topic.id, i]));
+    const unitIdOf = (topicId?: string) => course.units.find(unit => unit.topics.some(topic => topic.id === topicId))?.id;
+
+    // Open: the unit you are working on, and the one holding the lesson you just left.
+    // Other units fold to their banner until tapped.
+    const [toggled, setToggled] = useState<Record<string, boolean>>({});
+    const openByDefault = new Set([unitIdOf(firstOpen) ?? course.units[0]?.id, unitIdOf(focusTopicId)]);
+    const isOpen = (unitId: string) => toggled[unitId] ?? openByDefault.has(unitId);
 
     useEffect(() => {
         if (!focusTopicId) return;
-        const node = document.getElementById(`node-${focusTopicId}`);
-        node?.scrollIntoView({ block: 'center' });
+        // After the unit has opened.
+        const timer = window.setTimeout(() => document.getElementById(`node-${focusTopicId}`)?.scrollIntoView({ block: 'center' }), 50);
+        return () => window.clearTimeout(timer);
     }, [focusTopicId]);
 
     return (
-        <Box>
+        <Stack spacing={2}>
             {course.units.map(unit => {
                 const mastered = unit.topics.filter(topic => checksPassedIn(doc, topic.id) >= 4).length;
                 const openUnit = onOpenUnit ? () => onOpenUnit(unit.id) : undefined;
+                const open = isOpen(unit.id);
                 return (
-                    <Box key={unit.id} sx={{ mb: 6 }}>
-                        <UnitBanner unit={unit} mastered={mastered} onOpenUnit={openUnit} />
-                        <Stack spacing={3.5} sx={{ overflow: 'hidden', py: 1 }}>
-                            {unit.topics.map(topic => {
-                                const passed = checksPassedIn(doc, topic.id);
-                                const state: NodeState = passed >= 4 ? 'mastered' : topic.id === firstOpen ? 'current' : passed > 0 ? 'started' : 'upcoming';
-                                return (
-                                    <TopicNode
-                                        key={topic.id}
-                                        topic={topic}
-                                        state={state}
-                                        passed={passed}
-                                        accent={course.colour}
-                                        offset={WIND[(order.get(topic.id) ?? 0) % WIND.length]}
-                                        onOpen={el => setOpen({ topic, el })}
-                                    />
-                                );
-                            })}
-                            <UnitTrophy complete={mastered === unit.topics.length} unit={unit} onOpenUnit={openUnit} />
-                        </Stack>
+                    <Box key={unit.id}>
+                        <UnitBanner
+                            unit={unit}
+                            mastered={mastered}
+                            open={open}
+                            tracking={tracking}
+                            onToggle={() => setToggled(t => ({ ...t, [unit.id]: !open }))}
+                            onOpenUnit={openUnit}
+                        />
+                        <Collapse in={open} timeout={200} unmountOnExit>
+                            <Stack spacing={2.25} sx={{ overflow: 'hidden', pt: 4, pb: 2 }}>
+                                {unit.topics.map(topic => {
+                                    const passed = checksPassedIn(doc, topic.id);
+                                    const state: NodeState = passed >= 4 ? 'mastered' : topic.id === firstOpen ? 'current' : passed > 0 ? 'started' : 'upcoming';
+                                    return (
+                                        <Box key={topic.id} sx={{ display: 'flex', justifyContent: 'center', pt: state === 'current' ? 2.5 : 0 }}>
+                                            <TopicNode
+                                                topic={topic}
+                                                state={state}
+                                                passed={passed}
+                                                accent={course.colour}
+                                                offset={WIND[(order.get(topic.id) ?? 0) % WIND.length]}
+                                                onOpen={el => setPopover({ topic, el })}
+                                            />
+                                        </Box>
+                                    );
+                                })}
+                                <UnitTrophy complete={tracking && mastered === unit.topics.length} unit={unit} onOpenUnit={openUnit} />
+                            </Stack>
+                        </Collapse>
                     </Box>
                 );
             })}
-            {open && (
+            {popover && (
                 <TopicPopover
                     course={course}
-                    topic={open.topic}
-                    passed={checksPassedIn(doc, open.topic.id)}
-                    anchor={open.el}
-                    onClose={() => setOpen(null)}
+                    topic={popover.topic}
+                    passed={checksPassedIn(doc, popover.topic.id)}
+                    tracking={tracking}
+                    anchor={popover.el}
+                    onClose={() => setPopover(null)}
                     onStart={() => {
-                        setOpen(null);
-                        onOpenTopic(open.topic.id);
+                        setPopover(null);
+                        onOpenTopic(popover.topic.id);
                     }}
                 />
             )}
-        </Box>
+        </Stack>
     );
 };
 

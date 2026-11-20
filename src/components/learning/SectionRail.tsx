@@ -24,7 +24,9 @@ const OFFSET = 80;
 /** Fewer sections than this, and there is nothing worth navigating. */
 const MIN_SECTIONS = 3;
 const RAIL_WIDTH = 22;
-const TICK_WIDTH: Record<Level, number> = { topic: 16, step: 12, part: 7 };
+/** Every tick is the same size; the one you are reading is marked by colour. */
+const TICK_WIDTH = 12;
+const TICK_HEIGHT = 3;
 const IDLE = 'rgba(255,255,255,0.3)';
 
 const findSections = (): Section[] =>
@@ -190,11 +192,11 @@ export const SectionRail = () => {
                             >
                                 <Box
                                     sx={{
-                                        height: current ? 3 : 2,
-                                        width: TICK_WIDTH[section.level] + (current ? 4 : 0),
+                                        height: TICK_HEIGHT,
+                                        width: TICK_WIDTH,
                                         borderRadius: 1,
                                         bgcolor: current ? CYAN : IDLE,
-                                        transition: 'width 150ms, background-color 150ms',
+                                        transition: 'background-color 150ms',
                                     }}
                                 />
                             </ButtonBase>

@@ -23,7 +23,7 @@ import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import GoogleIcon from '@mui/icons-material/Google';
 import { COURSES } from '../../game/courses';
 import { useGameStats } from '../../game/useProgress';
-import { signIn, signOut, useAccount } from '../../services/account';
+import { signIn, signOut, useAccount, useTracksProgress } from '../../services/account';
 import { FLAME, XP_GOLD } from './colours';
 
 const NAV = [{ to: '/', label: 'Path' }, ...COURSES.map(course => ({ to: course.route, label: course.title }))];
@@ -94,6 +94,7 @@ const TopBar = () => {
     const { pathname } = useLocation();
     const navigate = useNavigate();
     const { xp, streak, today } = useGameStats();
+    const tracking = useTracksProgress();
     const [menu, setMenu] = useState<HTMLElement | null>(null);
 
     return (
@@ -164,15 +165,20 @@ const TopBar = () => {
                 <Box sx={{ flex: { xs: 1, md: 0 } }} />
 
                 <Stack direction="row" spacing={2} alignItems="center">
-                    <Stat
-                        icon={<LocalFireDepartmentRoundedIcon sx={{ color: streak > 0 && today > 0 ? FLAME : 'text.disabled' }} />}
-                        value={streak}
-                        colour={streak > 0 && today > 0 ? FLAME : '#90a4ae'}
-                        label={today > 0 ? 'Day streak' : 'Day streak (tick a check today to keep it)'}
-                    />
-                    <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-                        <Stat icon={<BoltRoundedIcon sx={{ color: XP_GOLD }} />} value={xp} colour={XP_GOLD} label="Total XP" />
-                    </Box>
+                    {/* Streak and XP are progress, so they show once signed in. */}
+                    {tracking && (
+                        <Stat
+                            icon={<LocalFireDepartmentRoundedIcon sx={{ color: streak > 0 && today > 0 ? FLAME : 'text.disabled' }} />}
+                            value={streak}
+                            colour={streak > 0 && today > 0 ? FLAME : '#90a4ae'}
+                            label={today > 0 ? 'Day streak' : 'Day streak (tick a check today to keep it)'}
+                        />
+                    )}
+                    {tracking && (
+                        <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+                            <Stat icon={<BoltRoundedIcon sx={{ color: XP_GOLD }} />} value={xp} colour={XP_GOLD} label="Total XP" />
+                        </Box>
+                    )}
                     <AccountButton />
                 </Stack>
             </Toolbar>

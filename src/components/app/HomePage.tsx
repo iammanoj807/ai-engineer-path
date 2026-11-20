@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+    Alert,
     Box,
     Button,
     ButtonBase,
@@ -27,6 +28,9 @@ import type { Course } from '../../services/progress';
 import { FLAME, MASTERED, XP_GOLD } from './colours';
 import CoursePath, { CARD, CheckDots } from './CoursePath';
 import GuestNote from './GuestNote';
+import { signIn, useAccount, useTracksProgress } from '../../services/account';
+import GoogleIcon from '@mui/icons-material/Google';
+import LockRoundedIcon from '@mui/icons-material/LockRounded';
 
 // ============ TODAY ============
 
@@ -116,9 +120,42 @@ const DailyGoalCard = ({ today, streak, activity }: { today: number; streak: num
     );
 };
 
+// ============ SIGNED OUT ============
+
+/** In place of the daily goal: progress (streak, goal, XP, ticks) starts at sign-in. */
+const TrackProgressCard = () => {
+    const account = useAccount();
+    return (
+        <Box sx={{ ...CARD, flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                <LockRoundedIcon sx={{ fontSize: 18, color: 'primary.main' }} />
+                <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: 1.2, color: 'text.secondary' }}>
+                    TRACK YOUR PROGRESS
+                </Typography>
+            </Stack>
+            <Typography sx={{ fontWeight: 700, mb: 0.5 }}>
+                Sign in to tick off topics, keep a streak, set a daily goal and earn XP.
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Reading every lesson is free without an account.
+            </Typography>
+            {account.error && <Alert severity="warning" sx={{ mb: 2 }}>{account.error}</Alert>}
+            <Button
+                variant="contained"
+                startIcon={<GoogleIcon />}
+                onClick={() => void signIn()}
+                disabled={account.status === 'loading'}
+                sx={{ fontWeight: 800, minHeight: 44, alignSelf: 'flex-start' }}
+            >
+                Sign in with Google
+            </Button>
+        </Box>
+    );
+};
+
 // ============ CONTINUE ============
 
-const ContinueCard = ({ stats }: { stats: CourseStats }) => {
+const ContinueCard = ({ stats, tracking }: { stats: CourseStats; tracking: boolean }) => {
     const navigate = useNavigate();
     const { course, next, nextPassed } = stats;
     const unit = next ? unitOf(course, next.id) : undefined;
@@ -162,7 +199,7 @@ const ContinueCard = ({ stats }: { stats: CourseStats }) => {
                 >
                     {nextPassed > 0 ? 'Continue' : 'Start'}
                 </Button>
-                <CheckDots passed={nextPassed} names={course.checkNames} colour={course.colour} />
+                {tracking && <CheckDots passed={nextPassed} names={course.checkNames} colour={course.colour} />}
             </Stack>
         </Box>
     );
@@ -170,7 +207,7 @@ const ContinueCard = ({ stats }: { stats: CourseStats }) => {
 
 // ============ COURSE PICKER ============
 
-const CoursePicker = ({ stats, selected, onSelect }: { stats: CourseStats[]; selected: Course; onSelect: (id: Course) => void }) => (
+const CoursePicker = ({ stats, selected, tracking, onSelect }: { stats: CourseStats[]; selected: Course; tracking: boolean; onSelect: (id: Course) => void }) => (
     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mb: 4 }}>
         {stats.map(({ course, mastered, total }) => {
             const active = course.id === selected;
@@ -192,16 +229,18 @@ const CoursePicker = ({ stats, selected, onSelect }: { stats: CourseStats[]; sel
                 >
                     <Stack direction="row" justifyContent="space-between" alignItems="baseline">
                         <Typography sx={{ fontWeight: 800, color: active ? course.colour : 'text.primary' }}>{course.title}</Typography>
-                        <Typography variant="body2" color="text.secondary">{mastered}/{total}</Typography>
+                        <Typography variant="body2" color="text.secondary">{tracking ? `${mastered}/${total}` : `${total} topics`}</Typography>
                     </Stack>
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 1.25, minHeight: { sm: 40 } }}>
                         {course.tagline}
                     </Typography>
-                    <LinearProgress
-                        variant="determinate"
-                        value={total ? (mastered / total) * 100 : 0}
-                        sx={{ height: 8, borderRadius: 4, bgcolor: 'rgba(255,255,255,0.08)', '& .MuiLinearProgress-bar': { bgcolor: course.colour, borderRadius: 4 } }}
-                    />
+                    {tracking && (
+                        <LinearProgress
+                            variant="determinate"
+                            value={total ? (mastered / total) * 100 : 0}
+                            sx={{ height: 8, borderRadius: 4, bgcolor: 'rgba(255,255,255,0.08)', '& .MuiLinearProgress-bar': { bgcolor: course.colour, borderRadius: 4 } }}
+                        />
+                    )}
                 </ButtonBase>
             );
         })}
@@ -213,6 +252,7 @@ const CoursePicker = ({ stats, selected, onSelect }: { stats: CourseStats[]; sel
 const HomePage = () => {
     const navigate = useNavigate();
     const { progress, stats, today, streak } = useGameStats();
+    const tracking = useTracksProgress();
     const [selected, setSelected] = useState<Course>(readLastCourse);
     const course = courseById(selected);
     const selectedStats = stats.find(s => s.course.id === selected)!;
@@ -224,16 +264,16 @@ const HomePage = () => {
 
     return (
         <Box sx={{ width: '100%', maxWidth: 940, mx: 'auto' }}>
-            <GuestNote />
+            {tracking && <GuestNote />}
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 4 }}>
-                <ContinueCard stats={selectedStats} />
-                <DailyGoalCard today={today} streak={streak} activity={progress.activity} />
+                <ContinueCard stats={selectedStats} tracking={tracking} />
+                {tracking ? <DailyGoalCard today={today} streak={streak} activity={progress.activity} /> : <TrackProgressCard />}
             </Stack>
 
             <Typography variant="caption" sx={{ display: 'block', fontWeight: 800, letterSpacing: 1.2, color: 'text.secondary', mb: 1.5 }}>
                 YOUR COURSES
             </Typography>
-            <CoursePicker stats={stats} selected={selected} onSelect={select} />
+            <CoursePicker stats={stats} selected={selected} tracking={tracking} onSelect={select} />
 
             <Box sx={{ maxWidth: 560, mx: 'auto' }}>
                 <CoursePath

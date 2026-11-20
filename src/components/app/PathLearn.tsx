@@ -13,6 +13,7 @@ import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import { allTopicsOf, unitOf, type CourseInfo } from '../../game/courses';
 import { checksPassedIn, type ChecksDoc } from '../../game/xp';
 import { useCourseNav } from '../../game/useCourseNav';
+import { useTracksProgress } from '../../services/account';
 import CoursePath from './CoursePath';
 import GuestNote from './GuestNote';
 
@@ -34,6 +35,7 @@ const PathLearn = ({
     const location = useLocation();
     const { openTopic, openUnit, backToPath } = useCourseNav(course);
     const [query, setQuery] = useState('');
+    const tracking = useTracksProgress();
 
     const topics = allTopicsOf(course);
     const topicId = params.get('topic');
@@ -132,9 +134,11 @@ const PathLearn = ({
                         >
                             <Stack direction="row" justifyContent="space-between" spacing={2}>
                                 <Typography fontWeight={800}>{topic.name}</Typography>
-                                <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
-                                    {checksPassedIn(doc, topic.id)}/4
-                                </Typography>
+                                {tracking && (
+                                    <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
+                                        {checksPassedIn(doc, topic.id)}/4
+                                    </Typography>
+                                )}
                             </Stack>
                             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>{topic.definition}</Typography>
                         </ButtonBase>

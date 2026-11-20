@@ -98,3 +98,13 @@ export const useAccount = (): AccountState =>
         },
         () => current,
     );
+
+/**
+ * Whether to show progress (streak, XP, ticks, counts). Signed-out visitors
+ * only read; their progress starts when they sign in. A build with no sign-in
+ * at all ('off') shows the progress kept in the browser.
+ */
+export const useTracksProgress = (): boolean => {
+    const { status } = useAccount();
+    return status === 'signed-in' || status === 'off';
+};

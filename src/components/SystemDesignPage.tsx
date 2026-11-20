@@ -84,6 +84,7 @@ import { useTopicAnimation } from './learning/anim/useTopicAnimation';
 import { useLoaded } from './learning/useLoaded';
 import { segmentSections, type Prose } from './learning/glossaryContext';
 import PathLearn from './app/PathLearn';
+import { useTracksProgress } from '../services/account';
 import { useCourseNav } from '../game/useCourseNav';
 import { courseById } from '../game/courses';
 
@@ -635,6 +636,7 @@ const ReviseCard = ({ topic, accent, onOpen }: { topic: SDTopic; accent: string;
  */
 const SystemDesignPage = () => {
     const { progress, toggleCheck } = useSystemDesign();
+    const tracking = useTracksProgress();
     const next = nextTopic(progress);
     const { textSize, t, theme, changeTextSize } = useTextSizeChoice();
 
@@ -782,6 +784,7 @@ const SystemDesignPage = () => {
                                 doc={progress}
                                 intro={<>
                         {/* ---- STATS ---- */}
+                        {tracking && (
                         <Stack direction="row" spacing={4} sx={{ mb: 3 }} flexWrap="wrap" useFlexGap>
                             {[
                                 { value: confident, total: allSystemDesignTopics.length, label: 'TOPICS CONFIDENT', color: CONFIDENT },
@@ -799,6 +802,7 @@ const SystemDesignPage = () => {
                                 </Box>
                             ))}
                         </Stack>
+                        )}
 
                         {/* ---- HOW TO STUDY ---- said once, and closed once read */}
                         <Box sx={{ mb: 3 }}>
@@ -846,6 +850,7 @@ const SystemDesignPage = () => {
                                     {phase.goal}
                                 </Typography>
 
+                                {tracking && (
                                 <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 2.5, maxWidth: 760 }}>
                                     <LinearProgress
                                         variant="determinate"
@@ -856,6 +861,7 @@ const SystemDesignPage = () => {
                                         {phaseConfident} of {phase.topics.length} confident
                                     </Typography>
                                 </Stack>
+                                )}
 
                                 {/* Big picture */}
                                 <Box sx={{ mt: 3, p: 2, borderRadius: 2, maxWidth: 760, bgcolor: `${phase.accent}14`, borderLeft: '3px solid', borderColor: phase.accent }}>
@@ -871,6 +877,7 @@ const SystemDesignPage = () => {
                         ) : (
                             <>
                         {/* ---- STATS ---- */}
+                        {tracking && (
                         <Stack direction="row" spacing={4} sx={{ mb: 3 }} flexWrap="wrap" useFlexGap>
                             {[
                                 { value: confident, total: allSystemDesignTopics.length, label: 'TOPICS CONFIDENT', color: CONFIDENT },
@@ -888,6 +895,7 @@ const SystemDesignPage = () => {
                                 </Box>
                             ))}
                         </Stack>
+                        )}
 
                         {/* ---- HOW TO STUDY ---- said once, and closed once read */}
                         <Box sx={{ mb: 3 }}>

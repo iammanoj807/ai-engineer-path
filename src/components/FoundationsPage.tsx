@@ -74,6 +74,7 @@ import { GlossaryDrawer } from './learning/GlossaryDrawer';
 import { MermaidDiagram } from './learning/MermaidDiagram';
 import { segmentSections } from './learning/glossaryContext';
 import PathLearn from './app/PathLearn';
+import { useTracksProgress } from '../services/account';
 import { useCourseNav } from '../game/useCourseNav';
 import { courseById } from '../game/courses';
 
@@ -419,6 +420,7 @@ const TopicCard = ({
  */
 const FoundationsPage = () => {
     const { progress, toggleCheck, toggleBuild } = useFoundations();
+    const tracking = useTracksProgress();
 
     const { textSize, t, theme, changeTextSize } = useTextSizeChoice();
 
@@ -534,6 +536,7 @@ const FoundationsPage = () => {
                             doc={progress}
                             intro={<>
                         {/* ---- STATS ---- */}
+                        {tracking && (
                         <Stack direction="row" spacing={4} sx={{ mb: 3 }} flexWrap="wrap" useFlexGap>
                             {[
                                 { value: confident, total: allFoundationTopics.length, label: 'TOPICS CONFIDENT', color: CONFIDENT },
@@ -551,6 +554,7 @@ const FoundationsPage = () => {
                                 </Box>
                             ))}
                         </Stack>
+                        )}
 
                         {/* ---- HOW TO LEARN A TOPIC ---- said once, and closed once read */}
                         <Box sx={{ mb: 3 }}>
@@ -606,6 +610,7 @@ const FoundationsPage = () => {
                                     {phase.goal}
                                 </Typography>
 
+                                {tracking && (
                                 <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 2.5, maxWidth: 760 }}>
                                     <LinearProgress
                                         variant="determinate"
@@ -616,6 +621,7 @@ const FoundationsPage = () => {
                                         {phaseConfident} of {phase.topics.length} confident
                                     </Typography>
                                 </Stack>
+                                )}
 
                                 {/* Big picture */}
                                 <Box sx={{ mt: 3, p: 2, borderRadius: 2, maxWidth: 760, bgcolor: `${phase.accent}14`, borderLeft: '3px solid', borderColor: phase.accent }}>
