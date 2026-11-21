@@ -545,10 +545,6 @@ export const subscribeToSql = (callback: (progress: SqlProgress) => void) =>
 export const saveSqlCheck = (topicId: string, check: SqlCheckKey, done: boolean) =>
     saveCheck('sql', topicId, check, done);
 
-/** Tick the checks a practice session proved, in one save. */
-export const saveSqlChecks = (topicId: string, checks: SqlCheckKey[]) =>
-    saveChecks('sql', topicId, Object.fromEntries(checks.map(check => [check, true])));
-
 // ============ SQL SAVED QUERIES ============
 
 export const subscribeToSqlQueries = (callback: (queries: SavedSqlQueries) => void) =>

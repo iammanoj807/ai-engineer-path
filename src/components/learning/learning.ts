@@ -183,30 +183,6 @@ export const useStudyMode = <M extends string>(key: string, modes: readonly M[])
 export const scrollToId = (id: string) =>
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-/** Frames an element must stay put before it counts as settled. */
-const SETTLED_FRAMES = 6;
-const MAX_SETTLE_MS = 1500;
-
-/**
- * Scroll to an element once it stops moving. A long card closing above it
- * moves it up the page for most of a second, so scrolling straight away
- * would overshoot.
- */
-export const scrollToIdWhenSettled = (id: string) => {
-    const started = performance.now();
-    let last = Number.NaN;
-    let still = 0;
-    const check = () => {
-        const element = document.getElementById(id);
-        const top = element ? element.getBoundingClientRect().top + window.scrollY : Number.NaN;
-        still = top === last ? still + 1 : 0;
-        last = top;
-        if (still >= SETTLED_FRAMES || performance.now() - started > MAX_SETTLE_MS) scrollToId(id);
-        else window.requestAnimationFrame(check);
-    };
-    window.requestAnimationFrame(check);
-};
-
 export const stepId = (topicId: string, step: number) => `topic-${topicId}-step-${step}`;
 
 /** "STEP 3 · PRACTISE, IN THIS ORDER" → "Step 3 · Practise, in this order", for the section rail. */
