@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, type ReactNode } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { Box, CircularProgress, Link, Typography } from '@mui/material';
+import CoffeeRoundedIcon from '@mui/icons-material/CoffeeRounded';
 import TopBar from './components/app/TopBar';
 import Celebration from './components/app/Celebration';
 import SignInNeeded from './components/app/SignInNeeded';
@@ -15,6 +16,9 @@ const HomePage = lazy(() => import('./components/app/HomePage'));
 const FoundationsPage = lazy(() => import('./components/FoundationsPage'));
 const SqlPage = lazy(() => import('./components/SqlPage'));
 const SystemDesignPage = lazy(() => import('./components/SystemDesignPage'));
+
+/** The same Buy Me a Coffee page that hamropedia.com links to. */
+const SUPPORT_URL = 'https://buymeacoffee.com/manojthapa';
 
 /** While a course loads: the page's own text from the build if there is one, else a spinner. */
 const PageLoading = () => {
@@ -68,13 +72,39 @@ const App = () => (
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </Box>
-            <Box component="footer" sx={{ py: 3, px: 2, textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <Box
+                component="footer"
+                sx={{ py: 3, px: 2, display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 1.5, borderTop: '1px solid rgba(255,255,255,0.06)' }}
+            >
                 <Typography variant="body2" color="text.secondary">
                     Free to use.{' '}
                     <Link href="https://github.com/iammanoj807/ai-engineer-path" target="_blank" rel="noreferrer" color="inherit">
                         Source on GitHub
                     </Link>
                 </Typography>
+                {/* A plain link: nothing from Buy Me a Coffee loads on this site. */}
+                <Link
+                    href={SUPPORT_URL}
+                    target="_blank"
+                    rel="noopener"
+                    underline="none"
+                    sx={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 0.75,
+                        px: 1.5,
+                        py: 0.5,
+                        borderRadius: 999,
+                        bgcolor: '#ffdd00',
+                        color: '#1a1a1a',
+                        fontSize: '0.85rem',
+                        fontWeight: 700,
+                        '&:hover': { bgcolor: '#ffe733', color: '#000' },
+                    }}
+                >
+                    <CoffeeRoundedIcon sx={{ fontSize: 18 }} />
+                    Buy me a coffee
+                </Link>
             </Box>
         </Box>
         <Celebration />
