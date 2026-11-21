@@ -35,3 +35,6 @@ dist-ssr
 
 # The voice model's Python environment (scripts/voice)
 .voice
+
+# Firebase service account keys: never commit (they go in the FIREBASE_SERVICE_ACCOUNT secret)
+*firebase-adminsdk*.json
