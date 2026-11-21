@@ -135,7 +135,7 @@ Train your small GPT with no position information at all. Compare the generated 
 <details>
 <summary>Show one good answer</summary>
 
-Training the same GPT with no position information gives a clearly worse validation loss than with learned positions, and the text gets worse: words fall apart into letter salad more often, and line structure (names followed by a colon, lines of similar length) is weaker.
+Training the same GPT with no position information gives a clearly worse validation loss than with learned positions, and the text gets worse: words break into random letters more often, and line structure (names followed by a colon, lines of similar length) is weaker.
 
 It is not a total failure, and that is interesting. A model with a causal mask can partly work out position by itself: the first token can only attend to itself, the second to two tokens, and so on, so the "amount of context" leaks some order information. But it is a weak, indirect signal, and an encoder with no mask would get none at all. That is why every practical transformer adds positions.
 

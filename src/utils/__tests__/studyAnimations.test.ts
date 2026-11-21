@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { allSqlTopics } from '../../data/sql';
-import { sqlAnimationChecks, sqlAnimations, sqlNoAnimation } from '../../data/sqlAnimations';
+import { sqlAnimationChecks, sqlAnimations, sqlNoAnimation, sqlSolutionAnimations, sqlSolutionChecks } from '../../data/sqlAnimations';
 import { systemDesignPhases } from '../../data/systemDesign';
 import { systemDesignAnimations, systemDesignForbidden, systemDesignNoAnimation } from '../../data/systemDesignAnimations';
 import type { AnimationSpec } from '../../components/learning/anim/scene';
@@ -35,6 +35,30 @@ describe('SQL animations', () => {
                 if (!expected) wrong.push(`${id}: example ${example} has no result`);
                 else if (JSON.stringify(rows) !== JSON.stringify(expected)) wrong.push(`${id} example ${example}: animation ${JSON.stringify(rows)} vs lesson ${JSON.stringify(expected)}`);
             }
+        }
+        expect(wrong).toEqual([]);
+    });
+});
+
+describe('SQL solution walk-throughs', () => {
+    const problems = allSqlTopics.filter(t => t.kind === 'problem');
+
+    it('has one for every interview problem, and for nothing else', () => {
+        expect(Object.keys(sqlSolutionAnimations).sort()).toEqual(problems.map(t => t.id).sort());
+        expect(Object.keys(sqlSolutionChecks).sort()).toEqual(problems.map(t => t.id).sort());
+    });
+
+    it('builds every frame from valid shapes that fit the picture', () => {
+        expect(animationProblems(sqlSolutionAnimations, { textFit: true })).toEqual([]);
+    });
+
+    it('ends on the same rows as the lesson\'s solution', () => {
+        const wrong: string[] = [];
+        for (const topic of problems) {
+            const expected = topic.solution.result?.rows;
+            const rows = sqlSolutionChecks[topic.id]?.();
+            if (!expected) wrong.push(`${topic.id}: the solution has no result`);
+            else if (JSON.stringify(rows) !== JSON.stringify(expected)) wrong.push(`${topic.id}: walk-through ${JSON.stringify(rows)} vs lesson ${JSON.stringify(expected)}`);
         }
         expect(wrong).toEqual([]);
     });

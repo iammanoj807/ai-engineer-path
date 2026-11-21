@@ -10,7 +10,7 @@
 
 ## The problem it solves
 
-Many deep-learning operations are memory-bound chains of small steps (normalise, activate, scale). Run as separate PyTorch operations, each one reads and writes the full tensor in slow memory. A fused kernel can be several times faster. Triton makes writing such kernels possible without learning CUDA C++, and it is what torch.compile uses under the hood.
+Many deep-learning operations are memory-bound chains of small steps (normalise, activate, scale). Run as separate PyTorch operations, each one reads and writes the full tensor in slow memory. A fused kernel can be several times faster. Triton makes writing such kernels possible without learning CUDA C++, and it is what torch.compile uses internally.
 
 ## The idea
 
@@ -181,7 +181,7 @@ Remove the mask from your vector-add kernel and use a size that is not a multipl
 
 Without the mask, with a size that isn't a multiple of BLOCK (say 1,000,001 with BLOCK 1,024), the last program reads and writes past the end of the arrays. The result: garbage in memory just past your tensor, a crash with "an illegal memory access was encountered" (which then poisons the whole CUDA context, so later calls fail too), or, worst of all, nothing visible at all because the memory happened to be accessible, and something else is silently corrupted. That is why every load and store at the edge of the data must be masked.
 
-BLOCK size: very small (say 16 or 32) means a huge number of programs, each doing almost nothing: the scheduling overhead and the poor use of wide memory transactions make it much slower. Very large (say 65,536) means few programs, each needing a lot of registers, so fewer run at once and some of the GPU sits idle; very large blocks can also fail to compile. The sweet spot for a simple element-wise kernel is usually around 1,024 to 4,096; Triton's autotuner can try several and pick the best.
+BLOCK size: very small (say 16 or 32) means a huge number of programs, each doing almost nothing: the scheduling overhead and the poor use of wide memory transactions make it much slower. Very large (say 65,536) means few programs, each needing a lot of registers, so fewer run at once and some of the GPU sits idle; very large blocks can also fail to compile. The best size for a simple element-wise kernel is usually around 1,024 to 4,096; Triton's autotuner can try several and pick the best.
 
 ```python
 # Needs an NVIDIA GPU and: pip install triton

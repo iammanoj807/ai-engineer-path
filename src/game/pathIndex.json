@@ -36,7 +36,7 @@
      "id": "f0-t3",
      "name": "Plotting results with Matplotlib",
      "definition": "Matplotlib is the standard Python library for drawing charts; in ML you use it mostly to see loss curves, data and predictions.",
-     "problem": "Training prints thousands of numbers, and you can't spot a trend by reading them. Is the loss still falling? Did it blow up at step 400? Is the model overfitting? A picture answers those questions in a second. Many training bugs are found by looking at a plot, not by reading the code."
+     "problem": "Training prints thousands of numbers, and you can't spot a trend by reading them. Is the loss still falling? Did it jump to a huge value at step 400? Is the model overfitting? A picture answers those questions in a second. Many training bugs are found by looking at a plot, not by reading the code."
     },
     {
      "id": "f0-t4",
@@ -212,7 +212,7 @@
      "id": "f2-t8",
      "name": "Feature scaling and encoding",
      "definition": "Feature scaling puts numeric features on similar ranges, and encoding turns categories into numbers, so that models treat every feature fairly and don't invent orders that aren't there.",
-     "problem": "Models only see numbers. A feature measured in thousands drowns out one measured in single digits, in any distance or gradient. And coding \"red, green, blue\" as 1, 2, 3 tells the model that green sits between the other two. Getting this wrong quietly ruins k-NN, SVMs, regularised models and neural networks, while trees barely notice."
+     "problem": "Models only see numbers. A feature measured in thousands outweighs one measured in single digits, in any distance or gradient. And coding \"red, green, blue\" as 1, 2, 3 tells the model that green sits between the other two. Getting this wrong quietly ruins k-NN, SVMs, regularised models and neural networks, while trees barely notice."
     },
     {
      "id": "f2-t9",
@@ -512,7 +512,7 @@
      "id": "f5-t12",
      "name": "Context engineering: long context and memory",
      "definition": "Context engineering is choosing exactly what goes into the model's context window on each call: instructions, examples, retrieved documents, history and tool results. The aim is to give it what it needs and nothing that distracts it.",
-     "problem": "Context windows are large but not free: every token adds cost and delay, and models use information buried in the middle of very long inputs less reliably. Long chats and agents keep piling up history and tool output. Deciding what to keep, summarise or drop is now one of the main skills in building reliable LLM apps."
+     "problem": "Context windows are large but not free: every token adds cost and delay, and models use information buried in the middle of very long inputs less reliably. Long chats and agents keep adding history and tool output. Deciding what to keep, summarise or drop is now one of the main skills in building reliable LLM apps."
     },
     {
      "id": "f5-t4",
@@ -624,7 +624,7 @@
      "id": "f6-t7",
      "name": "GPU kernels with Triton",
      "definition": "A GPU kernel is a function that runs as many parallel instances on the GPU, and Triton lets you write kernels in Python-like code. The biggest win is usually fusion: doing several steps in one kernel, so that the data leaves slow memory only once.",
-     "problem": "Many deep-learning operations are memory-bound chains of small steps (normalise, activate, scale). Run as separate PyTorch operations, each one reads and writes the full tensor in slow memory. A fused kernel can be several times faster. Triton makes writing such kernels possible without learning CUDA C++, and it is what torch.compile uses under the hood."
+     "problem": "Many deep-learning operations are memory-bound chains of small steps (normalise, activate, scale). Run as separate PyTorch operations, each one reads and writes the full tensor in slow memory. A fused kernel can be several times faster. Triton makes writing such kernels possible without learning CUDA C++, and it is what torch.compile uses internally."
     },
     {
      "id": "f6-t8",
@@ -1232,7 +1232,7 @@
      "id": "sd2-t1",
      "name": "Scalability: vertical vs horizontal",
      "definition": "Scalability is a system's ability to handle more load by adding resources.",
-     "problem": "A system that works for 100 users can fall over at 100,000. You need a way to add capacity without rewriting everything."
+     "problem": "A system that works for 100 users can fail at 100,000. You need a way to add capacity without rewriting everything."
     },
     {
      "id": "sd2-t2",
@@ -1332,7 +1332,7 @@
      "id": "sd3-t7",
      "name": "Object storage (S3) for files and media",
      "definition": "Object storage keeps files ('objects') such as images, videos and backups as a key pointing to bytes plus metadata, in a cheap, very durable, almost unlimited store like Amazon S3.",
-     "problem": "Photos, videos, backups and documents are big and numerous. Storing them in a database bloats it, slows backups and costs a lot; storing them on one server's disk breaks scaling."
+     "problem": "Photos, videos, backups and documents are big and numerous. Storing them in a database makes it huge, slows backups and costs a lot; storing them on one server's disk breaks scaling."
     },
     {
      "id": "sd3-t8",

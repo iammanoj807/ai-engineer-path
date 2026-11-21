@@ -22,7 +22,7 @@ The rows come from the table named after FROM, and every row of that table is us
 
 Ordering a set menu but saying "just the starter and the dessert, please". FROM is the menu you are ordering from; SELECT is the courses you want on your plate, in the order you name them.
 
-**Where the analogy breaks.** A waiter can only bring what is on the menu. SELECT can also bring things that don't exist in the table, because it can calculate new values from the columns on the fly.
+**Where the analogy breaks.** A waiter can only bring what is on the menu. SELECT can also bring things that don't exist in the table, because it can calculate new values from the columns as it runs.
 
 ## Syntax
 

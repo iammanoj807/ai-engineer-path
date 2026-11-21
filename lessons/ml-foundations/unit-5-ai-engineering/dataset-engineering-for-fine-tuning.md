@@ -22,7 +22,7 @@ When you fine-tune, the dataset is the product. Dataset engineering means decidi
 2. Collect candidates: real historical data, human-written examples, and synthetic examples from a stronger model.
 3. Remove exact and near duplicates.
 4. Filter for quality with rules, a model-based grader and human review of a sample. Drop wrong, rude, outdated or off-policy examples.
-5. Balance across topics and difficulty, so common cases don't drown out rare ones.
+5. Balance across topics and difficulty, so rare cases are not lost among the common ones.
 6. Format every example in the model's chat template, consistently.
 7. Hold back a test set the model never trains on, and check that no test example leaks into training.
 

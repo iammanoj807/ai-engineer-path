@@ -37,7 +37,7 @@ xychart-beta
   line [11, 7, 5, 4.5, 5, 6, 8, 11, 15]
 ```
 
-*Training error (the line that keeps falling) always improves with complexity. Validation error falls, then rises again: the bottom of that U is the sweet spot; to the right is overfitting.*
+*Training error (the line that keeps falling) always improves with complexity. Validation error falls, then rises again: the bottom of that U is the best point; to the right is overfitting.*
 
 ## Analogy
 

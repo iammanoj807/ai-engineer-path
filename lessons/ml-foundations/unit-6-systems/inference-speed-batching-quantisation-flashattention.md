@@ -18,7 +18,7 @@ Batching serves many requests together to use the GPU fully. Quantisation stores
 
 ## How it works, step by step
 
-1. Batching: one pass over the weights serves many users' next tokens at once, so the cost of reading the weights is shared. Continuous batching adds and removes requests on the fly.
+1. Batching: one pass over the weights serves many users' next tokens at once, so the cost of reading the weights is shared. Continuous batching adds and removes requests while the batch is running.
 2. Quantisation: store weights as 8-bit or 4-bit integers plus a scale factor, instead of 16-bit floats.
 3. Each weight snaps to its nearest allowed level. Per-channel or per-group scales keep errors small; an outlier weight in a group stretches the scale and hurts everyone else in it.
 4. Smaller weights mean less memory and fewer bytes per token: a 70B model needs about 140 GB in bf16, 70 GB in int8 and 35 GB in 4-bit.

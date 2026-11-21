@@ -302,6 +302,8 @@ Maths, machine learning, deep learning and LLMs, from scratch. **8 units · 101 
 
 From your first SELECT to window functions and interview problems. **9 units · 61 lessons** · [Open the course →](https://learn.hamropedia.com/sql/)
 
+Every example runs in the page on one small practice database. Each interview problem keeps its solution hidden until you have tried it; when you open it, a step-by-step walk-through shows the solution working on the real rows.
+
 | Unit | What you will learn | Lessons |
 |---|---|:-:|
 | [0 · Start here: databases, tables and SQL](https://learn.hamropedia.com/sql/unit/start-here/) | Know what a database is, what a table, a row and a key are, and the six practice tables you will use in every lesson. | 4 |

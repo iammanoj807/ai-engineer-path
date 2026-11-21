@@ -172,7 +172,7 @@ Prune 50%, 80% and 95% of the weights by magnitude, with and without retraining.
 <details>
 <summary>Show one good answer</summary>
 
-Magnitude pruning sets the smallest weights to zero. Without retraining, accuracy holds at 50% sparsity, drops somewhat at 80%, and falls apart at 95%. With a short retraining after pruning (keeping the pruned weights at zero), the network recovers most of the accuracy even at 80%, and a good part of it at 95%: the remaining weights learn to compensate. Plotted, the "no retraining" curve falls off a cliff well before the "with retraining" curve does.
+Magnitude pruning sets the smallest weights to zero. Without retraining, accuracy holds at 50% sparsity, drops somewhat at 80%, and drops sharply at 95%. With a short retraining after pruning (keeping the pruned weights at zero), the network recovers most of the accuracy even at 80%, and a good part of it at 95%: the remaining weights learn to compensate. Plotted, the "no retraining" curve falls off a cliff well before the "with retraining" curve does.
 
 Is the pruned model faster? Not as it stands. The weights are zeros stored in an ordinary dense matrix, and the hardware multiplies zeros just as fast as any other number, so the time is the same. Real speed-ups need either structured pruning (remove whole neurons, heads or channels, so the matrices get smaller), hardware-supported patterns like 2:4 sparsity on recent NVIDIA GPUs, or sparse kernels that only win at very high sparsity. The run below shows the dense timing is unchanged.
 

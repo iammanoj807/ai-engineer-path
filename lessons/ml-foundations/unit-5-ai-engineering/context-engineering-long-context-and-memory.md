@@ -10,7 +10,7 @@
 
 ## The problem it solves
 
-Context windows are large but not free: every token adds cost and delay, and models use information buried in the middle of very long inputs less reliably. Long chats and agents keep piling up history and tool output. Deciding what to keep, summarise or drop is now one of the main skills in building reliable LLM apps.
+Context windows are large but not free: every token adds cost and delay, and models use information buried in the middle of very long inputs less reliably. Long chats and agents keep adding history and tool output. Deciding what to keep, summarise or drop is now one of the main skills in building reliable LLM apps.
 
 ## The idea
 
@@ -66,7 +66,7 @@ assert count_tokens(context) < TOKEN_BUDGET
 - Information in the middle of long contexts is used less reliably ("lost in the middle").
 - Summaries plus retrieval scale better than whole histories.
 - Every token is billed and adds latency.
-- Agents need context management most, because tool results pile up fast.
+- Agents need context management most, because tool results add up fast.
 
 ## Common mistakes
 

@@ -64,7 +64,7 @@ Bank balance: strong consistency (CP). Likes on a post: eventual consistency (AP
 
 ## Common mistakes
 
-- Calling a system 'CA'. With replicas, partitions can't be wished away.
+- Calling a system 'CA'. With replicas, partitions can't be avoided.
 - Treating CAP as one choice for the whole system, instead of a choice per type of data.
 - Confusing CAP's consistency with ACID's consistency.
 

@@ -10,7 +10,7 @@
 
 ## The problem it solves
 
-Training prints thousands of numbers, and you can't spot a trend by reading them. Is the loss still falling? Did it blow up at step 400? Is the model overfitting? A picture answers those questions in a second. Many training bugs are found by looking at a plot, not by reading the code.
+Training prints thousands of numbers, and you can't spot a trend by reading them. Is the loss still falling? Did it jump to a huge value at step 400? Is the model overfitting? A picture answers those questions in a second. Many training bugs are found by looking at a plot, not by reading the code.
 
 ## The idea
 

@@ -108,7 +108,7 @@ export const foundationPhase2: FoundationPhase = {
             mistakes: [
                 'Using it when the relationship is strongly curved, without adding features.',
                 'Reading a weight as a cause. It only says how the prediction moves, with the other features held still.',
-                'Duplicated or near-duplicate features: XᵀX becomes nearly singular and the weights blow up.',
+                'Duplicated or near-duplicate features: XᵀX becomes nearly singular and the weights become huge.',
                 'Forgetting the bias column, which forces the line through the origin.',
             ],
             myths: [
@@ -331,7 +331,7 @@ export const foundationPhase2: FoundationPhase = {
             ],
             diagram: {
                 code: 'xychart-beta\n  title "Error vs model complexity (illustration)"\n  x-axis "complexity (for example polynomial degree)" [1, 2, 3, 4, 5, 6, 7, 8, 9]\n  y-axis "error" 0 --> 16\n  line [10, 6, 4, 3, 2.5, 2, 1.5, 1, 0.5]\n  line [11, 7, 5, 4.5, 5, 6, 8, 11, 15]',
-                caption: 'Training error (the line that keeps falling) always improves with complexity. Validation error falls, then rises again: the bottom of that U is the sweet spot; to the right is overfitting.',
+                caption: 'Training error (the line that keeps falling) always improves with complexity. Validation error falls, then rises again: the bottom of that U is the best point; to the right is overfitting.',
             },
             note: {
                 idea: 'Bias is error from a model that is too simple. Variance is error from a model that is too sensitive to the training data. Overfitting means low training error but high test error.',
@@ -483,7 +483,7 @@ export const foundationPhase2: FoundationPhase = {
             id: 'f2-t8',
             name: 'Feature scaling and encoding',
             definition: 'Feature scaling puts numeric features on similar ranges, and encoding turns categories into numbers, so that models treat every feature fairly and don\'t invent orders that aren\'t there.',
-            problem: 'Models only see numbers. A feature measured in thousands drowns out one measured in single digits, in any distance or gradient. And coding "red, green, blue" as 1, 2, 3 tells the model that green sits between the other two. Getting this wrong quietly ruins k-NN, SVMs, regularised models and neural networks, while trees barely notice.',
+            problem: 'Models only see numbers. A feature measured in thousands outweighs one measured in single digits, in any distance or gradient. And coding "red, green, blue" as 1, 2, 3 tells the model that green sits between the other two. Getting this wrong quietly ruins k-NN, SVMs, regularised models and neural networks, while trees barely notice.',
             howItWorks: [
                 'Standardisation: for each numeric feature, subtract the training mean and divide by the training standard deviation. The result has mean 0 and spread 1.',
                 'Min–max scaling squeezes values into 0 to 1 instead. It is handy for pixel values, but sensitive to outliers.',
@@ -519,7 +519,7 @@ export const foundationPhase2: FoundationPhase = {
             ],
             diagram: {
                 code: 'flowchart LR\n  S["size: 100 m²"] --> ST["standardise:<br/>(value − mean) ÷ std"]\n  R["rooms: 3"] --> ST\n  ST --> E["both now on a similar scale"]\n  C["colour: red / green / blue"] --> OH["one-hot:<br/>red = [1, 0, 0]<br/>green = [0, 1, 0]<br/>blue = [0, 0, 1]"]',
-                caption: 'Scaling stops big-unit features from drowning out small ones. One-hot encoding turns categories into numbers without inventing an order.',
+                caption: 'Scaling stops big-unit features from outweighing small ones. One-hot encoding turns categories into numbers without inventing an order.',
             },
             note: {
                 idea: 'Put features on similar scales so no feature dominates just because of its units. Turn categories into numbers with one-hot encoding.',
@@ -565,11 +565,11 @@ export const foundationPhase2: FoundationPhase = {
             mistakes: [
                 'Forgetting to scale features, so one feature with large numbers decides which neighbours count as nearest.',
                 'Choosing k on the test set. Choose it on validation data, and keep the test set for the final score.',
-                'Using it with many irrelevant features: noise dimensions swamp the useful ones.',
+                'Using it with many irrelevant features: noise dimensions outweigh the useful ones.',
                 'Expecting fast predictions on millions of rows without an index.',
             ],
             myths: [
-                { claim: 'k-nearest neighbours improves as you add more features, even irrelevant ones.', truth: 'Irrelevant features add noise to every distance, and with many of them the useful features are drowned out: the curse of dimensionality.' },
+                { claim: 'k-nearest neighbours improves as you add more features, even irrelevant ones.', truth: 'Irrelevant features add noise to every distance, and with many of them the useful features hardly count: the curse of dimensionality.' },
                 { claim: 'k-NN has no training step: so it also predicts quickly on millions of rows.', truth: 'No training means all the work happens at prediction time: each prediction compares the new point with the stored rows. Large data needs an index.' },
             ],
             followUps: [
@@ -999,13 +999,13 @@ export const foundationPhase2: FoundationPhase = {
                 'Soft clustering: each point belongs partly to every component.',
                 'E-step: responsibilities. M-step: weighted means, spreads and mixing weights.',
                 'The log-likelihood rises every round, but may stop at a local optimum.',
-                'A component can collapse onto a single point, its spread shrinking to 0 and the likelihood shooting to infinity. Put a floor on the variance.',
+                'A component can collapse onto a single point, its spread shrinking to 0 and the likelihood growing without limit. Put a floor on the variance.',
                 'It also gives a density: you can ask how likely a new point is, which helps anomaly detection.',
                 'Choose the number of components with a criterion such as BIC, or with validation likelihood.',
             ],
             mistakes: [
                 'Starting every component at the same place: they never separate.',
-                'Setting no floor on the variance, so a component collapses onto a single point and the likelihood shoots to infinity.',
+                'Setting no floor on the variance, so a component collapses onto a single point and the likelihood grows without limit.',
                 'Reading responsibilities as certainty about hidden truth. They are model-based guesses.',
             ],
             myths: [

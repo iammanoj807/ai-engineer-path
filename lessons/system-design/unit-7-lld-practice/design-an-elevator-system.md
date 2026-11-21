@@ -21,7 +21,7 @@ It tests state machines, scheduling and concurrency, and there's no single right
 
 ## Non-functional requirements
 
-- Short waiting times; far floors must not be starved.
+- Short waiting times; people on far floors must not wait for ever.
 - Safety: never move with the doors open.
 
 ## Classes
@@ -128,7 +128,7 @@ A controller receives hall calls and gives each one to the lift with the lowest 
 <details>
 <summary>&lt;b>Why not first come, first served?&lt;/b></summary>
 
-The lift would zig-zag between floors. Sweeping in one direction serves more people per trip and avoids starving any floor.
+The lift would zig-zag between floors. Sweeping in one direction serves more people per trip and leaves no floor waiting for ever.
 
 </details>
 
@@ -154,7 +154,7 @@ Picture an old-fashioned lift operator. They don't rush to whichever button was 
 
 That is LOOK. Each lift keeps two sorted lists of stops: those above it and those below it. While moving up it serves the up stops in order, from the nearest; when none are left above, it switches direction and serves the down stops. Unlike its cousin SCAN, it doesn't travel to the top floor if nobody needs it there; it only goes as far as the last request (it "looks" ahead).
 
-Why it works: every request is served within one sweep, so nobody on a far floor waits forever, and the lift doesn't zigzag between nearby requests while others wait. Serving the nearest request first, by contrast, can starve far floors under heavy traffic.
+Why it works: every request is served within one sweep, so nobody on a far floor waits forever, and the lift doesn't zigzag between nearby requests while others wait. Serving the nearest request first, by contrast, can leave far floors waiting for ever under heavy traffic.
 
 </details>
 

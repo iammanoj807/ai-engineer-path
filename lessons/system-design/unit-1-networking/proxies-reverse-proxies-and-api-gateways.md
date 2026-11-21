@@ -148,7 +148,7 @@ What it would not do: work out balances, check payment limits or run fraud rules
 
 ### 4. Trade-offs
 
-What goes wrong if business logic slowly creeps into the gateway?
+What goes wrong if business logic slowly moves into the gateway?
 
 <details>
 <summary>Show one good answer</summary>

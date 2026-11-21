@@ -225,7 +225,7 @@ Separate queues per channel and priority:
 • Isolation: passcodes have their own fast lane; a struggling SMS provider only slows SMS.  
 • Each worker pool is sized and rate-limited to match its provider's limits.  
 • Retries and dead-letter queues per channel, so failures are easier to see and fix.  
-• The cost: more queues to set up and monitor, routing logic, and a rule so low priority isn't starved forever (for example, workers take 9 high-priority messages for every 1 low).
+• The cost: more queues to set up and monitor, routing logic, and a rule so low priority isn't left waiting forever (for example, workers take 9 high-priority messages for every 1 low).
 
 For notifications, separate queues are clearly worth it: different channels and priorities really do have different speeds, limits and urgency.
 

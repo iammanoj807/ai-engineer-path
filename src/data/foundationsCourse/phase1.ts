@@ -416,7 +416,7 @@ export const foundationPhase1: FoundationPhase = {
             ],
             mistakes: [
                 'Forgetting to centre. The first "direction" then mostly points at the mean.',
-                'Not scaling features. Income in pounds swamps age in years.',
+                'Not scaling features. Income in pounds dominates age in years.',
                 'Reading principal directions as causes. They are directions of spread, nothing more.',
                 'Fitting PCA on all the data, test set included. Fit it on the training data, then apply it to the test data.',
             ],
@@ -490,10 +490,10 @@ export const foundationPhase1: FoundationPhase = {
             mistakes: [
                 'Forgetting the inner rate: the derivative of (3x + 1)² is not just 2(3x + 1).',
                 'Using the wrong values in the chain. Each rate is worked out at the current point (u = 4 here).',
-                'Numerical derivatives with h far too small, like 1e-15: rounding errors swamp the answer.',
+                'Numerical derivatives with h far too small, like 1e-15: rounding errors become bigger than the answer.',
             ],
             myths: [
-                { claim: 'Numerical derivative: the smaller the step h, the more accurate the answer.', truth: 'Only up to a point. With h as small as 1e-15, rounding errors swamp the tiny difference and the answer becomes wrong.' },
+                { claim: 'Numerical derivative: the smaller the step h, the more accurate the answer.', truth: 'Only up to a point. With h as small as 1e-15, rounding errors are bigger than the tiny difference, and the answer becomes wrong.' },
                 { claim: 'd/dx (3x + 1)² = 2(3x + 1).', truth: 'The chain rule also multiplies by the inner rate, which is 3. The derivative is 2(3x + 1) × 3 = 6(3x + 1).' },
             ],
             followUps: [
@@ -601,7 +601,7 @@ export const foundationPhase1: FoundationPhase = {
             ],
             keyPoints: [
                 'Update rule: w ← w − η·∇L(w), for every weight at once.',
-                'η too small: slow. Too large: oscillates or diverges. There is a sweet spot in between.',
+                'η too small: slow. Too large: oscillates or diverges. The best value lies in between.',
                 'For f(w) = w², each step multiplies w by (1 − 2η), so it converges only when 0 < η < 1.',
                 'Stochastic gradient descent (SGD) estimates the gradient from a small random batch: noisier, but far cheaper per step.',
                 'Gradient descent finds a local minimum. For convex functions, that is the global one.',

@@ -66,11 +66,11 @@ pred = np.bincount(y_train[nearest]).argmax()
 
 - Forgetting to scale features, so one feature with large numbers decides which neighbours count as nearest.
 - Choosing k on the test set. Choose it on validation data, and keep the test set for the final score.
-- Using it with many irrelevant features: noise dimensions swamp the useful ones.
+- Using it with many irrelevant features: noise dimensions outweigh the useful ones.
 - Expecting fast predictions on millions of rows without an index.
 
 > **Not true:** k-nearest neighbours improves as you add more features, even irrelevant ones.  
-> **In fact:** Irrelevant features add noise to every distance, and with many of them the useful features are drowned out: the curse of dimensionality.
+> **In fact:** Irrelevant features add noise to every distance, and with many of them the useful features hardly count: the curse of dimensionality.
 
 > **Not true:** k-NN has no training step: so it also predicts quickly on millions of rows.  
 > **In fact:** No training means all the work happens at prediction time: each prediction compares the new point with the stored rows. Large data needs an index.

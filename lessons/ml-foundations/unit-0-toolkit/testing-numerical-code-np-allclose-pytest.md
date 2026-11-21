@@ -182,7 +182,7 @@ Explain why == is dangerous for decimal numbers, and what np.allclose does inste
 <details>
 <summary>Show one good answer</summary>
 
-Computers store decimals in binary, and most decimals, such as 0.1, can't be stored exactly, so tiny rounding errors creep in: 0.1 + 0.2 is really 0.30000000000000004, and 0.1 + 0.2 == 0.3 is False. == demands every last digit to match, so a test using it fails on correct code, or passes only by luck.
+Computers store decimals in binary, and most decimals, such as 0.1, can't be stored exactly, so tiny rounding errors appear: 0.1 + 0.2 is really 0.30000000000000004, and 0.1 + 0.2 == 0.3 is False. == demands every last digit to match, so a test using it fails on correct code, or passes only by luck.
 
 np.allclose(a, b) instead asks "are these close enough?". For every element it checks \|a − b\| ≤ atol + rtol·\|b\|, where by default rtol = 1e-5 (a relative error of 0.001%) and atol = 1e-8 (for values near zero). It returns one True only if every element passes.
 

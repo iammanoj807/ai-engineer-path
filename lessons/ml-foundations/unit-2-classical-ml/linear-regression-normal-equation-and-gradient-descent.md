@@ -73,7 +73,7 @@ w = w - lr * grad
 
 - Using it when the relationship is strongly curved, without adding features.
 - Reading a weight as a cause. It only says how the prediction moves, with the other features held still.
-- Duplicated or near-duplicate features: XᵀX becomes nearly singular and the weights blow up.
+- Duplicated or near-duplicate features: XᵀX becomes nearly singular and the weights become huge.
 - Forgetting the bias column, which forces the line through the origin.
 
 > **Not true:** A large weight in a linear regression shows that its feature causes the outcome.  

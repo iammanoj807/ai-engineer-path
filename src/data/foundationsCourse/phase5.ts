@@ -325,7 +325,7 @@ export const foundationPhase5: FoundationPhase = {
             id: 'f5-t12',
             name: 'Context engineering: long context and memory',
             definition: 'Context engineering is choosing exactly what goes into the model\'s context window on each call: instructions, examples, retrieved documents, history and tool results. The aim is to give it what it needs and nothing that distracts it.',
-            problem: 'Context windows are large but not free: every token adds cost and delay, and models use information buried in the middle of very long inputs less reliably. Long chats and agents keep piling up history and tool output. Deciding what to keep, summarise or drop is now one of the main skills in building reliable LLM apps.',
+            problem: 'Context windows are large but not free: every token adds cost and delay, and models use information buried in the middle of very long inputs less reliably. Long chats and agents keep adding history and tool output. Deciding what to keep, summarise or drop is now one of the main skills in building reliable LLM apps.',
             howItWorks: [
                 'Set a token budget for the window: instructions, examples, retrieved documents, history, and room for the answer.',
                 'Keep instructions and the key examples stable at the start (which also makes prompt caching effective).',
@@ -340,7 +340,7 @@ export const foundationPhase5: FoundationPhase = {
                 'Information in the middle of long contexts is used less reliably ("lost in the middle").',
                 'Summaries plus retrieval scale better than whole histories.',
                 'Every token is billed and adds latency.',
-                'Agents need context management most, because tool results pile up fast.',
+                'Agents need context management most, because tool results add up fast.',
             ],
             mistakes: [
                 'Sending the entire history and every retrieved document by default.',
@@ -631,7 +631,7 @@ export const foundationPhase5: FoundationPhase = {
                 'Collect candidates: real historical data, human-written examples, and synthetic examples from a stronger model.',
                 'Remove exact and near duplicates.',
                 'Filter for quality with rules, a model-based grader and human review of a sample. Drop wrong, rude, outdated or off-policy examples.',
-                'Balance across topics and difficulty, so common cases don\'t drown out rare ones.',
+                'Balance across topics and difficulty, so rare cases are not lost among the common ones.',
                 'Format every example in the model\'s chat template, consistently.',
                 'Hold back a test set the model never trains on, and check that no test example leaks into training.',
             ],

@@ -260,7 +260,7 @@ export const foundationPhase6: FoundationPhase = {
             definition: 'Inference is sped up by serving many requests together (batching), storing weights in fewer bits (quantisation), and computing attention without writing the full score matrix to memory (FlashAttention).',
             problem: 'Generating text is mostly memory-bound: every token requires reading all the weights and the KV cache. Serving cost and speed decide whether a model is affordable to deploy. These three techniques are the main reasons modern models can be served cheaply and quickly, and on smaller hardware.',
             howItWorks: [
-                'Batching: one pass over the weights serves many users\' next tokens at once, so the cost of reading the weights is shared. Continuous batching adds and removes requests on the fly.',
+                'Batching: one pass over the weights serves many users\' next tokens at once, so the cost of reading the weights is shared. Continuous batching adds and removes requests while the batch is running.',
                 'Quantisation: store weights as 8-bit or 4-bit integers plus a scale factor, instead of 16-bit floats.',
                 'Each weight snaps to its nearest allowed level. Per-channel or per-group scales keep errors small; an outlier weight in a group stretches the scale and hurts everyone else in it.',
                 'Smaller weights mean less memory and fewer bytes per token: a 70B model needs about 140 GB in bf16, 70 GB in int8 and 35 GB in 4-bit.',
@@ -379,7 +379,7 @@ export const foundationPhase6: FoundationPhase = {
             id: 'f6-t7',
             name: 'GPU kernels with Triton',
             definition: 'A GPU kernel is a function that runs as many parallel instances on the GPU, and Triton lets you write kernels in Python-like code. The biggest win is usually fusion: doing several steps in one kernel, so that the data leaves slow memory only once.',
-            problem: 'Many deep-learning operations are memory-bound chains of small steps (normalise, activate, scale). Run as separate PyTorch operations, each one reads and writes the full tensor in slow memory. A fused kernel can be several times faster. Triton makes writing such kernels possible without learning CUDA C++, and it is what torch.compile uses under the hood.',
+            problem: 'Many deep-learning operations are memory-bound chains of small steps (normalise, activate, scale). Run as separate PyTorch operations, each one reads and writes the full tensor in slow memory. A fused kernel can be several times faster. Triton makes writing such kernels possible without learning CUDA C++, and it is what torch.compile uses internally.',
             howItWorks: [
                 'Split the work into blocks: each kernel instance (a "program") handles one block, for example one row of a matrix.',
                 'Each program computes which addresses it owns from its program id, and loads that block with tl.load, using a mask for the ragged edge.',

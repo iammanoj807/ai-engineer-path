@@ -70,7 +70,7 @@ SELECT 7 / 2 AS whole_division,
 | --- | --- | --- |
 | 3 | 3.5 | 43 |
 
-This bites in interviews when you compute a percentage: `delivered / total` gives 0. Multiply by 100.0 first.
+This causes mistakes in interviews when you compute a percentage: `delivered / total` gives 0. Multiply by 100.0 first.
 
 ---
 

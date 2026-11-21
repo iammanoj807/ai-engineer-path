@@ -439,7 +439,7 @@ export const phase2Answers: Record<string, TopicAnswers> = {
             `,
         },
         break: {
-            answer: `k-NN without scaling: when one feature is in thousands (say, salary) and the other in decimals (say, a 0–1 score that really decides the label), the distance is almost entirely the salary difference. The useful feature is drowned out, and accuracy falls to about chance (around 50%). With both features standardised, accuracy jumps back up (above 90% here).\n\nA category the encoder never saw: the code above raises a KeyError. In production that crashes on the first new value, such as a new country or product. Decide on purpose: either map unknown values to an all-zeros row (or an "other" column) and log them so you notice, or fail loudly if an unknown value means bad data. Either way, it should be a choice, not a surprise.`,
+            answer: `k-NN without scaling: when one feature is in thousands (say, salary) and the other in decimals (say, a 0–1 score that really decides the label), the distance is almost entirely the salary difference. The useful feature hardly counts, and accuracy falls to about chance (around 50%). With both features standardised, accuracy jumps back up (above 90% here).\n\nA category the encoder never saw: the code above raises a KeyError. In production that crashes on the first new value, such as a new country or product. Decide on purpose: either map unknown values to an all-zeros row (or an "other" column) and log them so you notice, or fail loudly if an unknown value means bad data. Either way, it should be a choice, not a surprise.`,
             code: py`
                 import numpy as np
 

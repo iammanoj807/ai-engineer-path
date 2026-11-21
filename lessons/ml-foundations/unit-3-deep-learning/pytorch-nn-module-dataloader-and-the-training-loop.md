@@ -66,7 +66,7 @@ for xb, yb in loader:
 
 ## Common mistakes
 
-- Forgetting opt.zero_grad(), so the gradients of earlier steps pile up on top of the new ones.
+- Forgetting opt.zero_grad(), so the gradients of earlier steps are added to the new ones.
 - Forgetting model.eval() before validation, so dropout and batch norm still behave as they do in training.
 - Calling softmax before F.cross_entropy, which already applies it: the loss is then computed on the wrong numbers.
 - Model on the GPU, data on the CPU (or the other way round): a device-mismatch error.
@@ -162,7 +162,7 @@ Remove opt.zero_grad() and train. Watch the loss. Then forget model.eval() on a 
 <details>
 <summary>Show one good answer</summary>
 
-No opt.zero_grad(): gradients pile up. Step 500's gradient is really the sum of all 500 gradients so far, so the steps keep getting bigger and point in stale directions. At first it can even look fine, because the pile acts like a big push downhill. But soon the steps are far too big: in the run below the loss climbs back to about 2.3 (pure guessing) with spikes above 10, while the correct loop keeps falling to about 0.4. (Adam partly hides it because it divides by the gradient size, but the updates are still wrong.)
+No opt.zero_grad(): gradients add up from step to step. Step 500's gradient is really the sum of all 500 gradients so far, so the steps keep getting bigger and point in stale directions. At first it can even look fine, because the pile acts like a big push downhill. But soon the steps are far too big: in the run below the loss climbs back to about 2.3 (pure guessing) with spikes above 10, while the correct loop keeps falling to about 0.4. (Adam partly hides it because it divides by the gradient size, but the updates are still wrong.)
 
 No model.eval() with dropout: validation runs with half the units randomly switched off (here dropout is 0.5), so the score is lower than the model really deserves and changes each time you evaluate. You might pick the wrong checkpoint, or think a good model is bad.
 

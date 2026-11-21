@@ -489,7 +489,7 @@ export const foundationPhase4: FoundationPhase = {
             ],
             myths: [
                 { claim: 'Temperature 0 = the setting for creative writing.', truth: 'At temperature 0 the model always takes the most likely token, which makes the text repetitive and can trap it in loops. Creative writing needs some randomness.' },
-                { claim: 'High temperature: the choice for answers that have to be exact and repeatable.', truth: 'High temperature adds randomness, so answers vary and errors creep in. For exact, repeatable output use a low temperature, or greedy decoding.' },
+                { claim: 'High temperature: the choice for answers that have to be exact and repeatable.', truth: 'High temperature adds randomness, so answers vary and errors appear. For exact, repeatable output use a low temperature, or greedy decoding.' },
             ],
             followUps: [
                 { q: 'What does a temperature of 0.5 do to logits [2, 0]?', a: 'It divides them by 0.5, giving [4, 0], so the top token\'s probability rises (from about 0.88 to about 0.98).' },

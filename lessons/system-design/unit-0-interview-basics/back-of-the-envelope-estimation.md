@@ -67,8 +67,8 @@ A Twitter-like app: 300 million daily users, each posting 2 tweets a day, gives 
 > **Not true:** 1 Gbps ≈ 1 GB of data a second.  
 > **In fact:** Network speeds are given in bits, and a byte is 8 bits. 1 Gbps is about 125 MB a second.
 
-> **Not true:** Sizing: plan for the average load; the peak takes care of itself.  
-> **In fact:** Traffic comes in peaks, often several times the average. Size the system for the peak, or it falls over just when it is needed most.
+> **Not true:** Sizing: plan for the average load; the peak needs no extra planning.  
+> **In fact:** Traffic comes in peaks, often several times the average. Size the system for the peak, or it fails just when it is needed most.
 
 ## In the interview
 

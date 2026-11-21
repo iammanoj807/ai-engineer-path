@@ -27,7 +27,7 @@ export const sqlPhase2: SqlPhase = {
                 FROM table_name;
             `,
             howItWorks: [
-                'FROM and WHERE decide which rows are in play — here all 10 orders.',
+                'FROM and WHERE decide which rows are used — here all 10 orders.',
                 '`COUNT(*)` counts the rows: 10.',
                 '`COUNT(amount)` counts rows whose amount is not NULL: 9, because order 106 has none.',
                 '`SUM(amount)` adds the 9 amounts: 793. `AVG(amount)` is 793 ÷ 9 = 88.11, not 793 ÷ 10.',

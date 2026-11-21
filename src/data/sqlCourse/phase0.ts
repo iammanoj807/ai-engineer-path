@@ -334,7 +334,7 @@ export const sqlPhase0: SqlPhase = {
                         columns: ['whole_division', 'exact_division', 'text_to_number'],
                         rows: [[3, 3.5, 43]],
                     },
-                    note: 'This bites in interviews when you compute a percentage: `delivered / total` gives 0. Multiply by 100.0 first.',
+                    note: 'This causes mistakes in interviews when you compute a percentage: `delivered / total` gives 0. Multiply by 100.0 first.',
                 },
                 {
                     title: 'Dates as YYYY-MM-DD text compare correctly',

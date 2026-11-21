@@ -39,7 +39,7 @@ FROM table_name;
 
 ## How it works, step by step
 
-1. FROM and WHERE decide which rows are in play — here all 10 orders.
+1. FROM and WHERE decide which rows are used — here all 10 orders.
 2. `COUNT(*)` counts the rows: 10.
 3. `COUNT(amount)` counts rows whose amount is not NULL: 9, because order 106 has none.
 4. `SUM(amount)` adds the 9 amounts: 793. `AVG(amount)` is 793 ÷ 9 = 88.11, not 793 ÷ 10.

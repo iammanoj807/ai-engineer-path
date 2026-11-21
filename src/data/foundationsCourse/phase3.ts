@@ -238,14 +238,14 @@ export const foundationPhase3: FoundationPhase = {
                 'micrograd (Karpathy) is a complete autograd engine in about 100 lines of Python. Building one is the best way to understand it.',
             ],
             mistakes: [
-                'Forgetting zero_grad(), so gradients from earlier batches pile up.',
+                'Forgetting zero_grad(), so gradients from earlier batches add up.',
                 'Evaluating without no_grad(), wasting memory on a graph you never use.',
                 'Calling .numpy() or .item() in the middle of a computation, which breaks the graph.',
                 'Changing a tensor in place that autograd still needs, which causes an error during backward.',
             ],
             myths: [
                 { claim: 'Gradients still flow through a value after .item() or .numpy() has been called on it.', truth: 'Those calls leave PyTorch and return plain numbers, so the graph is cut there and nothing before that point receives a gradient.' },
-                { claim: 'PyTorch clears the old gradients by itself before each backward pass.', truth: 'Gradients accumulate: each backward pass adds to .grad. Call optimizer.zero_grad() once per step, or the old gradients pile up.' },
+                { claim: 'PyTorch clears the old gradients by itself before each backward pass.', truth: 'Gradients accumulate: each backward pass adds to .grad. Call optimizer.zero_grad() once per step, or the old gradients add up.' },
             ],
             followUps: [
                 { q: 'What does loss.backward() do?', a: 'It walks the recorded graph from the loss backwards, applying the chain rule, and adds each gradient into the .grad of the tensors that need one.' },
@@ -383,7 +383,7 @@ export const foundationPhase3: FoundationPhase = {
                 idea: 'SGD steps against the gradient. Momentum keeps a running average of gradients, so you keep moving in a consistent direction. Adam adds a separate step size for each weight, based on how large its gradients usually are. A schedule changes the learning rate over time, for example warm-up then decay.',
                 analogy: 'SGD is a hiker who only looks at the ground under their feet. Momentum is a ball rolling downhill: it builds speed and rolls over small bumps. Adam is a ball that is careful in steep, bumpy directions and bolder in flat ones.',
                 breaks: 'A ball has one mass. Adam gives every single weight its own effective step size, so it is really millions of different balls.',
-                example: 'In a long, narrow valley, SGD with learning rate 0.09 bounces from wall to wall, because 0.09 is just under the value where it would blow up across the steep direction. Momentum averages those bounces away and speeds along the valley floor. Adam scales each direction by its typical gradient size, so its path is straighter from the start.',
+                example: 'In a long, narrow valley, SGD with learning rate 0.09 bounces from wall to wall, because 0.09 is just under the value where it would diverge across the steep direction. Momentum averages those bounces away and speeds along the valley floor. Adam scales each direction by its typical gradient size, so its path is straighter from the start.',
                 code: '# one Adam step for gradient g, at step t\nm = b1 * m + (1 - b1) * g\nv = b2 * v + (1 - b2) * g**2\nm_hat, v_hat = m / (1 - b1**t), v / (1 - b2**t)\nw -= lr * m_hat / (np.sqrt(v_hat) + eps)',
                 codeLanguage: 'python',
             },
@@ -606,7 +606,7 @@ export const foundationPhase3: FoundationPhase = {
                 'Set random seeds to make runs reproducible.',
             ],
             mistakes: [
-                'Forgetting opt.zero_grad(), so the gradients of earlier steps pile up on top of the new ones.',
+                'Forgetting opt.zero_grad(), so the gradients of earlier steps are added to the new ones.',
                 'Forgetting model.eval() before validation, so dropout and batch norm still behave as they do in training.',
                 'Calling softmax before F.cross_entropy, which already applies it: the loss is then computed on the wrong numbers.',
                 'Model on the GPU, data on the CPU (or the other way round): a device-mismatch error.',
@@ -800,7 +800,7 @@ export const foundationPhase3: FoundationPhase = {
                 { q: 'What does the hidden state hold?', a: 'A fixed-size summary of the sequence read so far: the network\'s memory.' },
                 { q: 'Why can an RNN process any sequence length with fixed weights?', a: 'It applies the same W and U at every step.' },
                 { q: 'Why do gradients vanish over long sequences?', a: 'They are multiplied by roughly the same factor at every step back in time; if it is below 1, the product shrinks towards 0.' },
-                { q: 'What is gradient clipping for?', a: 'It caps the gradient\'s size so an exploding gradient can\'t blow up the weights in one step.' },
+                { q: 'What is gradient clipping for?', a: 'It caps the gradient\'s size so an exploding gradient can\'t make the weights huge in one step.' },
             ],
             diagram: {
                 code: 'flowchart LR\n  H0["h₀"] --> C1["RNN cell"] --> H1["h₁"] --> C2["RNN cell"] --> H2["h₂"] --> C3["RNN cell"] --> H3["h₃ → output"]\n  X1["x₁"] --> C1\n  X2["x₂"] --> C2\n  X3["x₃"] --> C3',

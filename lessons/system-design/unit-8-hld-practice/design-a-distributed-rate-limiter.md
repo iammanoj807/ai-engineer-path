@@ -215,7 +215,7 @@ Token bucket or sliding window for an API that should allow short bursts?
 
 Token bucket.
 
-It is built for exactly this: the bucket's size is the burst you allow, and the refill rate is the steady limit. A client that has been quiet can fire, say, 20 requests at once; a client that keeps hammering is held to 10 a second. Per client it stores just two numbers (tokens and last refill time), so it is cheap in memory and in Redis.
+It is built for exactly this: the bucket's size is the burst you allow, and the refill rate is the steady limit. A client that has been quiet can fire, say, 20 requests at once; a client that keeps sending requests is held to 10 a second. Per client it stores just two numbers (tokens and last refill time), so it is cheap in memory and in Redis.
 
 Sliding window (log or counter) is about fairness over a moving window: never more than N in any 60 seconds. It allows a burst of up to N at once too, but then the client must wait for the whole window to slide before it gets capacity back, which feels stricter than a refill. The log version is exact but stores a timestamp per request; the counter version is cheap but approximate.
 

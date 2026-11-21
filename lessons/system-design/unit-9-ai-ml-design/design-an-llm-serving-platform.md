@@ -77,7 +77,7 @@ flowchart LR
 
 - Handling one request at a time on an expensive GPU.
 - Ignoring KV-cache memory when planning capacity.
-- No per-team quotas, so one team can starve the others.
+- No per-team quotas, so one team can use it all and leave nothing for the others.
 
 > **Not true:** Handling one request at a time makes full use of an expensive GPU.  
 > **In fact:** A GPU can work on many requests in the same pass. Continuous batching adds new requests between decode steps, which raises throughput a great deal.

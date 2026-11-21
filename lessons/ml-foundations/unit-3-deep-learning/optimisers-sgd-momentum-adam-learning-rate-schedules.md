@@ -45,7 +45,7 @@ SGD is a hiker who only looks at the ground under their feet. Momentum is a ball
 
 ## Worked example
 
-In a long, narrow valley, SGD with learning rate 0.09 bounces from wall to wall, because 0.09 is just under the value where it would blow up across the steep direction. Momentum averages those bounces away and speeds along the valley floor. Adam scales each direction by its typical gradient size, so its path is straighter from the start.
+In a long, narrow valley, SGD with learning rate 0.09 bounces from wall to wall, because 0.09 is just under the value where it would diverge across the steep direction. Momentum averages those bounces away and speeds along the valley floor. Adam scales each direction by its typical gradient size, so its path is straighter from the start.
 
 ```python
 # one Adam step for gradient g, at step t
@@ -115,7 +115,7 @@ Implement all four and race them on the same problem, such as the Rosenbrock fun
 
 Race all four on the Rosenbrock function, f(x, y) = (1 − x)² + 100(y − x²)², a long, curved, narrow valley with its minimum at (1, 1). Start at (−1.5, 2) and take 3,000 steps, each optimiser with a learning rate that suits it.
 
-Plain SGD has to use a tiny learning rate (any larger and it bounces off the steep walls and blows up), so after 3,000 steps it has barely moved: loss about 5. Momentum, with the same learning rate, builds up speed along the valley floor and gets to a loss of about 0.05. RMSProp scales each direction by its typical gradient, so it copes with the steep walls, and gets to about 0.2. Adam combines both ideas and lands on the minimum (1, 1) almost exactly. Plot all four loss curves on one log-scale axis to compare.
+Plain SGD has to use a tiny learning rate (any larger and it bounces off the steep walls and the loss grows without limit), so after 3,000 steps it has barely moved: loss about 5. Momentum, with the same learning rate, builds up speed along the valley floor and gets to a loss of about 0.05. RMSProp scales each direction by its typical gradient, so it copes with the steep walls, and gets to about 0.2. Adam combines both ideas and lands on the minimum (1, 1) almost exactly. Plot all four loss curves on one log-scale axis to compare.
 
 ```python
 import numpy as np

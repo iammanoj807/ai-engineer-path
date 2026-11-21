@@ -256,7 +256,7 @@ They are multiplied by roughly the same factor at every step back in time; if it
 <details>
 <summary>&lt;b>What is gradient clipping for?&lt;/b></summary>
 
-It caps the gradient's size so an exploding gradient can't blow up the weights in one step.
+It caps the gradient's size so an exploding gradient can't make the weights huge in one step.
 
 </details>
 

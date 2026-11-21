@@ -137,7 +137,7 @@ Draw where rate limiting happens in a system with a gateway, several servers and
 <details>
 <summary>Show one good answer</summary>
 
-The limit is checked once, at the gateway, before any work is done. The counters live in Redis, not in each gateway's memory, so the limit holds no matter which gateway a request lands on. Inside, a bounded queue in front of each service gives backpressure: when it is full, new work is refused instead of piling up.
+The limit is checked once, at the gateway, before any work is done. The counters live in Redis, not in each gateway's memory, so the limit holds no matter which gateway a request lands on. Inside, a bounded queue in front of each service gives backpressure: when it is full, new work is refused instead of building up.
 
 ```text
 Clients

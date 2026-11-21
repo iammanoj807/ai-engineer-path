@@ -10,7 +10,7 @@
 
 ## The problem it solves
 
-A system that works for 100 users can fall over at 100,000. You need a way to add capacity without rewriting everything.
+A system that works for 100 users can fail at 100,000. You need a way to add capacity without rewriting everything.
 
 ## The idea
 

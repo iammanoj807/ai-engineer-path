@@ -275,7 +275,7 @@ export const foundationPhase0: FoundationPhase = {
             id: 'f0-t3',
             name: 'Plotting results with Matplotlib',
             definition: 'Matplotlib is the standard Python library for drawing charts; in ML you use it mostly to see loss curves, data and predictions.',
-            problem: 'Training prints thousands of numbers, and you can\'t spot a trend by reading them. Is the loss still falling? Did it blow up at step 400? Is the model overfitting? A picture answers those questions in a second. Many training bugs are found by looking at a plot, not by reading the code.',
+            problem: 'Training prints thousands of numbers, and you can\'t spot a trend by reading them. Is the loss still falling? Did it jump to a huge value at step 400? Is the model overfitting? A picture answers those questions in a second. Many training bugs are found by looking at a plot, not by reading the code.',
             diagram: {
                 code: 'xychart-beta\n  title "A healthy loss curve"\n  x-axis "training step" [0, 1, 2, 3, 4, 5, 6, 7, 8]\n  y-axis "loss" 0 --> 3\n  line [2.3, 1.6, 1.15, 0.9, 0.72, 0.6, 0.52, 0.47, 0.44]',
                 caption: 'Loss falls fast at first, then flattens. Plotting it is the quickest way to see whether training is working.',
@@ -367,7 +367,7 @@ export const foundationPhase0: FoundationPhase = {
                 'GitHub is not Git. Git runs on your computer; GitHub is a website that keeps copies of repos and adds pull requests and issues.',
             ],
             mistakes: [
-                'Committing large data files or model weights. They stay in the history forever and bloat the repo. Ignore them with .gitignore.',
+                'Committing large data files or model weights. They stay in the history forever and make the repo huge. Ignore them with .gitignore.',
                 'Committing secrets such as API keys or .env files. Deleting them later does not remove them from the history, so change the key.',
                 'Messages like "update" or "fix". Say what changed and why.',
                 'Doing every experiment directly on main, so one broken idea breaks everything.',

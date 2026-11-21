@@ -70,7 +70,7 @@ git push
 
 ## Common mistakes
 
-- Committing large data files or model weights. They stay in the history forever and bloat the repo. Ignore them with .gitignore.
+- Committing large data files or model weights. They stay in the history forever and make the repo huge. Ignore them with .gitignore.
 - Committing secrets such as API keys or .env files. Deleting them later does not remove them from the history, so change the key.
 - Messages like "update" or "fix". Say what changed and why.
 - Doing every experiment directly on main, so one broken idea breaks everything.

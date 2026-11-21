@@ -20,7 +20,7 @@ export const sqlPhase1: SqlPhase = {
             problem: 'A table can have dozens of columns, and you usually need two or three. You also often need values that are not stored at all — a salary after a raise, a name and city joined into one label. SELECT lets you choose and calculate exactly the columns you need.',
             idea: 'After SELECT you write a list, separated by commas. Each item can be a column name (`salary`), a calculation (`salary + 5000`), or a fixed value (`\'hello\'`). AS gives an item a new name in the result, called an alias. `SELECT *` means every column, in table order.\n\nThe rows come from the table named after FROM, and every row of that table is used, because there is no filter yet.',
             analogy: 'Ordering a set menu but saying "just the starter and the dessert, please". FROM is the menu you are ordering from; SELECT is the courses you want on your plate, in the order you name them.',
-            breaks: 'A waiter can only bring what is on the menu. SELECT can also bring things that don\'t exist in the table, because it can calculate new values from the columns on the fly.',
+            breaks: 'A waiter can only bring what is on the menu. SELECT can also bring things that don\'t exist in the table, because it can calculate new values from the columns as it runs.',
             syntax: code`
                 SELECT column, expression AS new_name
                 FROM table_name;
@@ -857,7 +857,7 @@ export const sqlPhase1: SqlPhase = {
                 'Comparing dates stored as \'06/01/2024\' text — they compare as text, not as dates.',
             ],
             myths: [
-                { claim: 'Rounding each value first and then adding them gives the same total as adding first.', truth: 'Every rounding adds a small error, and the errors pile up. Add the exact values first, and round once at the end.' },
+                { claim: 'Rounding each value first and then adding them gives the same total as adding first.', truth: 'Every rounding adds a small error, and the errors add up. Add the exact values first, and round once at the end.' },
             ],
             dialects: [
                 'Month of a date: PostgreSQL `DATE_TRUNC(\'month\', d)` or `TO_CHAR(d, \'YYYY-MM\')`; MySQL `DATE_FORMAT(d, \'%Y-%m\')`; SQL Server `FORMAT(d, \'yyyy-MM\')`; SQLite `strftime(\'%Y-%m\', d)`.',

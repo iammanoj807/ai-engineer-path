@@ -233,7 +233,7 @@ When are retries dangerous? Give an example of an operation you must not blindly
 
 Retries are dangerous when:  
 • The operation is not safe to repeat. A timeout doesn't mean it failed; it may have worked and only the reply was lost. Retrying "charge this card £50" can charge twice.  
-• The service is overloaded. Each retry is more load on a service that is already drowning, so retries turn a slowdown into an outage. Retries also multiply through layers: if three layers each try 4 times, one user click can become 4 × 4 × 4 = 64 calls at the bottom.  
+• The service is overloaded. Each retry is more load on a service that is already overloaded, so retries turn a slowdown into an outage. Retries also multiply through layers: if three layers each try 4 times, one user click can become 4 × 4 × 4 = 64 calls at the bottom.  
 • The error is permanent. Retrying a 400 Bad Request or a 403 just fails again, more slowly.  
 • The retries outlast the caller's own timeout, so the work continues after nobody is waiting for it.
 

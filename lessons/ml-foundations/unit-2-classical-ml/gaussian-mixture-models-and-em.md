@@ -65,14 +65,14 @@ pi1 = r1.mean()
 - Soft clustering: each point belongs partly to every component.
 - E-step: responsibilities. M-step: weighted means, spreads and mixing weights.
 - The log-likelihood rises every round, but may stop at a local optimum.
-- A component can collapse onto a single point, its spread shrinking to 0 and the likelihood shooting to infinity. Put a floor on the variance.
+- A component can collapse onto a single point, its spread shrinking to 0 and the likelihood growing without limit. Put a floor on the variance.
 - It also gives a density: you can ask how likely a new point is, which helps anomaly detection.
 - Choose the number of components with a criterion such as BIC, or with validation likelihood.
 
 ## Common mistakes
 
 - Starting every component at the same place: they never separate.
-- Setting no floor on the variance, so a component collapses onto a single point and the likelihood shoots to infinity.
+- Setting no floor on the variance, so a component collapses onto a single point and the likelihood grows without limit.
 - Reading responsibilities as certainty about hidden truth. They are model-based guesses.
 
 > **Not true:** EM separates the components even when they all start in the same place.  

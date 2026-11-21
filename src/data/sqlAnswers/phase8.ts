@@ -735,7 +735,7 @@ export const sqlPhase8Answers: Record<string, SqlTopicAnswers> = {
     },
     'sql8-p12': {
         explain: {
-            answer: 'Because the question is about customers, not orders: "what share of customers came back?". Every customer must count exactly once.\n\nIf you worked on order rows instead, Priya, with 5 orders, would count five times and her habits would swamp everyone else\'s. So each customer is first reduced to one row with a single flag: 1 if they came back within 30 days, 0 if not (MAX over their orders turns "any qualifying order" into one 1). Then the rate is simple: the sum of the flags (customers who came back) ÷ the count of rows (customers).',
+            answer: 'Because the question is about customers, not orders: "what share of customers came back?". Every customer must count exactly once.\n\nIf you worked on order rows instead, Priya, with 5 orders, would count five times and her habits would outweigh everyone else\'s. So each customer is first reduced to one row with a single flag: 1 if they came back within 30 days, 0 if not (MAX over their orders turns "any qualifying order" into one 1). Then the rate is simple: the sum of the flags (customers who came back) ÷ the count of rows (customers).',
         },
         write: {
             answer: 'Change 30 to 7. Only Priya came back within a week (her second order was the next day). Lena\'s came 8 days later and Tom\'s 40 days later, and Zoe has only one order. 1 out of 4 is 25.0%.',

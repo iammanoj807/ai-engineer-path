@@ -10,7 +10,7 @@
 
 ## The problem it solves
 
-Models only see numbers. A feature measured in thousands drowns out one measured in single digits, in any distance or gradient. And coding "red, green, blue" as 1, 2, 3 tells the model that green sits between the other two. Getting this wrong quietly ruins k-NN, SVMs, regularised models and neural networks, while trees barely notice.
+Models only see numbers. A feature measured in thousands outweighs one measured in single digits, in any distance or gradient. And coding "red, green, blue" as 1, 2, 3 tells the model that green sits between the other two. Getting this wrong quietly ruins k-NN, SVMs, regularised models and neural networks, while trees barely notice.
 
 ## The idea
 
@@ -36,7 +36,7 @@ flowchart LR
   C["colour: red / green / blue"] --> OH["one-hot:<br/>red = [1, 0, 0]<br/>green = [0, 1, 0]<br/>blue = [0, 0, 1]"]
 ```
 
-*Scaling stops big-unit features from drowning out small ones. One-hot encoding turns categories into numbers without inventing an order.*
+*Scaling stops big-unit features from outweighing small ones. One-hot encoding turns categories into numbers without inventing an order.*
 
 ## Analogy
 
@@ -155,7 +155,7 @@ Train k-NN with and without scaling on data where one feature is in thousands an
 <details>
 <summary>Show one good answer</summary>
 
-k-NN without scaling: when one feature is in thousands (say, salary) and the other in decimals (say, a 0–1 score that really decides the label), the distance is almost entirely the salary difference. The useful feature is drowned out, and accuracy falls to about chance (around 50%). With both features standardised, accuracy jumps back up (above 90% here).
+k-NN without scaling: when one feature is in thousands (say, salary) and the other in decimals (say, a 0–1 score that really decides the label), the distance is almost entirely the salary difference. The useful feature hardly counts, and accuracy falls to about chance (around 50%). With both features standardised, accuracy jumps back up (above 90% here).
 
 A category the encoder never saw: the code above raises a KeyError. In production that crashes on the first new value, such as a new country or product. Decide on purpose: either map unknown values to an all-zeros row (or an "other" column) and log them so you notice, or fail loudly if an unknown value means bad data. Either way, it should be a choice, not a surprise.
 

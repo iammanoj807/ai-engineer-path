@@ -73,7 +73,7 @@ next_id = np.random.choice(len(p), p=p)
 > **In fact:** At temperature 0 the model always takes the most likely token, which makes the text repetitive and can trap it in loops. Creative writing needs some randomness.
 
 > **Not true:** High temperature: the choice for answers that have to be exact and repeatable.  
-> **In fact:** High temperature adds randomness, so answers vary and errors creep in. For exact, repeatable output use a low temperature, or greedy decoding.
+> **In fact:** High temperature adds randomness, so answers vary and errors appear. For exact, repeatable output use a low temperature, or greedy decoding.
 
 ## Practise
 

@@ -114,7 +114,7 @@ Explain push, pull and hybrid fan-out, and the celebrity problem.
 • Pull (fan-out on read): store each post once. When someone opens their feed, fetch the recent posts of everyone they follow and merge them. Posting is cheap, but every feed load does a lot of work, and feeds are read far more often than posts are written.  
 • Hybrid: push for ordinary users, who have hundreds of followers; pull for the few accounts with millions. At read time, the pre-built feed list is merged with the recent posts of the celebrities you follow.
 
-The celebrity problem: with pure push, one post from an account with 50 million followers means 50 million feed writes. It swamps the fan-out workers and delays everyone else's posts, and most of those followers won't even open the app today. The hybrid avoids it: celebrities' posts are fetched when someone actually reads.
+The celebrity problem: with pure push, one post from an account with 50 million followers means 50 million feed writes. It overloads the fan-out workers and delays everyone else's posts, and most of those followers won't even open the app today. The hybrid avoids it: celebrities' posts are fetched when someone actually reads.
 
 </details>
 

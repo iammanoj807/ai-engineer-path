@@ -17,7 +17,7 @@
 Put EXPLAIN in front of a query (in SQLite, EXPLAIN QUERY PLAN). Read each line as one step.
 
 There are three words to look for.  
-SCAN means reading a whole table: fine if it is small, a red flag if it is big.  
+SCAN means reading a whole table: fine if it is small, a warning sign if it is big.  
 SEARCH … USING INDEX means jumping straight to rows: good.  
 TEMP B-TREE or Sort means building a sort or a grouping: costly on big data.
 

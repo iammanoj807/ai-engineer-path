@@ -65,7 +65,7 @@ explained = S**2 / (S**2).sum()         # share of variance per direction
 ## Common mistakes
 
 - Forgetting to centre. The first "direction" then mostly points at the mean.
-- Not scaling features. Income in pounds swamps age in years.
+- Not scaling features. Income in pounds dominates age in years.
 - Reading principal directions as causes. They are directions of spread, nothing more.
 - Fitting PCA on all the data, test set included. Fit it on the training data, then apply it to the test data.
 

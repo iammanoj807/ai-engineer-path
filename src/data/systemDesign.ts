@@ -339,7 +339,7 @@ export const systemDesignPhases: SDPhase[] = [
                 ],
                 myths: [
                     { claim: '1 Gbps ≈ 1 GB of data a second.', truth: 'Network speeds are given in bits, and a byte is 8 bits. 1 Gbps is about 125 MB a second.' },
-                    { claim: 'Sizing: plan for the average load; the peak takes care of itself.', truth: 'Traffic comes in peaks, often several times the average. Size the system for the peak, or it falls over just when it is needed most.' },
+                    { claim: 'Sizing: plan for the average load; the peak needs no extra planning.', truth: 'Traffic comes in peaks, often several times the average. Size the system for the peak, or it fails just when it is needed most.' },
                 ],
                 interviewAnswer: 'I\'ll estimate the scale first, because it decides the design. For example, 100 million requests a day is only about 1,200 per second on average, maybe 5,000 at peak. A few load-balanced app servers and one database with read replicas can handle that. If it were 100 times more, I\'d plan for sharding and heavy caching.',
                 followUps: [
@@ -702,7 +702,7 @@ export const systemDesignPhases: SDPhase[] = [
                     explain: 'Explain reverse proxy versus forward proxy in two sentences.',
                     draw: 'Draw client → gateway → three services, and label what the gateway checks.',
                     apply: 'List what your gateway would do for a mobile banking app.',
-                    tradeoffs: 'What goes wrong if business logic slowly creeps into the gateway?',
+                    tradeoffs: 'What goes wrong if business logic slowly moves into the gateway?',
                 },
                 resources: [
                     { kind: 'read', title: 'The System Design Primer', source: 'Donne Martin · GitHub, free', url: 'https://github.com/donnemartin/system-design-primer' },
@@ -726,7 +726,7 @@ export const systemDesignPhases: SDPhase[] = [
                 name: 'Scalability: vertical vs horizontal',
                 priority: 'must',
                 definition: 'Scalability is a system\'s ability to handle more load by adding resources.',
-                problem: 'A system that works for 100 users can fall over at 100,000. You need a way to add capacity without rewriting everything.',
+                problem: 'A system that works for 100 users can fail at 100,000. You need a way to add capacity without rewriting everything.',
                 diagram: {
                     code: 'flowchart TD\n  LB["Load balancer"] --> S1["App server"]\n  LB --> S2["App server"]\n  LB --> S3["App server<br/>(added by auto-scaling)"]\n  S1 & S2 & S3 --> R[("Redis<br/>sessions")]\n  S1 & S2 & S3 --> P[("Database leader")]\n  P --> RR[("Read replica")]',
                     caption: 'Horizontal scaling: identical, stateless app servers behind a load balancer. Because sessions live in Redis, any server can handle any user, so adding a server is easy.',
@@ -1049,7 +1049,7 @@ export const systemDesignPhases: SDPhase[] = [
                     'AP: always answers, but may return stale data and needs conflict handling (shopping cart, likes).',
                 ],
                 mistakes: [
-                    'Calling a system \'CA\'. With replicas, partitions can\'t be wished away.',
+                    'Calling a system \'CA\'. With replicas, partitions can\'t be avoided.',
                     'Treating CAP as one choice for the whole system, instead of a choice per type of data.',
                     'Confusing CAP\'s consistency with ACID\'s consistency.',
                 ],
@@ -1616,7 +1616,7 @@ export const systemDesignPhases: SDPhase[] = [
                 name: 'Object storage (S3) for files and media',
                 priority: 'must',
                 definition: 'Object storage keeps files (\'objects\') such as images, videos and backups as a key pointing to bytes plus metadata, in a cheap, very durable, almost unlimited store like Amazon S3.',
-                problem: 'Photos, videos, backups and documents are big and numerous. Storing them in a database bloats it, slows backups and costs a lot; storing them on one server\'s disk breaks scaling.',
+                problem: 'Photos, videos, backups and documents are big and numerous. Storing them in a database makes it huge, slows backups and costs a lot; storing them on one server\'s disk breaks scaling.',
                 diagram: {
                     code: 'sequenceDiagram\n  participant C as Client\n  participant API as API server\n  participant S3 as Object storage\n  participant DB as Database\n  C->>API: I want to upload a photo\n  API->>S3: create a pre-signed upload URL\n  S3-->>API: URL, valid for 5 minutes\n  API-->>C: here is the URL\n  C->>S3: upload the file directly\n  C->>API: upload finished\n  API->>DB: save the key users/42/photo.jpg',
                     caption: 'The file goes straight from the client to storage. Your servers only hand out the upload link and record where the file is.',
@@ -1645,12 +1645,12 @@ export const systemDesignPhases: SDPhase[] = [
                     'Sending big uploads through your own app servers.',
                 ],
                 myths: [
-                    { claim: 'Videos and other large files: stored in the database, next to their metadata.', truth: 'Big files bloat the database and slow its backups. Put the file in object storage, and keep only its key and metadata in the database.' },
+                    { claim: 'Videos and other large files: stored in the database, next to their metadata.', truth: 'Big files make the database huge and slow its backups. Put the file in object storage, and keep only its key and metadata in the database.' },
                     { claim: 'Big uploads: sent through your own app servers on the way to storage.', truth: 'That ties up app servers with slow transfers. Give the client a pre-signed URL, and it uploads straight to object storage.' },
                 ],
                 interviewAnswer: 'Files go in object storage like S3, never in the database. The database keeps the object key and metadata. Clients upload directly using pre-signed URLs, and downloads go through a CDN.',
                 followUps: [
-                    { q: 'Why not store images in the database?', a: 'It bloats the database, slows backups and replication, and wastes expensive database capacity on cheap bytes.' },
+                    { q: 'Why not store images in the database?', a: 'It makes the database huge, slows backups and replication, and wastes expensive database capacity on cheap bytes.' },
                     { q: 'How do you upload 2 GB over a bad connection?', a: 'Multipart upload: send it in chunks, retry the failed ones, and resume instead of starting again.' },
                 ],
                 practice: {
@@ -2308,7 +2308,7 @@ export const systemDesignPhases: SDPhase[] = [
                 keyPoints: [
                     'Warning sign: methods that raise NotImplementedError or do nothing.',
                     'Split interfaces by what each client needs (role interfaces).',
-                    'Works hand in hand with single responsibility.',
+                    'Works together with single responsibility.',
                 ],
                 code: 'from abc import ABC, abstractmethod\n\nclass Printer(ABC):\n    @abstractmethod\n    def print(self, doc): ...\n\nclass Scanner(ABC):\n    @abstractmethod\n    def scan(self): ...\n\nclass BasicPrinter(Printer):                 # no fake scan() needed\n    def print(self, doc): return f"printing {doc}"\n\nclass OfficeMachine(Printer, Scanner):\n    def print(self, doc): return f"printing {doc}"\n    def scan(self): return "scanned page"',
                 codeLanguage: 'python',
@@ -3130,7 +3130,7 @@ export const systemDesignPhases: SDPhase[] = [
                     'Emergency stop and maintenance mode.',
                 ],
                 nonFunctional: [
-                    'Short waiting times; far floors must not be starved.',
+                    'Short waiting times; people on far floors must not wait for ever.',
                     'Safety: never move with the doors open.',
                 ],
                 classes: [
@@ -3174,7 +3174,7 @@ export const systemDesignPhases: SDPhase[] = [
                 ],
                 interviewAnswer: 'A controller receives hall calls and gives each one to the lift with the lowest cost: near, idle, or already heading that way. Each lift serves its stops with the LOOK algorithm — continue in one direction, then reverse. A state machine per lift guarantees the doors are closed before it moves.',
                 followUps: [
-                    { q: 'Why not first come, first served?', a: 'The lift would zig-zag between floors. Sweeping in one direction serves more people per trip and avoids starving any floor.' },
+                    { q: 'Why not first come, first served?', a: 'The lift would zig-zag between floors. Sweeping in one direction serves more people per trip and leaves no floor waiting for ever.' },
                     { q: 'How would you test it?', a: 'Simulate time in steps with scripted requests, check the safety rules (never moving with the doors open) and measure the average wait.' },
                 ],
                 practice: {
@@ -4610,7 +4610,7 @@ export const systemDesignPhases: SDPhase[] = [
                 mistakes: [
                     'Handling one request at a time on an expensive GPU.',
                     'Ignoring KV-cache memory when planning capacity.',
-                    'No per-team quotas, so one team can starve the others.',
+                    'No per-team quotas, so one team can use it all and leave nothing for the others.',
                 ],
                 myths: [
                     { claim: 'Handling one request at a time makes full use of an expensive GPU.', truth: 'A GPU can work on many requests in the same pass. Continuous batching adds new requests between decode steps, which raises throughput a great deal.' },

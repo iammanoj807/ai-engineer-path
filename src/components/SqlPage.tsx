@@ -279,6 +279,24 @@ const TopicAnimation = ({ topicId, accent }: { topicId: string; accent: string }
     );
 };
 
+/** The solution walk-throughs load with the other animations, but only when a solution is opened. */
+const loadSolutionAnimations = () => import('../data/sqlAnimations').then(m => m.sqlSolutionAnimations);
+
+/**
+ * An interview problem's solution, working step by step on the practice
+ * database. It sits with the solution, so it gives nothing away before the
+ * learner has tried the problem.
+ */
+const SolutionAnimation = ({ topicId, accent }: { topicId: string; accent: string }) => {
+    const spec = useTopicAnimation(loadSolutionAnimations, topicId);
+    if (!spec) return null;
+    return (
+        <Block title="Watch the solution work">
+            <AnimatedScene spec={spec} accent={accent} />
+        </Block>
+    );
+};
+
 /** The practice answers load as their own chunk, the first time a topic is opened. */
 const loadAnswers = () => import('../data/sqlAnswers').then(m => m.sqlAnswers);
 
@@ -394,6 +412,7 @@ const ProblemBody = ({ topic, accent, marked }: { topic: SqlProblem; accent: str
                         note={notes[0]}
                         saveAs={{ key: 'solution', place: 'Step 1 · Solution' }}
                     />
+                    <SolutionAnimation topicId={topic.id} accent={accent} />
                     {(topic.alternatives ?? []).map((example, index) => (
                         <ExampleBlock
                             key={example.title}

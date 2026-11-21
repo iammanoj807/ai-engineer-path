@@ -23,7 +23,7 @@ The Markdown pages in `lessons/` are written from these files. Don't edit them b
 ## Adding to a lesson, or adding a lesson
 
 - **A derivation.** An ML lesson can have an optional `deeper` block ("Go deeper"): a title, four to seven small steps, and the result. Use it for the proof the lesson states but does not show.
-- **A new lesson** needs the lesson itself (with its one false statement, see below), one answer for each of its four exercises, an animation, and glossary entries for the words it teaches. Code in a lesson or an answer must have been run, with the numbers it printed. Then run `npm run path-index` (it gives the lesson its address) and `npm run lessons`. The tests tell you what is missing.
+- **A new lesson** needs the lesson itself (with its one false statement, see below), one answer for each of its four exercises, an animation, and glossary entries for the words it teaches. A SQL interview problem has a solution walk-through instead (`src/data/sqlAnimations/phase8.ts`), shown only once the solution is open. Code in a lesson or an answer must have been run, with the numbers it printed. Then run `npm run path-index` (it gives the lesson its address) and `npm run lessons`. The tests tell you what is missing.
 
 ## Practice sessions build themselves
 

@@ -60,7 +60,7 @@ print(w)   # very close to 0
 ## Must know
 
 - Update rule: w ← w − η·∇L(w), for every weight at once.
-- η too small: slow. Too large: oscillates or diverges. There is a sweet spot in between.
+- η too small: slow. Too large: oscillates or diverges. The best value lies in between.
 - For f(w) = w², each step multiplies w by (1 − 2η), so it converges only when 0 &lt; η &lt; 1.
 - Stochastic gradient descent (SGD) estimates the gradient from a small random batch: noisier, but far cheaper per step.
 - Gradient descent finds a local minimum. For convex functions, that is the global one.
@@ -167,7 +167,7 @@ The update gives (w − 3) ← (w − 3)·(1 − 2η), so everything depends on 
 • η = 0.9: factor −0.8. The sign flips each step, so w jumps to the other side of 3, but each jump is shorter. It swings from side to side and still settles.  
 • η = 1.1: factor −1.2. It swings to the other side and lands further away each time: 0 → 6.6 → −1.32 → 8.18 … It explodes.
 
-The general rule for this kind of bowl: the steps shrink only when \|1 − 2η\| &lt; 1, so η must be between 0 and 1. For real losses the limit depends on how curved the loss is, which is why a learning rate that works on one problem can blow up another.
+The general rule for this kind of bowl: the steps shrink only when \|1 − 2η\| &lt; 1, so η must be between 0 and 1. For real losses the limit depends on how curved the loss is, which is why a learning rate that works on one problem can diverge on another.
 
 ```python
 for lr in [0.01, 0.5, 0.9, 1.1]:

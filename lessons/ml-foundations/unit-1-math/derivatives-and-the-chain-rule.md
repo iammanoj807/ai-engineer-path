@@ -63,10 +63,10 @@ h = 1e-5
 
 - Forgetting the inner rate: the derivative of (3x + 1)² is not just 2(3x + 1).
 - Using the wrong values in the chain. Each rate is worked out at the current point (u = 4 here).
-- Numerical derivatives with h far too small, like 1e-15: rounding errors swamp the answer.
+- Numerical derivatives with h far too small, like 1e-15: rounding errors become bigger than the answer.
 
 > **Not true:** Numerical derivative: the smaller the step h, the more accurate the answer.  
-> **In fact:** Only up to a point. With h as small as 1e-15, rounding errors swamp the tiny difference and the answer becomes wrong.
+> **In fact:** Only up to a point. With h as small as 1e-15, rounding errors are bigger than the tiny difference, and the answer becomes wrong.
 
 > **Not true:** d/dx (3x + 1)² = 2(3x + 1).  
 > **In fact:** The chain rule also multiplies by the inner rate, which is 3. The derivative is 2(3x + 1) × 3 = 6(3x + 1).
@@ -140,7 +140,7 @@ h = 1e-1 is too big: the formula assumes the curve is nearly straight between x 
 
 h = 1e-12 is too small: f(x + h) and f(x − h) are now almost the same number, and floats keep only about 16 significant digits. Subtracting two nearly equal numbers wipes out most of those digits (catastrophic cancellation), and dividing by the tiny 2h magnifies what is left. The error comes back up, to about 1e-5: a million times worse than h = 1e-5.
 
-The sweet spot for the central difference is roughly h ≈ 1e-5 to 1e-6, about the cube root of the float precision.
+The best range for the central difference is roughly h ≈ 1e-5 to 1e-6, about the cube root of the float precision.
 
 ```python
 import numpy as np

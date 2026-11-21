@@ -151,7 +151,7 @@ Try to generate text with the BERT-style model, one token at a time. Why does it
 
 To generate with it, put a [MASK] at the end, predict what it is, keep that character, add a new [MASK], and repeat. The result is poor: short runs of plausible letters that soon fall into repetition or nonsense, much worse than the GPT of the same size.
 
-Why: it was trained on a different task. It always had real text on both sides of a gap, and only 15% of positions were hidden. Here the gap is always at the very end, with nothing to its right, which it never practised, and every character it guesses becomes context for the next guess, so its mistakes pile up. It also never learned a proper probability for "what comes next given only the past", which is exactly what generation needs. Encoders are built to understand a whole text at once (classification, search, tagging); decoders are built to write.
+Why: it was trained on a different task. It always had real text on both sides of a gap, and only 15% of positions were hidden. Here the gap is always at the very end, with nothing to its right, which it never practised, and every character it guesses becomes context for the next guess, so its mistakes add up. It also never learned a proper probability for "what comes next given only the past", which is exactly what generation needs. Encoders are built to understand a whole text at once (classification, search, tagging); decoders are built to write.
 
 ```python
 import torch

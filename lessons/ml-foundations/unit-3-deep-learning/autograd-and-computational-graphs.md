@@ -66,7 +66,7 @@ w.grad    # tensor(-12.)  the same as the hand calculation
 
 ## Common mistakes
 
-- Forgetting zero_grad(), so gradients from earlier batches pile up.
+- Forgetting zero_grad(), so gradients from earlier batches add up.
 - Evaluating without no_grad(), wasting memory on a graph you never use.
 - Calling .numpy() or .item() in the middle of a computation, which breaks the graph.
 - Changing a tensor in place that autograd still needs, which causes an error during backward.
@@ -75,7 +75,7 @@ w.grad    # tensor(-12.)  the same as the hand calculation
 > **In fact:** Those calls leave PyTorch and return plain numbers, so the graph is cut there and nothing before that point receives a gradient.
 
 > **Not true:** PyTorch clears the old gradients by itself before each backward pass.  
-> **In fact:** Gradients accumulate: each backward pass adds to .grad. Call optimizer.zero_grad() once per step, or the old gradients pile up.
+> **In fact:** Gradients accumulate: each backward pass adds to .grad. Call optimizer.zero_grad() once per step, or the old gradients add up.
 
 ## Practise
 

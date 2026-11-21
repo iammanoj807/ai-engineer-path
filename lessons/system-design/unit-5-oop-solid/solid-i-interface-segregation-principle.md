@@ -56,7 +56,7 @@ A Machine interface with print(), scan() and fax() forces a basic printer to imp
 
 - Warning sign: methods that raise NotImplementedError or do nothing.
 - Split interfaces by what each client needs (role interfaces).
-- Works hand in hand with single responsibility.
+- Works together with single responsibility.
 
 ## In code
 

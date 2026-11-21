@@ -121,7 +121,7 @@ This is SQLite's way. The notes below give the PostgreSQL, MySQL and SQL Server 
 - Comparing dates stored as '06/01/2024' text — they compare as text, not as dates.
 
 > **Not true:** Rounding each value first and then adding them gives the same total as adding first.  
-> **In fact:** Every rounding adds a small error, and the errors pile up. Add the exact values first, and round once at the end.
+> **In fact:** Every rounding adds a small error, and the errors add up. Add the exact values first, and round once at the end.
 
 ## Other databases
 

@@ -10,7 +10,7 @@
 
 ## The problem it solves
 
-Photos, videos, backups and documents are big and numerous. Storing them in a database bloats it, slows backups and costs a lot; storing them on one server's disk breaks scaling.
+Photos, videos, backups and documents are big and numerous. Storing them in a database makes it huge, slows backups and costs a lot; storing them on one server's disk breaks scaling.
 
 ## The idea
 
@@ -68,7 +68,7 @@ Profile photo upload: the app asks the API for a pre-signed URL, uploads straigh
 - Sending big uploads through your own app servers.
 
 > **Not true:** Videos and other large files: stored in the database, next to their metadata.  
-> **In fact:** Big files bloat the database and slow its backups. Put the file in object storage, and keep only its key and metadata in the database.
+> **In fact:** Big files make the database huge and slow its backups. Put the file in object storage, and keep only its key and metadata in the database.
 
 > **Not true:** Big uploads: sent through your own app servers on the way to storage.  
 > **In fact:** That ties up app servers with slow transfers. Give the client a pre-signed URL, and it uploads straight to object storage.
@@ -80,7 +80,7 @@ Files go in object storage like S3, never in the database. The database keeps th
 <details>
 <summary>&lt;b>Why not store images in the database?&lt;/b></summary>
 
-It bloats the database, slows backups and replication, and wastes expensive database capacity on cheap bytes.
+It makes the database huge, slows backups and replication, and wastes expensive database capacity on cheap bytes.
 
 </details>
 

@@ -209,7 +209,7 @@ A loan application is long (identity check, credit check, affordability, underwr
 
 With choreography, six services each react to each other's events. Nobody holds the whole picture, the flow exists only in your head, and adding a step means changing several services. That suits short flows with two or three steps.
 
-The cost of orchestration: one more component to run, and a risk that business rules creep into the orchestrator. Keep the decisions in the services; the orchestrator only decides what happens next.
+The cost of orchestration: one more component to run, and a risk that business rules move into the orchestrator. Keep the decisions in the services; the orchestrator only decides what happens next.
 
 </details>
 
