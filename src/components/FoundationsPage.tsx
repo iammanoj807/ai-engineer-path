@@ -79,6 +79,7 @@ import { segmentSections } from './learning/glossaryContext';
 import PathLearn from './app/PathLearn';
 import QuickPracticePanel from './practice/QuickPracticePanel';
 import GuessFirst from './learning/GuessFirst';
+import { StudyStrip } from './learning/StudyStrip';
 import { useTracksProgress } from '../services/account';
 import { useCourseNav } from '../game/useCourseNav';
 import { courseById } from '../game/courses';
@@ -561,9 +562,9 @@ const FoundationsPage = () => {
                         </Stack>
                         )}
 
-                        {/* ---- HOW TO LEARN A TOPIC ---- said once, and closed once read */}
+                        {/* ---- HOW EACH LESSON WORKS ---- a picture; the full text opens from Details */}
                         <Box sx={{ mb: 3 }}>
-                            <ReferencePanel title="How to learn a topic (read once)" tint="rgba(77,208,225,0.07)" border="rgba(77,208,225,0.25)">
+                            <StudyStrip title="How to learn a topic" checks={CHECK_KEYS.map(key => CHECK_LABELS[key])}>
                                 <Typography variant="body1" sx={{ color: 'text.primary' }}>
                                     {CONFIDENT_RULE}
                                 </Typography>
@@ -594,7 +595,7 @@ const FoundationsPage = () => {
                                         </Box>
                                     ))}
                                 </Box>
-                            </ReferencePanel>
+                            </StudyStrip>
                         </Box>
 
                             </>}

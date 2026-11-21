@@ -65,7 +65,6 @@ import {
     TopicResourceRow,
     CheckDots,
     StepBar,
-    ReferencePanel,
     Block,
     Callout,
     MUST_KNOW,
@@ -89,6 +88,7 @@ import { segmentSections, type Prose } from './learning/glossaryContext';
 import PathLearn from './app/PathLearn';
 import QuickPracticePanel from './practice/QuickPracticePanel';
 import GuessFirst from './learning/GuessFirst';
+import { StudyStrip } from './learning/StudyStrip';
 import { useTracksProgress } from '../services/account';
 import { useCourseNav } from '../game/useCourseNav';
 import { courseById } from '../game/courses';
@@ -811,9 +811,9 @@ const SystemDesignPage = () => {
                         </Stack>
                         )}
 
-                        {/* ---- HOW TO STUDY ---- said once, and closed once read */}
+                        {/* ---- HOW EACH LESSON WORKS ---- a picture; the full text opens from Details */}
                         <Box sx={{ mb: 3 }}>
-                            <ReferencePanel title="How to study system design (read once)" tint="rgba(77,208,225,0.07)" border="rgba(77,208,225,0.25)">
+                            <StudyStrip title="How to study system design" checks={SD_CHECK_KEYS.map(key => SD_CHECK_LABELS[key])}>
                                 <Stack component="ol" spacing={1} sx={{ pl: 2.5, m: 0 }}>
                                     {sdHowToStudy.map(line => (
                                         <Typography key={line} component="li" variant="body2" sx={{ color: 'text.primary' }}>
@@ -836,7 +836,7 @@ const SystemDesignPage = () => {
                                         </Box>
                                     ))}
                                 </Box>
-                            </ReferencePanel>
+                            </StudyStrip>
                         </Box>
 
                                 </>}
@@ -904,9 +904,9 @@ const SystemDesignPage = () => {
                         </Stack>
                         )}
 
-                        {/* ---- HOW TO STUDY ---- said once, and closed once read */}
+                        {/* ---- HOW EACH LESSON WORKS ---- a picture; the full text opens from Details */}
                         <Box sx={{ mb: 3 }}>
-                            <ReferencePanel title="How to study system design (read once)" tint="rgba(77,208,225,0.07)" border="rgba(77,208,225,0.25)">
+                            <StudyStrip title="How to study system design" checks={SD_CHECK_KEYS.map(key => SD_CHECK_LABELS[key])}>
                                 <Stack component="ol" spacing={1} sx={{ pl: 2.5, m: 0 }}>
                                     {sdHowToStudy.map(line => (
                                         <Typography key={line} component="li" variant="body2" sx={{ color: 'text.primary' }}>
@@ -929,7 +929,7 @@ const SystemDesignPage = () => {
                                         </Box>
                                     ))}
                                 </Box>
-                            </ReferencePanel>
+                            </StudyStrip>
                         </Box>
 
                         {/* ---- FILTERS ---- */}

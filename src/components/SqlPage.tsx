@@ -65,7 +65,6 @@ import {
     TopicResourceRow,
     CheckDots,
     StepBar,
-    ReferencePanel,
     Block,
     Callout,
     MUST_KNOW,
@@ -90,6 +89,10 @@ import { AnswerQuery, ExampleBlock, ExampleOutcome, FloatingSqlBox, MONO, Practi
 import { roomForQuickBox } from './sql/quickBoxLayout';
 import QuickPracticePanel from './practice/QuickPracticePanel';
 import GuessFirst from './learning/GuessFirst';
+import { StudyStrip, ToolButton } from './learning/StudyStrip';
+import StorageRoundedIcon from '@mui/icons-material/StorageRounded';
+import BookmarkRoundedIcon from '@mui/icons-material/BookmarkRounded';
+import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import { SqlQueriesContext, SqlTopicContext } from './sql/sqlContext';
 import PathLearn from './app/PathLearn';
 import { useTracksProgress } from '../services/account';
@@ -948,7 +951,7 @@ const SqlPage = () => {
 
                             {/* ---- REFERENCE ---- how to study, the practice tables, the cheat sheet */}
                             <Stack spacing={1.5} sx={{ mb: 3 }}>
-                                <ReferencePanel title="How to study SQL (read once)" tint="rgba(77,208,225,0.07)" border="rgba(77,208,225,0.25)">
+                                <StudyStrip title="How to study SQL" checks={SQL_CHECK_KEYS.map(key => SQL_CHECK_LABELS[key])}>
                                     <Stack component="ol" spacing={1} sx={{ pl: 2.5, m: 0 }}>
                                         {sqlHowToStudy.map(line => (
                                             <Typography key={line} component="li" variant="body2" sx={{ color: 'text.primary' }}>
@@ -971,16 +974,19 @@ const SqlPage = () => {
                                             </Box>
                                         ))}
                                     </Box>
-                                </ReferencePanel>
-                                <ReferencePanel title="The practice database: six tables, and a box to run any query" tint="rgba(255,202,40,0.06)" border="rgba(255,202,40,0.25)">
-                                    <PracticeDatabase accent={MUST} />
-                                </ReferencePanel>
-                                <ReferencePanel title={`My saved queries (${savedCount})`} tint="rgba(102,187,106,0.05)" border="rgba(102,187,106,0.25)">
-                                    <SavedQueriesPanel accent={CONFIDENT} openTopic={openTopic} />
-                                </ReferencePanel>
-                                <ReferencePanel title="SQL cheat sheet: the shapes to know by heart" tint="rgba(255,255,255,0.03)" border="rgba(255,255,255,0.12)">
-                                    <CheatSheet />
-                                </ReferencePanel>
+                                </StudyStrip>
+                                {/* The course's tools: each opens in a dialog. */}
+                                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                                    <ToolButton icon={StorageRoundedIcon} colour="#ffca28" label="Practice database" title="The practice database: six tables, and a box to run any query">
+                                        <PracticeDatabase accent={MUST} />
+                                    </ToolButton>
+                                    <ToolButton icon={BookmarkRoundedIcon} colour="#81c784" label={`Saved queries (${savedCount})`} title={`My saved queries (${savedCount})`}>
+                                        <SavedQueriesPanel accent={CONFIDENT} openTopic={openTopic} />
+                                    </ToolButton>
+                                    <ToolButton icon={DescriptionRoundedIcon} colour="#90caf9" label="Cheat sheet" title="SQL cheat sheet: the shapes to know by heart">
+                                        <CheatSheet />
+                                    </ToolButton>
+                                </Stack>
                             </Stack>
 
                                     </>}
@@ -1050,7 +1056,7 @@ const SqlPage = () => {
 
                             {/* ---- REFERENCE ---- how to study, the practice tables, the cheat sheet */}
                             <Stack spacing={1.5} sx={{ mb: 3 }}>
-                                <ReferencePanel title="How to study SQL (read once)" tint="rgba(77,208,225,0.07)" border="rgba(77,208,225,0.25)">
+                                <StudyStrip title="How to study SQL" checks={SQL_CHECK_KEYS.map(key => SQL_CHECK_LABELS[key])}>
                                     <Stack component="ol" spacing={1} sx={{ pl: 2.5, m: 0 }}>
                                         {sqlHowToStudy.map(line => (
                                             <Typography key={line} component="li" variant="body2" sx={{ color: 'text.primary' }}>
@@ -1073,16 +1079,19 @@ const SqlPage = () => {
                                             </Box>
                                         ))}
                                     </Box>
-                                </ReferencePanel>
-                                <ReferencePanel title="The practice database: six tables, and a box to run any query" tint="rgba(255,202,40,0.06)" border="rgba(255,202,40,0.25)">
-                                    <PracticeDatabase accent={MUST} />
-                                </ReferencePanel>
-                                <ReferencePanel title={`My saved queries (${savedCount})`} tint="rgba(102,187,106,0.05)" border="rgba(102,187,106,0.25)">
-                                    <SavedQueriesPanel accent={CONFIDENT} openTopic={openTopic} />
-                                </ReferencePanel>
-                                <ReferencePanel title="SQL cheat sheet: the shapes to know by heart" tint="rgba(255,255,255,0.03)" border="rgba(255,255,255,0.12)">
-                                    <CheatSheet />
-                                </ReferencePanel>
+                                </StudyStrip>
+                                {/* The course's tools: each opens in a dialog. */}
+                                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                                    <ToolButton icon={StorageRoundedIcon} colour="#ffca28" label="Practice database" title="The practice database: six tables, and a box to run any query">
+                                        <PracticeDatabase accent={MUST} />
+                                    </ToolButton>
+                                    <ToolButton icon={BookmarkRoundedIcon} colour="#81c784" label={`Saved queries (${savedCount})`} title={`My saved queries (${savedCount})`}>
+                                        <SavedQueriesPanel accent={CONFIDENT} openTopic={openTopic} />
+                                    </ToolButton>
+                                    <ToolButton icon={DescriptionRoundedIcon} colour="#90caf9" label="Cheat sheet" title="SQL cheat sheet: the shapes to know by heart">
+                                        <CheatSheet />
+                                    </ToolButton>
+                                </Stack>
                             </Stack>
 
                             {/* ---- FILTERS ---- */}
