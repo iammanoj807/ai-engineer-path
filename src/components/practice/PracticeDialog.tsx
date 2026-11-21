@@ -6,6 +6,7 @@ import { CircularProgress, Dialog, Stack, Typography } from '@mui/material';
 import type { Course } from '../../services/progress';
 import Mascot from './Mascot';
 import { guideFor, type Guide } from './guides';
+import type { DueLesson } from '../../game/review';
 
 const PracticeSession = lazy(() => import('./PracticeSession'));
 
@@ -19,9 +20,13 @@ const Waiting = ({ guide, onClose }: { guide: Guide; onClose: () => void }) => (
     </Dialog>
 );
 
-const PracticeDialog = ({ course, topicId, onClose }: { course: Course; topicId: string; onClose: () => void }) => (
+/**
+ * A lesson's practice (with a guess first when `warmUp`, from the path), or a
+ * review of due lessons (`review`).
+ */
+const PracticeDialog = ({ course, topicId, onClose, warmUp, review }: { course: Course; topicId: string; onClose: () => void; warmUp?: boolean; review?: DueLesson[] }) => (
     <Suspense fallback={<Waiting guide={guideFor(topicId)} onClose={onClose} />}>
-        <PracticeSession course={course} topicId={topicId} onClose={onClose} />
+        <PracticeSession course={course} topicId={topicId} onClose={onClose} warmUp={warmUp} review={review} />
     </Suspense>
 );
 

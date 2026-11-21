@@ -77,6 +77,16 @@ Tap any lesson on the path and press **Practise**. The lesson's guide teaches th
 
 A right answer chimes. A wrong one costs a heart, and the card comes back at the end so it sticks. Finishing earns XP and keeps your streak. The voice and the sounds each have their own on/off button.
 
+### Learn it so it lasts
+
+The site follows what learning research shows works best:
+
+1. **Guess first.** Before a lesson, take a quick true-or-false guess. A guess, even a wrong one, makes the answer stick when you meet it (the *pretesting effect*).
+2. **Learn it.** An animation, the idea step by step, and a worked example.
+3. **Practise from memory.** Answering from memory beats rereading. In one well-known study, students who tested themselves remembered 61% a week later, against 40% for rereading (Roediger and Karpicke, 2006).
+4. **Review just before you forget.** Each lesson you practise comes back for a five-minute mixed review after 1, 3, 7, 14, 30 and 60 days, with the cards you missed first. Spacing and mixing are what make learning last.
+5. **Harder each time.** Reviews move from recognising, to recalling from memory, to the interview question about the lesson. You go from beginner to interview level.
+
 ### Run SQL in the page
 
 [![A SQL lesson's practice box: a GROUP BY query and its result table](docs/images/sql-run.png)](https://learn.hamropedia.com/sql/group-by-one-result-row-per-group/)

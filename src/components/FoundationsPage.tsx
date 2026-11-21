@@ -78,6 +78,7 @@ import { MermaidDiagram } from './learning/MermaidDiagram';
 import { segmentSections } from './learning/glossaryContext';
 import PathLearn from './app/PathLearn';
 import QuickPracticePanel from './practice/QuickPracticePanel';
+import GuessFirst from './learning/GuessFirst';
 import { useTracksProgress } from '../services/account';
 import { useCourseNav } from '../game/useCourseNav';
 import { courseById } from '../game/courses';
@@ -261,6 +262,7 @@ const TopicCard = ({
                     {/* ---- STEP 1 ---- the lesson, written to be enough on its own */}
                     <SectionLabel color={accent} id={stepId(topic.id, 1)}>{STEPS[0].label}</SectionLabel>
                     <Stack spacing={3} sx={{ maxWidth: 760 }}>
+                        <GuessFirst topic={topic} accent={accent} glossary={foundationsGlossary} />
                         <QuoteBox accent={accent}>
                             <Typography variant="body1">
                                 <strong style={{ color: accent }}>In one line.</strong> <ProseText value={marked('definition')[0]} />

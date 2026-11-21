@@ -11,7 +11,7 @@ import type { SqlResultTable, SqlTopic, SqlTopicAnswers } from '../data/sql';
 import type { SDTopic } from '../data/systemDesign';
 import type { Course } from '../services/progress';
 import type { GlossaryTerm, TextSegment } from '../utils/glossaryEngine';
-import type { BlankCard, IdeaCard, MatchCard, MistakeCard, OrderCard, PracticeCard, RecallCard, WordsCard } from './cards';
+import type { BlankCard, GuessCard, IdeaCard, MatchCard, MistakeCard, OrderCard, PracticeCard, RecallCard, WordsCard } from './cards';
 import { seedOf, sqlFixCard, sqlPracticeCards, type WriteCard } from './sql';
 import { isTypable } from './typing';
 
@@ -275,6 +275,42 @@ const mistakeCard = (lesson: LessonText): MistakeCard[] => {
     return [{ kind: 'mistake', id, options: shuffle([{ text: mistake, mistake: true }, ...facts.map(text => ({ text, mistake: false }))], id) }];
 };
 
+/**
+ * The warm-up before learning: the lesson's second common mistake (false) and
+ * a key point (true), never the statements the "spot the mistake" card shows.
+ */
+export const guessCard = (lesson: LessonText): GuessCard[] => {
+    const id = `${lesson.id}-guess`;
+    const fits = (text: string) => text.length >= 20 && text.length <= 170 && !hasLink(text);
+    // mistakeCard uses the first mistake that fits and the first three facts.
+    const mistake = lesson.mistakes.filter(fits)[1];
+    const fact = lesson.facts.filter(fits)[3];
+    const statements = [...(mistake ? [{ text: mistake, isTrue: false }] : []), ...(fact ? [{ text: fact, isTrue: true }] : [])];
+    return statements.length ? [{ kind: 'guess', id, statements: shuffle(statements, id) }] : [];
+};
+
+/** A question an interviewer would ask about the lesson, with its model answer. */
+export interface InterviewSource {
+    q: string;
+    answer: string;
+    /** The lessons the answer is built on; the first is the main one. */
+    topicIds: string[];
+}
+
+/**
+ * A lesson's interview-level question, for its later reviews: the course's
+ * interview question about it when there is one, else a follow-up question the
+ * "Remember it" card doesn't use.
+ */
+export const interviewCard = (lesson: LessonText, questions: InterviewSource[] = []): RecallCard[] => {
+    const id = `${lesson.id}-interview`;
+    const asked = questions.find(question => question.topicIds[0] === lesson.id && question.q.length <= 260);
+    if (asked) return [{ kind: 'recall', id, question: asked.q, answer: asked.answer, interview: true }];
+    const fits = (f: { q: string; a: string }) => f.q.length <= 220 && f.a.length <= 360 && !hasLink(f.q) && !hasLink(f.a);
+    const followUp = lesson.followUps.filter(fits)[1];
+    return followUp ? [{ kind: 'recall', id, question: followUp.q, answer: followUp.a, interview: true }] : [];
+};
+
 const recallCard = (lesson: LessonText): RecallCard[] => {
     const followUp = lesson.followUps.find(f => f.q.length <= 220 && f.a.length <= 360 && !hasLink(f.q) && !hasLink(f.a));
     return followUp ? [{ kind: 'recall', id: `${lesson.id}-recall`, question: followUp.q, answer: followUp.a }] : [];
@@ -290,9 +326,14 @@ export const MAX_EXERCISES = 8;
  * words first, then exercises from recognising (match, spot the mistake) to
  * producing (order, type the word, write SQL), with one question to recall.
  */
-export const buildSession = (course: Course, topic: AnyTopic, sources: SessionSources): PracticeCard[] => {
+/**
+ * A lesson's practice. With `warmUp` (opened straight from the path), it starts
+ * with a guess before the teaching; from the lesson page it doesn't, because the
+ * page asked the same guess before the learner read it.
+ */
+export const buildSession = (course: Course, topic: AnyTopic, sources: SessionSources, options: { warmUp?: boolean } = {}): PracticeCard[] => {
     const lesson = lessonText(topic);
-    const teach: PracticeCard[] = [ideaCard(lesson), ...wordsCard(topic, sources.glossary)];
+    const teach: PracticeCard[] = [...(options.warmUp ? guessCard(lesson) : []), ideaCard(lesson), ...wordsCard(topic, sources.glossary)];
     const match = matchCard(topic, sources.glossary);
     const matched = new Set(match.flatMap(card => card.pairs.map(pair => pair.key)));
     const order = orderCard(lesson);

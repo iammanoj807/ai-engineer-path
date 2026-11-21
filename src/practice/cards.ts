@@ -8,6 +8,17 @@ import type { PredictCard, RowOrder, WriteCard } from './sql';
 
 export type { PredictCard, WriteCard } from './sql';
 
+/**
+ * Before learning: one or two statements from the lesson to guess true or
+ * false. A guess, even a wrong one, makes the answer stick when the lesson
+ * shows it (the pretesting effect). No hearts or XP depend on it.
+ */
+export interface GuessCard {
+    kind: 'guess';
+    id: string;
+    statements: { text: string; isTrue: boolean }[];
+}
+
 /** Teaching: the lesson's one-line idea, its picture, and an everyday comparison. */
 export interface IdeaCard {
     kind: 'idea';
@@ -70,6 +81,8 @@ export interface RecallCard {
     id: string;
     question: string;
     answer: string;
+    /** An interview-level question, for a lesson's later reviews. */
+    interview?: boolean;
 }
 
 /** SQL: a working query with one small bug put in, to find and fix. */
@@ -85,15 +98,16 @@ export interface FixCard {
     hint: string;
 }
 
-export type PracticeCard = IdeaCard | WordsCard | MatchCard | BlankCard | OrderCard | MistakeCard | RecallCard | PredictCard | WriteCard | FixCard;
+export type PracticeCard = GuessCard | IdeaCard | WordsCard | MatchCard | BlankCard | OrderCard | MistakeCard | RecallCard | PredictCard | WriteCard | FixCard;
 
-/** Cards that teach rather than ask: they can't be got wrong. */
-export const isTeaching = (card: PracticeCard) => card.kind === 'idea' || card.kind === 'words';
+/** Cards that teach rather than ask: they can't be got wrong (a guess is only a guess). */
+export const isTeaching = (card: PracticeCard) => card.kind === 'idea' || card.kind === 'words' || card.kind === 'guess';
 
 /** Cards that ask and are checked: these cost a heart when missed, and come back once at the end. */
 export const isChecked = (card: PracticeCard) => !isTeaching(card) && card.kind !== 'recall';
 
 export const CARD_TITLES: Record<PracticeCard['kind'], string> = {
+    guess: 'Take a guess',
     idea: 'New idea',
     words: 'New words',
     match: 'Match the pairs',
@@ -107,4 +121,5 @@ export const CARD_TITLES: Record<PracticeCard['kind'], string> = {
 };
 
 /** A card's title; a SQL problem's own question is "Solve the problem". */
-export const cardTitle = (card: PracticeCard) => (card.kind === 'write' ? card.label.charAt(0) + card.label.slice(1).toLowerCase() : CARD_TITLES[card.kind]);
+export const cardTitle = (card: PracticeCard) =>
+    card.kind === 'write' ? card.label.charAt(0) + card.label.slice(1).toLowerCase() : card.kind === 'recall' && card.interview ? 'Interview question' : CARD_TITLES[card.kind];

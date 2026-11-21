@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { Box, Button, ButtonBase, Stack, Typography } from '@mui/material';
-import type { MatchCard, MistakeCard, OrderCard, RecallCard } from '../../../practice/cards';
+import { cardTitle, type MatchCard, type MistakeCard, type OrderCard, type RecallCard } from '../../../practice/cards';
 import { cardLine } from '../../../practice/lines';
 import { ProseText } from '../../learning/GlossaryText';
 import { usePractice } from '../context';
@@ -235,17 +235,19 @@ export const RecallCardView = ({ card, accent, onDone }: CardProps<RecallCard>) 
     return (
         <>
             <Body>
-                <CardHeader title="Remember it" accent={accent} mood={knew === null ? 'think' : knew ? 'happy' : 'idle'} speak={cardLine(card)}>
+                <CardHeader title={cardTitle(card)} accent={accent} mood={knew === null ? 'think' : knew ? 'happy' : 'idle'} speak={cardLine(card)}>
                     <ProseText value={prose(card.question)} />
                 </CardHeader>
                 {!shown ? (
                     <Typography color="text.secondary" sx={{ mb: 2 }}>
-                        Say your answer out loud or in your head, then look.
+                        {card.interview
+                            ? 'As if in an interview: say your answer out loud, in your own words, then compare it with a strong answer.'
+                            : 'Say your answer out loud or in your head, then look.'}
                     </Typography>
                 ) : (
                     <Box sx={{ p: { xs: 2, sm: 2.5 }, borderRadius: 3, bgcolor: `${accent}12`, borderLeft: `3px solid ${accent}` }}>
                         <Typography variant="caption" sx={{ display: 'block', fontWeight: 800, letterSpacing: 1, color: accent, mb: 0.75 }}>
-                            THE ANSWER
+                            {card.interview ? 'A STRONG ANSWER' : 'THE ANSWER'}
                         </Typography>
                         <Typography sx={{ lineHeight: 1.6 }}>
                             <ProseText value={prose(card.answer)} />

@@ -20,7 +20,11 @@ import { sqlGlossary } from '../../src/utils/sqlGlossary';
 import { systemDesignGlossary } from '../../src/utils/glossary';
 import type { GlossarySource } from '../../src/utils/glossaryEngine';
 import { runOnPracticeDb } from '../../src/utils/sqlRunner';
-import { buildSession, withFixCard, type AnyTopic, type PracticeGlossary } from '../../src/practice/build';
+import { buildSession, interviewCard, lessonText, withFixCard, type AnyTopic, type InterviewSource, type PracticeGlossary } from '../../src/practice/build';
+import { genAiInterviewSet } from '../../src/data/interviewPrep/genai';
+import { mlInterviewSet } from '../../src/data/interviewPrep/ml';
+import { sqlInterviewSet } from '../../src/data/interviewPrep/sql';
+import { systemDesignInterviewSet } from '../../src/data/interviewPrep/systemDesign';
 import { GREETING_LINES, MOMENT_LINES, cardLine } from '../../src/practice/lines';
 import { GUIDES, guideFor, type Guide } from '../../src/components/practice/guides';
 import { clipKey, tidyLine } from '../../src/components/practice/clipKey';
@@ -82,10 +86,11 @@ const adapt = <T extends AnyTopic>(glossary: GlossarySource<T>): PracticeGlossar
 });
 
 const SQL = await initSqlJs();
+const questionsOf = (sets: { questions: InterviewSource[] }[]): InterviewSource[] => sets.flatMap(set => set.questions);
 const courses = [
-    { course: 'foundations', topics: allFoundationTopics, glossary: adapt(foundationsGlossary) },
-    { course: 'sql', topics: allSqlTopics, glossary: adapt(sqlGlossary) },
-    { course: 'system_design', topics: allSystemDesignTopics, glossary: adapt(systemDesignGlossary) },
+    { course: 'foundations', topics: allFoundationTopics, glossary: adapt(foundationsGlossary), questions: questionsOf([genAiInterviewSet, mlInterviewSet]) },
+    { course: 'sql', topics: allSqlTopics, glossary: adapt(sqlGlossary), questions: questionsOf([sqlInterviewSet]) },
+    { course: 'system_design', topics: allSystemDesignTopics, glossary: adapt(systemDesignGlossary), questions: questionsOf([systemDesignInterviewSet]) },
 ] as const;
 
 const lines = new Map<string, { guide: Guide; voice: string; key: string; text: string; say: string }>();
@@ -95,10 +100,12 @@ const add = (guide: Guide, text: string) => {
     if (clean) lines.set(`${guide}|${clean}`, { guide, voice, key: clipKey(voice, clean), text: clean, say: spokenForm(clean) });
 };
 
-for (const { course, topics, glossary } of courses) {
+for (const { course, topics, glossary, questions } of courses) {
     for (const topic of topics as AnyTopic[]) {
-        let cards = buildSession(course, topic, { glossary, sqlAnswers });
+        // With the guess that opens practice from the path, and the interview question of later reviews.
+        let cards = buildSession(course, topic, { glossary, sqlAnswers }, { warmUp: true });
         if (course === 'sql') cards = withFixCard(cards, sql => runOnPracticeDb(SQL, sql));
+        cards = [...cards, ...interviewCard(lessonText(topic), questions)];
         const guide = guideFor(topic.id);
         for (const card of cards) {
             add(guide, cardLine(card));

@@ -14,16 +14,24 @@ import type { SqlCheckKey } from '../data/sql';
 import type { SavedSqlQueries, SavedSqlQuery } from '../utils/sqlQueries';
 import { localDay } from '../game/day';
 import { XP_PER_CHECK } from '../game/xp';
+import { scheduleAfter, type ReviewOutcome } from '../game/review';
 
 // ============ SHAPES ============
 
 export type FoundationCheckKey = 'explain' | 'derive' | 'build' | 'break';
 
-/** A lesson's practice sessions: the best score (0–100), the last day practised, how many times. */
+/**
+ * A lesson's practice: the best score (0–100), the last day practised or
+ * reviewed, how many times practised, and its spaced review (src/game/review.ts):
+ * when it is due, its step, and the cards missed last time.
+ */
 export interface PracticeRecord {
     best: number;
     last: string;
     times: number;
+    due?: string;
+    step?: number;
+    missed?: string[];
 }
 
 export interface FoundationsProgress {
@@ -399,6 +407,8 @@ export interface PracticeResult {
     score: number;
     /** Checks the session proved (SQL), ticked in the same save. */
     checks?: string[];
+    /** Cards not right first time: they come back first in the lesson's review. */
+    missed?: string[];
 }
 
 /**
@@ -412,10 +422,13 @@ export const savePracticeResult = async (course: Course, topicId: string, result
     await whenLoaded('activity');
     const today = localDay();
     const previous = asObject(asObject((state[course] as { practice?: unknown } | undefined)?.practice)[topicId]) as Partial<PracticeRecord>;
+    const missed = result.missed ?? [];
     const record: PracticeRecord = {
         best: Math.max(Number(previous.best) || 0, Math.round(result.score)),
         last: today,
         times: (Number(previous.times) || 0) + 1,
+        // When the lesson comes back for review: tomorrow after a first practice.
+        ...scheduleAfter(previous, { allFirstTry: missed.length === 0, missed }, today),
     };
     const saving: Promise<void>[] = [write(course, { practice: { [topicId]: { ...record } } })];
     if (result.xp > 0) {
@@ -464,6 +477,38 @@ export const setEmailReminders = async (on: boolean): Promise<void> => {
     if (!canSave()) return;
     await whenLoaded('activity');
     await write('activity', { emails: on });
+};
+
+// ============ REVIEWS ============
+
+/** One lesson in a finished review. */
+export interface ReviewedLesson {
+    topicId: string;
+    outcome: ReviewOutcome;
+}
+
+/**
+ * Save a finished review: each lesson's next review (further away when all
+ * was right, tomorrow when not), and the XP for today. One save, like a
+ * practice session, so signing in to save keeps all of it.
+ */
+export const saveReviewResult = async (course: Course, lessons: ReviewedLesson[], xp: number): Promise<void> => {
+    if (!allowedOrAsk(() => saveReviewResult(course, lessons, xp), [course, 'activity'])) return;
+    await whenLoaded(course);
+    await whenLoaded('activity');
+    const today = localDay();
+    const practice = asObject((state[course] as { practice?: unknown } | undefined)?.practice);
+    const updates: Patch = {};
+    for (const { topicId, outcome } of lessons) {
+        const previous = asObject(practice[topicId]) as Partial<PracticeRecord>;
+        updates[topicId] = { last: today, ...scheduleAfter(previous, outcome, today) };
+    }
+    const saving: Promise<void>[] = [write(course, { practice: updates })];
+    if (xp > 0) {
+        dayXpListeners.forEach(fn => fn(xpSoFarToday(today) + xp, xp));
+        saving.push(write('activity', { xp: { [today]: (state.activity?.xp?.[today] ?? 0) + xp } }));
+    }
+    await Promise.all(saving);
 };
 
 // Keep today's count current even before the home page subscribes.

@@ -31,6 +31,7 @@ import type { Course } from '../../services/progress';
 import { FLAME, MASTERED, XP_GOLD } from './colours';
 import CoursePath, { CARD, CheckDots } from './CoursePath';
 import GuestNote from './GuestNote';
+import ReviewCard from './ReviewCard';
 import { signIn, useAccount, useTracksProgress, wasSignedIn } from '../../services/account';
 import { CourseShowcase, Hero, LessonAnatomy, PathSection, StartBand } from './Landing';
 import GoogleIcon from '@mui/icons-material/Google';
@@ -384,6 +385,8 @@ const HomePage = () => {
                 <ContinueCard stats={selectedStats} tracking={tracking} />
                 {tracking ? <DailyGoalCard today={today} streak={streak} activity={progress.activity} /> : <TrackProgressCard />}
             </Stack>
+            {/* Lessons practised before, back for a short review just as they would fade. */}
+            {tracking && <ReviewCard progress={progress} />}
 
             <Typography variant="caption" sx={{ display: 'block', fontWeight: 800, letterSpacing: 1.2, color: 'text.secondary', mb: 1.5 }}>
                 YOUR COURSES

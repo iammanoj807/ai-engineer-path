@@ -7,7 +7,7 @@ import type { Course } from '../services/progress';
 import type { GlossarySource } from '../utils/glossaryEngine';
 import type { PageGlossary } from '../components/learning/glossaryContext';
 import type { AnimationLoader } from '../components/learning/anim/useTopicAnimation';
-import type { AnyTopic, PracticeGlossary } from './build';
+import type { AnyTopic, InterviewSource, PracticeGlossary } from './build';
 
 export interface PracticeSources {
     course: Course;
@@ -61,4 +61,18 @@ export const ANIMATIONS: Record<Course, AnimationLoader> = {
     foundations: () => import('../data/foundationsAnimations').then(m => m.foundationAnimations),
     sql: () => import('../data/sqlAnimations').then(m => m.sqlAnimations),
     system_design: () => import('../data/systemDesignAnimations').then(m => m.systemDesignAnimations),
+};
+
+/**
+ * A course's interview questions, for the interview-level cards of a lesson's
+ * later reviews (src/practice/review.ts). Loaded only when a review starts.
+ */
+export const loadInterviewQuestions = async (course: Course): Promise<InterviewSource[]> => {
+    const sets =
+        course === 'foundations'
+            ? await Promise.all([import('../data/interviewPrep/genai').then(m => m.genAiInterviewSet), import('../data/interviewPrep/ml').then(m => m.mlInterviewSet)])
+            : course === 'sql'
+              ? [(await import('../data/interviewPrep/sql')).sqlInterviewSet]
+              : [(await import('../data/interviewPrep/systemDesign')).systemDesignInterviewSet];
+    return sets.flatMap(set => set.questions.map(({ q, answer, topicIds }) => ({ q, answer, topicIds })));
 };

@@ -447,7 +447,8 @@ const CoursePath = ({
                     }}
                 />
             )}
-            {practising && <PracticeDialog course={course.id} topicId={practising} onClose={() => setPractising(null)} />}
+            {/* Straight from the path, so practice starts with a guess before the teaching. */}
+            {practising && <PracticeDialog course={course.id} topicId={practising} warmUp onClose={() => setPractising(null)} />}
         </Stack>
     );
 };

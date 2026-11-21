@@ -1,9 +1,11 @@
-// Teaching cards: before any question, the idea in one line with its picture
-// and an everyday comparison, then the new words it uses. Nothing is asked
-// about before it has been shown.
+// Teaching cards: a guess first (from the path), then the idea in one line with
+// its picture and an everyday comparison, then the new words it uses. The guess
+// is only a guess: no hearts, no score. Wrong or right, it makes the answer
+// stick when the lesson shows it (the pretesting effect).
 
-import { Box, Button, Stack, Typography } from '@mui/material';
-import type { IdeaCard, WordsCard } from '../../../practice/cards';
+import { useState } from 'react';
+import { Box, Button, ButtonBase, Stack, Typography } from '@mui/material';
+import type { GuessCard, IdeaCard, WordsCard } from '../../../practice/cards';
 import { cardLine } from '../../../practice/lines';
 import { ANIMATIONS } from '../../../practice/load';
 import { AnimatedScene } from '../../learning/anim/AnimatedScene';
@@ -11,7 +13,11 @@ import { useTopicAnimation } from '../../learning/anim/useTopicAnimation';
 import { ProseText } from '../../learning/GlossaryText';
 import { usePractice } from '../context';
 import { Body, CardHeader, Footer } from '../parts';
-import { bigButton, type CardProps } from '../style';
+import { RIGHT, bigButton, choiceSx, type CardProps, type Feedback } from '../style';
+import { playPop } from '../sound';
+
+/** A guess that was off: amber, not red. It's a guess, not a mistake. */
+const GUESSED_OFF = '#ffb74d';
 
 const DONE = { firstTry: true, solved: true, revealed: false };
 
@@ -23,6 +29,77 @@ const Section = ({ label, accent, children }: { label: string; accent: string; c
         <Typography sx={{ fontSize: { xs: '1.02rem', sm: '1.1rem' }, lineHeight: 1.6 }}>{children}</Typography>
     </Box>
 );
+
+export const GuessCardView = ({ card, accent, onDone }: CardProps<GuessCard>) => {
+    const { prose } = usePractice();
+    const [answers, setAnswers] = useState<(boolean | null)[]>(() => card.statements.map(() => null));
+    const done = answers.every(answer => answer !== null);
+    const allRight = answers.every((answer, i) => answer === card.statements[i].isTrue);
+    const feedback: Feedback = !done
+        ? null
+        : allRight
+          ? { tone: 'right', title: 'Great guesses!', detail: "Now let's see why." }
+          : { tone: 'shown', title: 'Good try: keep these in mind', detail: 'The lesson shows why. Guessing first helps it stick.' };
+    const guess = (i: number, value: boolean) => {
+        playPop();
+        setAnswers(previous => previous.map((answer, j) => (j === i ? value : answer)));
+    };
+    return (
+        <>
+            <Body>
+                <CardHeader title="Take a guess" accent={accent} mood={done ? 'happy' : 'think'} speak={cardLine(card)}>
+                    {cardLine(card)}
+                </CardHeader>
+                <Typography color="text.secondary" sx={{ mb: 2 }}>
+                    No hearts to lose: a guess is just a guess.
+                </Typography>
+                <Stack spacing={2}>
+                    {card.statements.map((statement, i) => {
+                        const answer = answers[i];
+                        const shown = answer !== null;
+                        return (
+                            <Box key={statement.text} sx={{ p: { xs: 2, sm: 2.25 }, borderRadius: 3, border: '1px solid rgba(255,255,255,0.12)', bgcolor: 'rgba(255,255,255,0.03)' }}>
+                                <Typography sx={{ fontSize: { xs: '1.02rem', sm: '1.08rem' }, lineHeight: 1.55, mb: 1.5 }}>
+                                    <ProseText value={prose(statement.text)} />
+                                </Typography>
+                                <Stack direction="row" spacing={1.25} role="radiogroup" aria-label="True or false">
+                                    {[true, false].map(value => {
+                                        const isAnswer = shown && value === statement.isTrue;
+                                        const pickedOff = shown && answer === value && !isAnswer;
+                                        return (
+                                            <ButtonBase
+                                                key={String(value)}
+                                                role="radio"
+                                                aria-checked={answer === value}
+                                                disabled={shown}
+                                                onClick={() => guess(i, value)}
+                                                sx={{ ...choiceSx(isAnswer ? RIGHT : pickedOff ? GUESSED_OFF : undefined, shown && !isAnswer && !pickedOff), justifyContent: 'center', fontWeight: 800 }}
+                                            >
+                                                {value ? 'True' : 'False'}
+                                            </ButtonBase>
+                                        );
+                                    })}
+                                </Stack>
+                                {shown && (
+                                    <Typography sx={{ mt: 1.25, fontWeight: 700, color: statement.isTrue ? RIGHT : GUESSED_OFF }}>
+                                        {statement.isTrue ? "True. You'll see why in a moment." : "False: it's a common mistake. The lesson shows why."}
+                                    </Typography>
+                                )}
+                            </Box>
+                        );
+                    })}
+                </Stack>
+            </Body>
+            <Footer feedback={feedback}>
+                {done ? (
+                    <Button variant="contained" onClick={() => onDone(DONE)} sx={bigButton} autoFocus disableFocusRipple>
+                        Let&apos;s learn
+                    </Button>
+                ) : null}
+            </Footer>
+        </>
+    );
+};
 
 export const IdeaCardView = ({ card, accent, onDone }: CardProps<IdeaCard>) => {
     const { course, topicId, prose } = usePractice();

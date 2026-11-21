@@ -89,6 +89,7 @@ import { segmentSections, type Prose } from './learning/glossaryContext';
 import { AnswerQuery, ExampleBlock, ExampleOutcome, FloatingSqlBox, MONO, PracticeDatabase, SavedQueriesPanel, SqlRunBox } from './sql/SqlParts';
 import { roomForQuickBox } from './sql/quickBoxLayout';
 import QuickPracticePanel from './practice/QuickPracticePanel';
+import GuessFirst from './learning/GuessFirst';
 import { SqlQueriesContext, SqlTopicContext } from './sql/sqlContext';
 import PathLearn from './app/PathLearn';
 import { useTracksProgress } from '../services/account';
@@ -500,6 +501,8 @@ const TopicCard = ({
                         {/* ---- STEP 1 ---- the lesson, or the problem to solve */}
                         <SectionLabel color={accent} id={stepId(topic.id, 1)}>{steps[0].label}</SectionLabel>
                         <Stack spacing={3} sx={{ maxWidth: 760 }}>
+                            {/* Problems already start with "solve it yourself first". */}
+                            {topic.kind === 'lesson' && <GuessFirst topic={topic} accent={accent} glossary={sqlGlossary} />}
                             <QuoteBox accent={accent}>
                                 <Typography variant="body1">
                                     <strong style={{ color: accent }}>{topic.kind === 'lesson' ? 'Definition.' : 'The question.'}</strong>{' '}
