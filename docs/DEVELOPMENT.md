@@ -55,7 +55,7 @@ For local development, put the same values in `.env.local` (see `.env.example`).
 
 ## The guides' voices
 
-Pia and Hamish say every practice line out loud, and their mouths move in step. The lines are recorded ahead of time with [Kokoro](https://github.com/thewh1teagle/kokoro-onnx), a free open-source voice model (Apache-2.0), into `public/voice/`: one small MP3 per line, and `manifest.json` with each line's mouth shapes. The voices are set in `scripts/voice/lines.ts` (`VOICE_MODELS`).
+Ada and Alan say every practice line out loud, and their mouths move in step. The lines are recorded ahead of time with [Kokoro](https://github.com/thewh1teagle/kokoro-onnx), a free open-source voice model (Apache-2.0), into `public/voice/`: one small MP3 per line, and `manifest.json` with each line's mouth shapes. The voices are set in `scripts/voice/lines.ts` (`VOICE_MODELS`).
 
 After lessons change, record the new lines (only new or changed lines are recorded; unused recordings are deleted):
 

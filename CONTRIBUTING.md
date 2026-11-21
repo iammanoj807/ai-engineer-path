@@ -20,7 +20,7 @@ Each file is plain TypeScript data. The comments at the top of `src/data/foundat
 
 ## Practice sessions build themselves
 
-The quick practice with Pia and Hamish (match the pairs, fill the gap, put the steps in order, spot the mistake, and the SQL cards) is made automatically from what a lesson already has. Nothing is written twice. See `src/practice/build.ts`.
+The quick practice with Ada and Alan (match the pairs, fill the gap, put the steps in order, spot the mistake, and the SQL cards) is made automatically from what a lesson already has. Nothing is written twice. See `src/practice/build.ts`.
 
 So when you improve a lesson, its practice improves too:
 

@@ -25,7 +25,7 @@ Free · No sign-up needed to read · Works on your phone
 
 - **One clear next step.** Each course is a path of units, with lessons in the order they are meant to be taken. The next lesson is always marked **START**.
 - **Every lesson in full.** An animation, the idea step by step, a worked example, and exercises with answers.
-- **Practice that feels like a game.** Five-minute sessions after each lesson, with hearts, XP, a streak and two friendly guides, Pia and Hamish, who read each question aloud.
+- **Practice that feels like a game.** Five-minute sessions after each lesson, with hearts, XP, a streak and two friendly coaches, Ada and Alan, who read each question aloud.
 - **SQL that runs in your browser.** A real SQLite engine and six practice tables, with nothing to install.
 - **Ready for interviews.** Every course has interview questions with full spoken answers, the traps, and the follow-ups.
 
@@ -58,16 +58,16 @@ Every lesson teaches one idea all the way through:
 3. **A worked example** with code that has been run.
 4. **Four checks with answers.** In ML Foundations they are Explain, Derive, Build and Break. Pass all four without notes and the lesson is mastered.
 
-### Practise with Pia and Hamish
+### Practise with Ada and Alan
 
 <p align="center">
-  <img src="docs/images/practice-idea.png" alt="Hamish introduces a lesson's idea, with its animation" width="24%">
+  <img src="docs/images/practice-idea.png" alt="Alan introduces a lesson's idea, with its animation" width="24%">
   <img src="docs/images/practice-match.png" alt="Match each word to its meaning" width="24%">
   <img src="docs/images/practice-typing.png" alt="Type the missing word, checked letter by letter" width="24%">
   <img src="docs/images/practice-summary.png" alt="Lesson complete: XP earned, first-try score and hearts left" width="24%">
 </p>
 
-Tap any lesson on the path and press **Practise**. The lesson's guide teaches the idea and its new words first, then asks quick questions made from the lesson itself, reading each one aloud:
+Tap any lesson on the path and press **Practise**. The lesson's coach teaches the idea and its new words first, then asks quick questions made from the lesson itself, reading each one aloud:
 
 - **Match the pairs:** each word to what it means.
 - **Fill the gap:** type the missing word, checked letter by letter, or choose it from four words if typing is hard.

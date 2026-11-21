@@ -112,8 +112,8 @@ const Celebration = () => {
                     <DialogContent sx={{ textAlign: 'center', p: { xs: 3, sm: 4 } }}>
                         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                             <Stack direction="row" spacing={1} justifyContent="center">
-                                <Mascot mood="cheer" size={96} who="pia" />
-                                <Mascot mood="cheer" size={96} who="hamish" />
+                                <Mascot mood="cheer" size={96} who="ada" />
+                                <Mascot mood="cheer" size={96} who="alan" />
                             </Stack>
                         </Box>
                         <Typography variant="h5" sx={{ fontWeight: 800, mt: 1 }}>

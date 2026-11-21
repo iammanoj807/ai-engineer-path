@@ -41,8 +41,8 @@ export const cardLine = (card: PracticeCard, options: { choosing?: boolean } = {
 
 /** What each guide says when tapped on the front page. */
 export const GREETING_LINES: Record<Guide, string> = {
-    pia: "Hi! I'm Pia. Let's learn together, one small step at a time.",
-    hamish: "Hey, I'm Hamish. Ready for your first lesson? It only takes a few minutes.",
+    ada: "Hi! I'm Ada. Let's learn together, one small step at a time.",
+    alan: "Hey, I'm Alan. Ready for your first lesson? It only takes a few minutes.",
 };
 
 /** Full-screen moments in a session, and the end. */

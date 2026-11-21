@@ -1,5 +1,5 @@
 // The front page for visitors who are not signed in: what the site is, with
-// the guides Pia and Hamish saying hello, the three courses, what every lesson
+// the guides Ada and Alan saying hello, the three courses, what every lesson
 // gives you, the path itself, and a last nudge to start. It asks no one to sign
 // in: the top bar offers that, and the site asks only when progress needs saving.
 // Signed-in learners get their dashboard instead (HomePage.tsx).
@@ -465,7 +465,7 @@ const LESSON_PARTS: { icon: ElementType; colour: string; title: string; text: st
     { icon: AnimationRoundedIcon, colour: '#b39ddb', title: 'An animation', text: 'See the idea move before you read about it. Play it, pause it, or step through it.' },
     { icon: LightbulbRoundedIcon, colour: '#ffca28', title: 'The idea, step by step', text: 'Why it exists, how it works, and the mistakes people make with it.' },
     { icon: CodeRoundedIcon, colour: '#82b1ff', title: 'A worked example', text: 'Real numbers worked through, with code that has been run.' },
-    { icon: TaskAltRoundedIcon, colour: MASTERED, title: 'Practise like a game', text: 'Pia and Hamish ask quick questions: match the pairs, type or choose the missing word, put the steps in order. Hearts, XP and a streak keep you going.' },
+    { icon: TaskAltRoundedIcon, colour: MASTERED, title: 'Practise like a game', text: 'Your coaches, Ada and Alan, ask quick questions: match the pairs, type or choose the missing word, put the steps in order. Hearts, XP and a streak keep you going.' },
     { icon: RecordVoiceOverRoundedIcon, colour: '#4dd0e1', title: 'Interview questions', text: 'Every course has an interview mode: full spoken answers, the traps, and the follow-ups.' },
     { icon: TerminalRoundedIcon, colour: COURSES.find(course => course.id === 'sql')?.colour ?? '#f48fb1', title: 'SQL that runs in the page', text: 'SQLite runs in your browser, so every query works with nothing to install.' },
 ];
@@ -566,18 +566,18 @@ export const StartBand = ({ course, onSeeCourses }: { course: CourseInfo; onSeeC
             }}
         >
             <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-                <Mascot who="pia" mood="cheer" size={132} />
+                <Mascot who="ada" mood="cheer" size={132} />
             </Box>
             <Stack direction="row" justifyContent="center" spacing={2} sx={{ display: { xs: 'flex', md: 'none' } }}>
-                <Mascot who="pia" mood="cheer" size={96} />
-                <Mascot who="hamish" mood="cheer" size={96} />
+                <Mascot who="ada" mood="cheer" size={96} />
+                <Mascot who="alan" mood="cheer" size={96} />
             </Stack>
             <Box>
                 <Typography id="start-title" component="h2" sx={{ fontWeight: 800, color: HEADING, fontSize: { xs: '1.6rem', sm: '2.1rem' }, lineHeight: 1.2, letterSpacing: '-0.015em' }}>
                     Your first lesson is one tap away
                 </Typography>
                 <Typography color="text.secondary" sx={{ mt: 1.25, maxWidth: 560, mx: 'auto' }}>
-                    Free, with nothing to set up. Watch the idea move, read it step by step, then practise for five minutes with Pia and Hamish.
+                    Free, with nothing to set up. Watch the idea move, read it step by step, then practise for five minutes with Ada and Alan.
                 </Typography>
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} justifyContent="center" sx={{ mt: 3 }}>
                     <Button
@@ -601,7 +601,7 @@ export const StartBand = ({ course, onSeeCourses }: { course: CourseInfo; onSeeC
                 </Stack>
             </Box>
             <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-                <Mascot who="hamish" mood="cheer" size={132} />
+                <Mascot who="alan" mood="cheer" size={132} />
             </Box>
         </Box>
     );

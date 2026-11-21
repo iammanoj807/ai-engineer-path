@@ -30,7 +30,7 @@ import { GUIDES, guideFor, type Guide } from '../../src/components/practice/guid
 import { clipKey, tidyLine } from '../../src/components/practice/clipKey';
 
 /** The recorded voice for each guide (Kokoro voices: see scripts/voice/record.py). Change one, and run both scripts again. */
-export const VOICE_MODELS: Record<Guide, string> = { pia: 'af_heart', hamish: 'am_fenrir' };
+export const VOICE_MODELS: Record<Guide, string> = { ada: 'af_heart', alan: 'am_fenrir' };
 
 const SQL_WORDS = /\b(SELECT|FROM|WHERE|GROUP BY|ORDER BY|HAVING|LEFT JOIN|RIGHT JOIN|INNER JOIN|FULL JOIN|CROSS JOIN|JOIN|COUNT|SUM|AVG|MIN|MAX|DISTINCT|LIMIT|OFFSET|NULL|CASE|WHEN|THEN|ELSE|END|UNION ALL|UNION|INSERT|UPDATE|DELETE|CREATE|TABLE|INDEX|WITH|RECURSIVE|OVER|PARTITION BY|ROW_NUMBER|DENSE_RANK|RANK|LAG|LEAD|COALESCE|BETWEEN|LIKE|EXISTS|AND|OR|NOT|IS|AS|ON|IN|ASC|DESC|ROUND|CAST|STRFTIME|SUBSTR|INSTR|LENGTH|UPPER|LOWER|TRIM|IFNULL|NULLIF|EXPLAIN|PRIMARY KEY|FOREIGN KEY|FULL|OUTER|INNER|LEFT|RIGHT|CROSS|INTERSECT|EXCEPT|ALTER|TRUNCATE|DROP|VALUES|SET|INTO|DEFAULT|UNIQUE|CHECK|VIEW|TRIGGER|BEGIN|COMMIT|ROLLBACK)\b/g;
 

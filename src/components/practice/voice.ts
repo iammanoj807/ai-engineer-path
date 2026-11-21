@@ -1,7 +1,7 @@
 // The guides read each line aloud, and their mouths move while they talk.
 //
 // Every line is recorded ahead of time with a natural-sounding voice model
-// (scripts/voice): a young woman's voice for Pia, a young man's for Hamish, the
+// (scripts/voice): a young woman's voice for Ada, a young man's for Alan, the
 // same on every phone and computer. public/voice/manifest.json lists each
 // recording with its mouth shapes, 20 a second, played in step with the sound.
 //
@@ -134,8 +134,8 @@ export const prefetchLines = (lines: string[], guide: Guide) => {
 
 /** Voices to look for, youngest-sounding first: Apple's downloadable voices and Microsoft's natural ones lead. */
 const VOICES: Record<Guide, string[]> = {
-    pia: ['Ava', 'Zoe', 'Microsoft Emma', 'Microsoft Aria', 'Microsoft Jenny', 'Allison', 'Google US English', 'Google UK English Female', 'Samantha', 'Microsoft Libby', 'Microsoft Sonia', 'Microsoft Zira', 'Susan', 'Serena', 'Karen', 'Tessa', 'Moira', 'Fiona', 'Victoria'],
-    hamish: ['Evan', 'Nathan', 'Microsoft Andrew', 'Microsoft Brian', 'Microsoft Guy', 'Microsoft Christopher', 'Microsoft Eric', 'Microsoft Ryan', 'Tom', 'Aaron', 'Google UK English Male', 'Daniel', 'Oliver', 'Arthur', 'Microsoft David', 'Microsoft Mark', 'Microsoft George', 'Alex'],
+    ada: ['Ava', 'Zoe', 'Microsoft Emma', 'Microsoft Aria', 'Microsoft Jenny', 'Allison', 'Google US English', 'Google UK English Female', 'Samantha', 'Microsoft Libby', 'Microsoft Sonia', 'Microsoft Zira', 'Susan', 'Serena', 'Karen', 'Tessa', 'Moira', 'Fiona', 'Victoria'],
+    alan: ['Evan', 'Nathan', 'Microsoft Andrew', 'Microsoft Brian', 'Microsoft Guy', 'Microsoft Christopher', 'Microsoft Eric', 'Microsoft Ryan', 'Tom', 'Aaron', 'Google UK English Male', 'Daniel', 'Oliver', 'Arthur', 'Microsoft David', 'Microsoft Mark', 'Microsoft George', 'Alex'],
 };
 
 /** Joke voices, and old robotic ones that sound nothing like a young person: never used. */
@@ -168,7 +168,7 @@ const speakWithDevice = (words: string, guide: Guide, turn: number) => {
     line.lang = voice.lang;
     // A touch higher and quicker than the voice's own: younger, and still clear.
     line.rate = 1.03;
-    line.pitch = guide === 'pia' ? 1.12 : 1.05;
+    line.pitch = guide === 'ada' ? 1.12 : 1.05;
     line.volume = 0.9;
     const clock = () => performance.now() / 1000;
     line.onstart = () => {

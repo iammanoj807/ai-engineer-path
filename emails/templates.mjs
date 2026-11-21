@@ -47,7 +47,7 @@ export const welcomeEmail = ({ name }) => {
 <p style="margin:0 0 8px">Here's how to get the most out of it:</p>
 <ol style="margin:0 0 18px;padding-left:22px">
 <li style="margin-bottom:8px"><b>One lesson at a time.</b> Open the path and press <b>Start</b> on the lesson marked Up next. Each one has an animation, the idea step by step, and a worked example.</li>
-<li style="margin-bottom:8px"><b>Five minutes of practice after each lesson.</b> Pia and Hamish, your guides, ask quick questions and read them aloud. Every right answer earns XP.</li>
+<li style="margin-bottom:8px"><b>Five minutes of practice after each lesson.</b> Ada and Alan, your coaches, ask quick questions and read them aloud. Every right answer earns XP.</li>
 <li><b>Come back tomorrow.</b> A few minutes a day beats one long evening a week, and your streak keeps count.</li>
 </ol>
 <p style="margin:0 0 22px">${button(SITE, 'Start your first lesson')}</p>
@@ -67,7 +67,7 @@ I made this site because learning AI shouldn't cost a fortune or feel like a maz
 Here's how to get the most out of it:
 
 1. One lesson at a time. Open the path and press Start on the lesson marked Up next. Each one has an animation, the idea step by step, and a worked example.
-2. Five minutes of practice after each lesson. Pia and Hamish, your guides, ask quick questions and read them aloud. Every right answer earns XP.
+2. Five minutes of practice after each lesson. Ada and Alan, your coaches, ask quick questions and read them aloud. Every right answer earns XP.
 3. Come back tomorrow. A few minutes a day beats one long evening a week, and your streak keeps count.
 
 Start your first lesson: ${SITE}
@@ -90,7 +90,7 @@ P.S. If the site helps you, a star on GitHub helps other learners find it too: $
 const REMINDERS = [
     { subject: first => `${first}, your next lesson is waiting`, line: "It's been a week since your last lesson. Five minutes today is enough to keep going." },
     { subject: first => `Five minutes today, ${first}?`, line: 'A short lesson or one practice round keeps what you learned fresh. Your path is right where you left it.' },
-    { subject: first => `Pia and Hamish miss you, ${first}`, line: 'Your guides have a few quick questions ready for you. Pick up where you left off, one small step at a time.' },
+    { subject: first => `Ada and Alan miss you, ${first}`, line: 'Your coaches have a few quick questions ready for you. Pick up where you left off, one small step at a time.' },
     { subject: first => `Still learning AI, ${first}? Here's your next step`, line: "This is our last reminder for now: we won't email again unless you come back. Your progress is saved whenever you're ready." },
 ];
 
@@ -136,7 +136,7 @@ export const reminderEmail = ({ name, number, progress: summary }) => {
 <div style="font-size:12px;font-weight:800;letter-spacing:0.6px;color:#6b7280;text-transform:uppercase">Up next · ${escape(next.course)}</div>
 <div style="font-size:18px;font-weight:800;margin:4px 0 14px">${escape(next.name)}</div>
 ${button(next.url, 'Continue this lesson')}
-<div style="font-size:13px;color:#6b7280;margin-top:12px">Then a five-minute practice with Pia or Hamish.</div>
+<div style="font-size:13px;color:#6b7280;margin-top:12px">Then a five-minute practice with Ada or Alan.</div>
 </div>`
         : `<p style="margin:0 0 22px">Open the path and press <b>Start</b> on the lesson marked Up next.</p>
 <p style="margin:0 0 22px">${button(SITE, 'Continue learning')}</p>`;
@@ -151,7 +151,7 @@ ${streakLine ? `<p style="margin:0 0 16px">${escape(streakLine)}</p>` : ''}${til
 
 ${reminder.line}
 ${streakLine ? `\n${streakLine}\n` : ''}${progress && progress.xp > 0 ? `\nYou've earned ${progress.xp} XP so far.\n` : ''}
-${next ? `Up next in ${next.course}: ${next.name}\nContinue this lesson: ${next.url}\nThen a five-minute practice with Pia or Hamish.` : `Open the path and press Start on the lesson marked Up next: ${SITE}`}
+${next ? `Up next in ${next.course}: ${next.name}\nContinue this lesson: ${next.url}\nThen a five-minute practice with Ada or Alan.` : `Open the path and press Start on the lesson marked Up next: ${SITE}`}
 
 See you there,
 ${FOUNDER}

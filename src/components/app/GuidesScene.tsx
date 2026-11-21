@@ -1,4 +1,4 @@
-// The front page's guides, teaching at a chalkboard. Pia and Hamish take turns:
+// The front page's guides, teaching at a chalkboard. Ada and Alan take turns:
 // as each one talks (mouth moving, arm up to the board), their point is written
 // on the board in chalk. Then both cheer, the board is wiped, and it starts again.
 //
@@ -16,10 +16,10 @@ import { GREETING_LINES } from '../../practice/lines';
 
 /** Each point on the board, and who teaches it. */
 const POINTS: { guide: Guide; text: string }[] = [
-    { guide: 'pia', text: 'Watch the idea move' },
-    { guide: 'hamish', text: 'Read it, step by step' },
-    { guide: 'pia', text: 'Practise for five minutes' },
-    { guide: 'hamish', text: 'Earn XP, keep your streak' },
+    { guide: 'ada', text: 'Watch the idea move' },
+    { guide: 'alan', text: 'Read it, step by step' },
+    { guide: 'ada', text: 'Practise for five minutes' },
+    { guide: 'alan', text: 'Earn XP, keep your streak' },
 ];
 const FINALE = POINTS.length;
 
@@ -54,7 +54,7 @@ const GuidesScene = () => {
             mouthOnly(POINTS[step].guide, WRITE_MS + 250);
             timers.push(window.setTimeout(() => setStep(step + 1), WRITE_MS + HOLD_MS));
         } else {
-            mouthOnly('pia', 1300);
+            mouthOnly('ada', 1300);
             timers.push(window.setTimeout(() => setWiping(true), CHEER_MS));
             timers.push(
                 window.setTimeout(() => {
@@ -81,7 +81,7 @@ const GuidesScene = () => {
     return (
         <Box
             role="group"
-            aria-label="Pia and Hamish, your guides, at a chalkboard"
+            aria-label="Ada and Alan, your coaches, at a chalkboard"
             sx={{
                 borderRadius: 5,
                 px: { xs: 2, sm: 3 },
@@ -125,7 +125,7 @@ const GuidesScene = () => {
                             <Typography sx={{ color: CHALK, fontWeight: 700, fontSize: { xs: '1.05rem', sm: '1.15rem' }, textShadow: '0 0 1px rgba(255,255,255,0.4)' }}>
                                 {point.text}
                             </Typography>
-                            <Typography sx={{ color: point.guide === 'pia' ? '#b6beff' : '#80e3d6', fontSize: '0.8rem', fontWeight: 700, opacity: 0.85, display: { xs: 'none', sm: 'block' } }}>
+                            <Typography sx={{ color: point.guide === 'ada' ? '#b6beff' : '#80e3d6', fontSize: '0.8rem', fontWeight: 700, opacity: 0.85, display: { xs: 'none', sm: 'block' } }}>
                                 {GUIDE_NAMES[point.guide]}
                             </Typography>
                         </Stack>
@@ -154,7 +154,7 @@ const GuidesScene = () => {
 
             {/* The guides, under the board: tap one to hear them say hello. */}
             <Stack direction="row" justifyContent="space-around" alignItems="flex-end" sx={{ mt: { xs: 2.5, sm: 3 } }}>
-                {(['pia', 'hamish'] as const).map(guide => (
+                {(['ada', 'alan'] as const).map(guide => (
                     <ButtonBase
                         key={guide}
                         onClick={() => hello(guide)}
@@ -167,7 +167,7 @@ const GuidesScene = () => {
                         <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
                             <Mascot who={guide} mood={moodOf(guide)} size={118} />
                         </Box>
-                        <Typography sx={{ mt: 0.25, fontWeight: 800, color: guide === 'pia' ? '#9aa6ff' : '#4dd0c1' }}>{GUIDE_NAMES[guide]}</Typography>
+                        <Typography sx={{ mt: 0.25, fontWeight: 800, color: guide === 'ada' ? '#9aa6ff' : '#4dd0c1' }}>{GUIDE_NAMES[guide]}</Typography>
                     </ButtonBase>
                 ))}
             </Stack>

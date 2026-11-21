@@ -691,7 +691,7 @@ const PracticeSession = ({
                     sx={{ flex: 1, height: 14, borderRadius: 7, bgcolor: 'rgba(255,255,255,0.08)', '& .MuiLinearProgress-bar': { bgcolor: phase === 'retry' ? XP_GOLD : accent, borderRadius: 7 } }}
                 />
                 {canSpeak() && (
-                    <IconButton onClick={() => setVoiceOn(!voice)} aria-label={voice ? "Turn the guide's voice off" : "Turn the guide's voice on"} aria-pressed={voice} sx={{ color: 'text.secondary' }}>
+                    <IconButton onClick={() => setVoiceOn(!voice)} aria-label={voice ? "Turn the coach's voice off" : "Turn the coach's voice on"} aria-pressed={voice} sx={{ color: 'text.secondary' }}>
                         {voice ? <RecordVoiceOverRoundedIcon /> : <VoiceOverOffRoundedIcon />}
                     </IconButton>
                 )}
