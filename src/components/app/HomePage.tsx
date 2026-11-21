@@ -1,7 +1,9 @@
-// The home page: today's goal and streak, the one thing to do next, and each
-// course drawn as a path of topics to walk, one step at a time.
+// The home page. Signed out, it is the front page (Landing.tsx): what the site
+// is, the courses, and the path. Signed in, it is the dashboard: today's goal
+// and streak, the one thing to do next, and each course drawn as a path of
+// topics to walk, one step at a time.
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Alert,
@@ -29,7 +31,8 @@ import type { Course } from '../../services/progress';
 import { FLAME, MASTERED, XP_GOLD } from './colours';
 import CoursePath, { CARD, CheckDots } from './CoursePath';
 import GuestNote from './GuestNote';
-import { signIn, useAccount, useTracksProgress } from '../../services/account';
+import { signIn, useAccount, useTracksProgress, wasSignedIn } from '../../services/account';
+import { CourseShowcase, Hero, LessonAnatomy, PathSection, SignInBand } from './Landing';
 import GoogleIcon from '@mui/icons-material/Google';
 import LockRoundedIcon from '@mui/icons-material/LockRounded';
 
@@ -250,18 +253,86 @@ const CoursePicker = ({ stats, selected, tracking, onSelect }: { stats: CourseSt
 
 // ============ PAGE ============
 
+const scrollToSection = (id: string) => {
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    document.getElementById(id)?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+};
+
+const SECTION_GAP = { xs: 9, md: 13 };
+
+/**
+ * Signed out: the front page (Landing.tsx). Signed in: the dashboard, with
+ * today's goal and the next topic. Until sign-in has loaded, the browser's
+ * last state decides, so a signed-in learner does not see the front page flash.
+ */
 const HomePage = () => {
     const navigate = useNavigate();
     const { progress, stats, today, streak } = useGameStats();
     const tracking = useTracksProgress();
+    const account = useAccount();
     const [selected, setSelected] = useState<Course>(readLastCourse);
     const course = courseById(selected);
     const selectedStats = stats.find(s => s.course.id === selected)!;
+    const frontPage = account.status === 'guest' || (account.status === 'loading' && !wasSignedIn());
+
+    // Signing in from far down the front page swaps it for the much shorter
+    // dashboard; start that at the top, at the welcome and the next topic.
+    const wasFrontPage = useRef(frontPage);
+    useEffect(() => {
+        if (wasFrontPage.current && !frontPage) window.scrollTo(0, 0);
+        wasFrontPage.current = frontPage;
+    }, [frontPage]);
 
     const select = (id: Course) => {
         setSelected(id);
         writeLastCourse(id);
     };
+
+    const path = (
+        <CoursePath
+            key={course.id}
+            course={course}
+            doc={checksDocOf(progress, course.id)}
+            onOpenTopic={topicId => navigate(topicPath(course, topicId))}
+            onOpenUnit={unitId => navigate(unitPath(course, unitId))}
+        />
+    );
+    const pathNote = (
+        <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 2 }}>
+            Every topic is a full lesson: an animation, the idea step by step, a worked example and four exercises with answers.
+            A topic is mastered when you pass all four checks without notes.
+        </Typography>
+    );
+
+    if (frontPage) {
+        return (
+            <Box sx={{ width: '100%', maxWidth: 1120, mx: 'auto' }}>
+                <Hero course={course} onSeeCourses={() => scrollToSection('courses')} />
+                <Box sx={{ mt: SECTION_GAP }}>
+                    <CourseShowcase
+                        onShowPath={id => {
+                            select(id);
+                            scrollToSection('path');
+                        }}
+                    />
+                </Box>
+                <Box sx={{ mt: SECTION_GAP }}>
+                    <LessonAnatomy />
+                </Box>
+                <Box sx={{ mt: SECTION_GAP }}>
+                    <PathSection selected={selected} onSelect={select}>
+                        {path}
+                        {pathNote}
+                    </PathSection>
+                </Box>
+                <Box sx={{ mt: SECTION_GAP, mb: { xs: 2, md: 4 } }}>
+                    <SignInBand />
+                </Box>
+            </Box>
+        );
+    }
+
+    const firstName = account.status === 'signed-in' ? account.name?.split(' ')[0] : undefined;
 
     return (
         <Box sx={{ width: '100%', maxWidth: 940, mx: 'auto' }}>
@@ -272,6 +343,11 @@ const HomePage = () => {
             >
                 AI Engineer Path: learn ML foundations, SQL and system design for free
             </Typography>
+            {account.status === 'signed-in' && (
+                <Typography sx={{ fontWeight: 800, color: '#fff', fontSize: { xs: '1.45rem', sm: '1.75rem' }, mb: 2.5 }}>
+                    Welcome back{firstName ? `, ${firstName}` : ''}
+                </Typography>
+            )}
             {tracking && <GuestNote />}
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 4 }}>
                 <ContinueCard stats={selectedStats} tracking={tracking} />
@@ -283,19 +359,8 @@ const HomePage = () => {
             </Typography>
             <CoursePicker stats={stats} selected={selected} tracking={tracking} onSelect={select} />
 
-            <Box sx={{ maxWidth: 560, mx: 'auto' }}>
-                <CoursePath
-                    key={course.id}
-                    course={course}
-                    doc={checksDocOf(progress, course.id)}
-                    onOpenTopic={topicId => navigate(topicPath(course, topicId))}
-                    onOpenUnit={unitId => navigate(unitPath(course, unitId))}
-                />
-            </Box>
-            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 2 }}>
-                Every topic is a full lesson: an animation, the idea step by step, a worked example and four exercises with answers.
-                A topic is mastered when you pass all four checks without notes.
-            </Typography>
+            <Box sx={{ maxWidth: 560, mx: 'auto' }}>{path}</Box>
+            {pathNote}
         </Box>
     );
 };

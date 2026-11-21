@@ -40,6 +40,28 @@ const set = (next: AccountState) => {
     listeners.forEach(fn => fn());
 };
 
+// Sign-in takes a moment to load. Remembering whether this browser was signed
+// in lets the home page show the right layout (dashboard or front page) at once.
+const SIGNED_IN_KEY = 'aep:v1:signed-in';
+
+const rememberSignedIn = (signedIn: boolean) => {
+    try {
+        if (signedIn) localStorage.setItem(SIGNED_IN_KEY, '1');
+        else localStorage.removeItem(SIGNED_IN_KEY);
+    } catch {
+        // Blocked storage: the home page waits for sign-in instead.
+    }
+};
+
+/** Whether this browser was signed in last time; a guess, until sign-in has loaded. */
+export const wasSignedIn = (): boolean => {
+    try {
+        return localStorage.getItem(SIGNED_IN_KEY) === '1';
+    } catch {
+        return false;
+    }
+};
+
 type CloudModule = typeof import('./cloud');
 let cloud: Promise<CloudModule> | null = null;
 
@@ -51,11 +73,13 @@ export const startAccount = () => {
         .then(mod => mod.watchUser(config as FirebaseConfig, {
             onSignedIn: (user, backend) => {
                 switchBackend(backend);
+                rememberSignedIn(true);
                 set({ status: 'signed-in', name: user.name, photo: user.photo });
                 runPendingSave();
             },
             onSignedOut: () => {
                 switchBackend(localBackend('guest'));
+                rememberSignedIn(false);
                 set({ status: 'guest' });
             },
         }))
