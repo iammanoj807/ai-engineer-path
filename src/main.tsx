@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import App from './App';
-import { startAccount } from './services/account';
+import { startAccount, wasSignedIn } from './services/account';
 import { addressFromHash } from './game/addresses';
 import { keepPrerendered } from './game/prerendered';
 import './index.css';
@@ -59,7 +59,11 @@ const theme = createTheme({
 });
 
 const root = document.getElementById('root')!;
-keepPrerendered(window.location.pathname, moved ? '' : root.innerHTML);
+// The page's own text, without the static top bar (the app draws its own). Not the
+// front page's text for a learner who was signed in: their home is the dashboard.
+const pageText = root.querySelector('.seo-page')?.outerHTML ?? '';
+const memberHome = window.location.pathname === '/' && wasSignedIn();
+keepPrerendered(window.location.pathname, moved || memberHome ? '' : pageText);
 
 ReactDOM.createRoot(root).render(
     <React.StrictMode>

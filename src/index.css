@@ -3,9 +3,11 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  /* The site is dark only. This is also the colour behind the page the build
+     writes, before the app has loaded. */
+  color-scheme: dark;
+  color: #d7d2ce;
+  background-color: #0B0E14;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -52,18 +54,6 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-}
 
 /* Each page's own text, written into its HTML by the build (vite.config.ts).
    It shows before the app has loaded and while a course loads, so it follows
@@ -92,3 +82,126 @@ button:focus-visible {
 .seo-page .seo-lessons li { margin: 0.35em 0; }
 .seo-page .seo-next { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; margin: 2em 0 1em; }
 .seo-page pre { background: #151921; padding: 12px; border-radius: 8px; overflow-x: auto; }
+
+/* The top bar the build writes into every page (vite.config.ts), drawn like the
+   app's own (components/app/TopBar.tsx), so nothing moves when the app takes over. */
+.seo-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 60px;
+  padding: 0 16px;
+  background: rgba(11, 14, 20, 0.92);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: "Plus Jakarta Sans", "Inter", "Roboto", "Helvetica", "Arial", sans-serif;
+}
+.seo-bar-menu { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; margin-left: -8px; }
+.seo-bar-icon { width: 24px; height: 24px; fill: #fff; }
+.seo-bar-logo, .seo-bar-logo:hover {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #d7d2ce;
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 1rem;
+  line-height: 1.5;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.seo-bar-route { width: 24px; height: 24px; fill: #2979ff; }
+.seo-bar-nav { display: none; }
+@media (min-width: 600px) {
+  .seo-bar-logo, .seo-bar-logo:hover { font-size: 1.1rem; }
+}
+@media (min-width: 900px) {
+  .seo-bar { padding: 0 32px; }
+  .seo-bar-menu { display: none; }
+  .seo-bar-logo { margin-right: 16px; }
+  .seo-bar-nav { display: flex; gap: 4px; }
+  .seo-bar-nav a, .seo-bar-nav a:hover {
+    box-sizing: border-box;
+    min-width: 64px;
+    padding: 6px 12px;
+    text-align: center;
+    text-decoration: none;
+    font-size: 0.875rem;
+    line-height: 1.75;
+    font-weight: 600;
+    color: #b0bec5;
+    border-bottom: 2px solid transparent;
+  }
+  .seo-bar-nav a.on { color: #d7d2ce; font-weight: 800; border-bottom-color: #2979ff; }
+}
+
+/* The front page before the app has loaded (sitePages.test.ts), laid out like
+   its hero (components/app/Landing.tsx): the same words in the same places. */
+.seo-page.seo-home { max-width: 1120px; padding: 0 0 48px; line-height: 1.5; }
+#root > .seo-page.seo-home { max-width: none; padding: 24px 16px 48px; }
+#root > .seo-page.seo-home > section { max-width: 1120px; margin-left: auto; margin-right: auto; }
+@media (min-width: 600px) {
+  #root > .seo-page.seo-home { padding-left: 5%; padding-right: 5%; }
+}
+@media (min-width: 900px) {
+  #root > .seo-page.seo-home { padding: 32px 8% 48px; }
+}
+/* Signed in last time: their home page is the dashboard, so don't show the front page's text first. */
+.aep-member #root > .seo-home { visibility: hidden; }
+
+.seo-hero { display: grid; grid-template-columns: minmax(0, 1fr); gap: 48px; align-items: center; padding-top: 8px; }
+@media (min-width: 900px) {
+  .seo-hero { grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr); gap: 56px; padding-top: 32px; }
+}
+.seo-page.seo-home .seo-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 24px;
+  padding: 4.8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.5;
+  color: #d7d2ce;
+}
+.seo-dot { width: 8px; height: 8px; flex-shrink: 0; border-radius: 50%; background: #66bb6a; box-shadow: 0 0 0 4px #66bb6a33; }
+.seo-page.seo-home h1 { margin: 0; font-weight: 800; color: #fff; font-size: 2.3rem; line-height: 1.07; letter-spacing: -0.025em; }
+.seo-grad { display: inline-block; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+.seo-page.seo-home .seo-lead { margin: 20px 0 0; max-width: 520px; color: #b0bec5; font-size: 1.05rem; line-height: 1.6; }
+.seo-ctas { display: flex; flex-direction: column; gap: 12px; margin: 32px 0 0; }
+.seo-page .seo-btn {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  line-height: 1.75;
+  text-decoration: none;
+}
+.seo-page .seo-btn-main { padding: 8px 28px 8px 24px; background: #2979ff; color: #fff; font-weight: 800; box-shadow: 0 10px 30px -10px rgba(41, 121, 255, 0.7); }
+.seo-page .seo-btn-alt { padding: 7px 20px 7px 24px; border: 1px solid rgba(255, 255, 255, 0.2); color: #d7d2ce; font-weight: 700; }
+.seo-btn-icon { width: 22px; height: 22px; fill: currentColor; }
+.seo-page.seo-home .seo-first { margin: 12px 0 0; font-size: 0.875rem; line-height: 1.43; color: #b0bec5; }
+.seo-first b { color: #d7d2ce; font-weight: 700; }
+.seo-stats { display: flex; gap: 28px; margin-top: 32px; padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+.seo-stats b { display: block; font-weight: 800; color: #fff; font-size: 1.5rem; line-height: 1.1; }
+.seo-stats span { display: block; font-size: 0.875rem; line-height: 1.43; color: #b0bec5; }
+.seo-courses { margin-top: 96px; }
+@media (min-width: 600px) {
+  .seo-page.seo-home h1 { font-size: 3rem; }
+  .seo-page.seo-home .seo-lead { font-size: 1.15rem; }
+  .seo-ctas { flex-direction: row; }
+  .seo-stats { gap: 40px; }
+  .seo-stats b { font-size: 1.75rem; }
+}
+@media (min-width: 900px) {
+  .seo-page.seo-home h1 { font-size: 3.35rem; }
+}

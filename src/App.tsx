@@ -5,8 +5,6 @@ import CoffeeRoundedIcon from '@mui/icons-material/CoffeeRounded';
 import TopBar from './components/app/TopBar';
 import Celebration from './components/app/Celebration';
 import SignInNeeded from './components/app/SignInNeeded';
-import { writeLastCourse } from './game/courses';
-import { placeOf } from './game/addresses';
 import { absoluteUrl, metaFor } from './game/seo';
 import { prerenderedFor } from './game/prerendered';
 
@@ -39,14 +37,11 @@ const setHead = (selector: string, attribute: string, value: string, create: () 
 
 /**
  * On every change of page: the tab title, description and canonical address
- * follow the page (the build writes the same ones into each page's HTML), and
- * the course is remembered so the home page continues it.
+ * follow the page (the build writes the same ones into each page's HTML).
  */
 const PageChange = () => {
     const { pathname } = useLocation();
     useEffect(() => {
-        const place = placeOf(pathname);
-        if (place) writeLastCourse(place.course.id);
         const meta = metaFor(pathname);
         document.title = meta.title;
         setHead('meta[name="description"]', 'content', meta.description, () => Object.assign(document.createElement('meta'), { name: 'description' }));

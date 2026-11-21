@@ -23,7 +23,7 @@ import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import LocalFireDepartmentRoundedIcon from '@mui/icons-material/LocalFireDepartmentRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
-import { courseById, readLastCourse, unitOf, writeLastCourse } from '../../game/courses';
+import { courseById, readHomeCourse, unitOf, writeHomeCourse } from '../../game/courses';
 import { topicPath, unitPath } from '../../game/addresses';
 import { checksDocOf, useGameStats, type CourseStats } from '../../game/useProgress';
 import { DAILY_GOALS, lastDays, readDailyGoal, writeDailyGoal } from '../../game/xp';
@@ -270,10 +270,14 @@ const HomePage = () => {
     const { progress, stats, today, streak } = useGameStats();
     const tracking = useTracksProgress();
     const account = useAccount();
-    const [selected, setSelected] = useState<Course>(readLastCourse);
+    const frontPage = account.status === 'guest' || (account.status === 'loading' && !wasSignedIn());
+    // The front page starts on ML Foundations every time; browsing its tabs is not a choice to remember.
+    // The dashboard shows the course picked on it, ML Foundations until then.
+    const [frontPageCourse, setFrontPageCourse] = useState<Course>('foundations');
+    const [homeCourse, setHomeCourse] = useState<Course>(readHomeCourse);
+    const selected = frontPage ? frontPageCourse : homeCourse;
     const course = courseById(selected);
     const selectedStats = stats.find(s => s.course.id === selected)!;
-    const frontPage = account.status === 'guest' || (account.status === 'loading' && !wasSignedIn());
 
     // Signing in from far down the front page swaps it for the much shorter
     // dashboard; start that at the top, at the welcome and the next topic.
@@ -284,8 +288,12 @@ const HomePage = () => {
     }, [frontPage]);
 
     const select = (id: Course) => {
-        setSelected(id);
-        writeLastCourse(id);
+        if (frontPage) {
+            setFrontPageCourse(id);
+            return;
+        }
+        setHomeCourse(id);
+        writeHomeCourse(id);
     };
 
     const path = (

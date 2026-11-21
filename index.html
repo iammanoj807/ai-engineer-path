@@ -3,6 +3,8 @@
 
 <head>
   <meta charset="UTF-8" />
+  <!-- A learner who was signed in last time sees their dashboard, not the front page: hide the front page's text that the build wrote into this page until the app has drawn the dashboard (index.css, account.ts). -->
+  <script>try { if (localStorage.getItem('aep:v1:signed-in') === '1') document.documentElement.classList.add('aep-member') } catch (e) {}</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"

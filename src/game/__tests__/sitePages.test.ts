@@ -14,8 +14,9 @@ import { sqlPhases, type SqlTopic } from '../../data/sql';
 import { systemDesignPhases, type SDTopic } from '../../data/systemDesign';
 import { COURSES, type CourseInfo, type PathTopic, type PathUnit } from '../courses';
 import { SITE_URL, coursePath, topicPath, unitPath } from '../addresses';
-import { SITE_NAME, allPages, metaFor, type PageMeta } from '../seo';
+import { allPages, metaFor, type PageMeta } from '../seo';
 import { SITE_LINK } from '../../utils/glossaryEngine';
+import { HERO, HERO_GRADIENT, HERO_STATS } from '../homeCopy';
 
 const OUT = fileURLToPath(new URL('../../../generated/site-pages.json', import.meta.url));
 
@@ -92,6 +93,31 @@ const lessonText = (topic: AnyTopic): string => {
 const lessonLinks = (course: CourseInfo, topics: PathTopic[]) =>
     `<ul class="seo-lessons">${topics.map(topic => `<li>${link(topicPath(course, topic.id), topic.name)}: ${esc(topic.definition)}</li>`).join('')}</ul>`;
 
+// The front page as the app first draws it (Landing.tsx), so nothing jumps when
+// the app takes over: the same words, in the same places. The courses and their
+// units follow below, as links for search engines.
+const icon = (d: string) => `<svg class="seo-btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg>`;
+const PLAY_ICON = 'M8 6.82v10.36c0 .79.87 1.27 1.54.84l8.14-5.18c.62-.39.62-1.29 0-1.69L9.54 5.98C8.87 5.55 8 6.03 8 6.82';
+const DOWN_ICON = 'M11 5v11.17l-4.88-4.88c-.39-.39-1.03-.39-1.42 0s-.39 1.02 0 1.41l6.59 6.59c.39.39 1.02.39 1.41 0l6.59-6.59c.39-.39.39-1.02 0-1.41a.996.996 0 0 0-1.41 0L13 16.17V5c0-.55-.45-1-1-1s-1 .45-1 1';
+
+const homeBody = () => {
+    const course = COURSES[0];
+    const first = course.units[0].topics[0];
+    const hero = `<section class="seo-hero"><div class="seo-hero-text">`
+        + `<p class="seo-chip"><span class="seo-dot"></span>${esc(HERO.chip)}</p>`
+        + `<h1>${esc(HERO.title)} <span class="seo-grad" style="background-image:${HERO_GRADIENT}">${esc(HERO.titleEnd)}</span></h1>`
+        + `<p class="seo-lead">${esc(HERO.lead)}</p>`
+        + `<p class="seo-ctas"><a class="seo-btn seo-btn-main" href="${esc(topicPath(course, first.id))}">${icon(PLAY_ICON)}${esc(HERO.start)}</a>`
+        + `<a class="seo-btn seo-btn-alt" href="#courses">${esc(HERO.browse)}${icon(DOWN_ICON)}</a></p>`
+        + `<p class="seo-first">${esc(HERO.firstLesson)} <b>${esc(first.name)}</b> (${esc(course.title)})</p>`
+        + `<div class="seo-stats">${HERO_STATS.map(stat => `<div><b>${stat.value}</b><span>${esc(stat.label)}</span></div>`).join('')}</div>`
+        + `</div></section>`;
+    const courses = `<section id="courses" class="seo-courses">${COURSES.map(
+        c => `<h2>${link(coursePath(c), c.title)}</h2><p>${esc(c.tagline)}</p><ul class="seo-lessons">${c.units.map(u => `<li>${link(unitPath(c, u.id), `Unit ${u.number}: ${u.title}`)}</li>`).join('')}</ul>`,
+    ).join('')}</section>`;
+    return `<article class="seo-page seo-home">${hero}${courses}</article>`;
+};
+
 const body = (meta: PageMeta, course?: CourseInfo, unit?: PathUnit, topic?: PathTopic): string => {
     if (course && unit && topic) {
         const full = fullTopics.get(topic.id);
@@ -112,9 +138,7 @@ const body = (meta: PageMeta, course?: CourseInfo, unit?: PathUnit, topic?: Path
             .map(u => `<h2>${link(unitPath(course, u.id), `Unit ${u.number}: ${u.title}`)}</h2><p>${esc(u.goal)}</p>${lessonLinks(course, u.topics)}`)
             .join('')}</article>`;
     }
-    return `<article class="seo-page"><h1>${esc(SITE_NAME)}</h1><p class="seo-lead">${esc(meta.description)}</p>${COURSES.map(
-        c => `<h2>${link(coursePath(c), c.title)}</h2><p>${esc(c.tagline)}</p><ul class="seo-lessons">${c.units.map(u => `<li>${link(unitPath(c, u.id), `Unit ${u.number}: ${u.title}`)}</li>`).join('')}</ul>`,
-    ).join('')}</article>`;
+    return homeBody();
 };
 
 const pages = allPages().map(({ meta, course, unit, topic }) => ({ ...meta, body: body(meta, course, unit, topic) }));

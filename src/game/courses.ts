@@ -83,11 +83,15 @@ export const allTopicsOf = (course: CourseInfo): PathTopic[] => course.units.fla
 export const unitOf = (course: CourseInfo, topicId: string): PathUnit | undefined =>
     course.units.find(unit => unit.topics.some(topic => topic.id === topicId));
 
-const LAST_COURSE_KEY = 'aep:v1:last-course';
+// The course the home page dashboard shows: ML Foundations, until the learner
+// picks another one there. Opening a course page does not change it. (v1 also
+// changed with every course page visited, so a look at SQL made SQL the home
+// course; its old value is ignored.)
+const HOME_COURSE_KEY = 'aep:v2:home-course';
 
-export const readLastCourse = (): Course => {
+export const readHomeCourse = (): Course => {
     try {
-        const saved = localStorage.getItem(LAST_COURSE_KEY);
+        const saved = localStorage.getItem(HOME_COURSE_KEY);
         if (COURSES.some(course => course.id === saved)) return saved as Course;
     } catch {
         // Blocked storage.
@@ -95,9 +99,9 @@ export const readLastCourse = (): Course => {
     return 'foundations';
 };
 
-export const writeLastCourse = (id: Course) => {
+export const writeHomeCourse = (id: Course) => {
     try {
-        localStorage.setItem(LAST_COURSE_KEY, id);
+        localStorage.setItem(HOME_COURSE_KEY, id);
     } catch {
         // Not remembered.
     }

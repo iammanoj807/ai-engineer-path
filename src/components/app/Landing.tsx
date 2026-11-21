@@ -31,14 +31,13 @@ import { DAILY_GOALS, XP_PER_CHECK, XP_TOPIC_BONUS } from '../../game/xp';
 import type { Course } from '../../services/progress';
 import { signIn, useAccount } from '../../services/account';
 import { FLAME, MASTERED, XP_GOLD } from './colours';
+import { HERO, HERO_GRADIENT, HERO_STATS } from '../../game/homeCopy';
 
 const HEADING = '#fff';
 const LINE = 'rgba(255,255,255,0.08)';
 const MONO = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
 
 const lessonsIn = (course: CourseInfo) => course.units.reduce((n, unit) => n + unit.topics.length, 0);
-const LESSONS = COURSES.reduce((n, course) => n + lessonsIn(course), 0);
-const UNITS = COURSES.reduce((n, course) => n + course.units.length, 0);
 
 const prefersReducedMotion = () =>
     typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
@@ -285,7 +284,6 @@ const LessonPreview = () => {
 
 export const Hero = ({ course, onSeeCourses }: { course: CourseInfo; onSeeCourses: () => void }) => {
     const first = course.units[0]?.topics[0];
-    const gradient = `linear-gradient(90deg, ${COURSES.map(c => c.colour).join(', ')})`;
     return (
         <Box
             component="section"
@@ -306,25 +304,24 @@ export const Hero = ({ course, onSeeCourses }: { course: CourseInfo; onSeeCourse
                     sx={{ display: 'inline-flex', px: 1.5, py: 0.6, mb: 3, borderRadius: 999, border: `1px solid ${LINE}`, bgcolor: 'rgba(255,255,255,0.03)' }}
                 >
                     <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: MASTERED, boxShadow: `0 0 0 4px ${MASTERED}33`, flexShrink: 0 }} />
-                    <Typography sx={{ fontSize: '0.85rem', fontWeight: 700 }}>Free. Every lesson is open, no account needed.</Typography>
+                    <Typography sx={{ fontSize: '0.85rem', fontWeight: 700 }}>{HERO.chip}</Typography>
                 </Stack>
                 <Typography
                     id="home-title"
                     component="h1"
                     sx={{ fontWeight: 800, color: HEADING, fontSize: { xs: '2.3rem', sm: '3rem', md: '3.35rem' }, lineHeight: 1.07, letterSpacing: '-0.025em' }}
                 >
-                    Learn ML, SQL and system design,{' '}
+                    {HERO.title}{' '}
                     <Box
                         component="span"
                         // inline-block keeps the phrase together, on its own line when it does not fit.
-                        sx={{ display: 'inline-block', background: gradient, WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', color: 'transparent' }}
+                        sx={{ display: 'inline-block', background: HERO_GRADIENT, WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', color: 'transparent' }}
                     >
-                        one step at a time.
+                        {HERO.titleEnd}
                     </Box>
                 </Typography>
                 <Typography sx={{ mt: 2.5, color: 'text.secondary', fontSize: { xs: '1.05rem', sm: '1.15rem' }, lineHeight: 1.6, maxWidth: 520 }}>
-                    {LESSONS} lessons that start from scratch and go all the way to interview questions. Every topic has an animation, the idea step by step, a
-                    worked example and four exercises with answers.
+                    {HERO.lead}
                 </Typography>
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mt: 4 }}>
                     <Button
@@ -335,7 +332,7 @@ export const Hero = ({ course, onSeeCourses }: { course: CourseInfo; onSeeCourse
                         startIcon={<PlayArrowRoundedIcon />}
                         sx={{ fontWeight: 800, px: 3.5, minHeight: 52, fontSize: '1.05rem', boxShadow: '0 10px 30px -10px rgba(41,121,255,0.7)' }}
                     >
-                        Start learning
+                        {HERO.start}
                     </Button>
                     <Button
                         variant="outlined"
@@ -344,12 +341,12 @@ export const Hero = ({ course, onSeeCourses }: { course: CourseInfo; onSeeCourse
                         onClick={onSeeCourses}
                         sx={{ fontWeight: 700, px: 3, minHeight: 52, fontSize: '1.05rem', color: 'text.primary', borderColor: 'rgba(255,255,255,0.2)' }}
                     >
-                        See the courses
+                        {HERO.browse}
                     </Button>
                 </Stack>
                 {first && (
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
-                        First lesson:{' '}
+                        {HERO.firstLesson}{' '}
                         <Box component="span" sx={{ color: 'text.primary', fontWeight: 700 }}>
                             {first.name}
                         </Box>{' '}
@@ -357,11 +354,7 @@ export const Hero = ({ course, onSeeCourses }: { course: CourseInfo; onSeeCourse
                     </Typography>
                 )}
                 <Stack direction="row" spacing={{ xs: 3.5, sm: 5 }} sx={{ mt: 4, pt: 3, borderTop: `1px solid ${LINE}` }}>
-                    {[
-                        { value: LESSONS, label: 'lessons' },
-                        { value: UNITS, label: 'units' },
-                        { value: COURSES.length, label: 'courses' },
-                    ].map(stat => (
+                    {HERO_STATS.map(stat => (
                         <Box key={stat.label}>
                             <Typography sx={{ fontWeight: 800, color: HEADING, fontSize: { xs: '1.5rem', sm: '1.75rem' }, lineHeight: 1.1 }}>{stat.value}</Typography>
                             <Typography variant="body2" color="text.secondary">
