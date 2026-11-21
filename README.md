@@ -8,8 +8,8 @@ Learn machine learning from the maths up, SQL from your first `SELECT`, and syst
 231 lessons that start from scratch and go all the way to interview questions.
 
 [![ML Foundations: 98 lessons](https://img.shields.io/badge/ML_Foundations-98_lessons-b39ddb?style=for-the-badge&labelColor=151921)](https://learn.hamropedia.com/foundations/)
-[![SQL: 61 lessons](https://img.shields.io/badge/SQL-61_lessons-f48fb1?style=for-the-badge&labelColor=151921)](https://learn.hamropedia.com/sql/)
-[![System Design: 72 lessons](https://img.shields.io/badge/System_Design-72_lessons-4dd0e1?style=for-the-badge&labelColor=151921)](https://learn.hamropedia.com/system-design/)
+[![SQL: 61 lessons](https://img.shields.io/badge/SQL-61_lessons-b39ddb?style=for-the-badge&labelColor=151921)](https://learn.hamropedia.com/sql/)
+[![System Design: 72 lessons](https://img.shields.io/badge/System_Design-72_lessons-b39ddb?style=for-the-badge&labelColor=151921)](https://learn.hamropedia.com/system-design/)
 
 ### [Start learning at learn.hamropedia.com →](https://learn.hamropedia.com)
 

@@ -328,13 +328,12 @@ export const MAX_EXERCISES = 8;
  * producing (order, type the word, write SQL), with one question to recall.
  */
 /**
- * A lesson's practice. With `warmUp` (opened straight from the path), it starts
- * with a guess before the teaching; from the lesson page it doesn't, because the
- * page asked the same guess before the learner read it.
+ * A lesson's quick practice: the idea and its new words, then the questions.
+ * (The guess before learning is part of "Learn it step by step", below.)
  */
-export const buildSession = (course: Course, topic: AnyTopic, sources: SessionSources, options: { warmUp?: boolean } = {}): PracticeCard[] => {
+export const buildSession = (course: Course, topic: AnyTopic, sources: SessionSources): PracticeCard[] => {
     const lesson = lessonText(topic);
-    const teach: PracticeCard[] = [...(options.warmUp ? guessCard(lesson) : []), ideaCard(lesson), ...wordsCard(topic, sources.glossary)];
+    const teach: PracticeCard[] = [ideaCard(lesson), ...wordsCard(topic, sources.glossary)];
     const match = matchCard(topic, sources.glossary);
     const matched = new Set(match.flatMap(card => card.pairs.map(pair => pair.key)));
     const order = orderCard(lesson);

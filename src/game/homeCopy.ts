@@ -23,4 +23,5 @@ export const HERO_STATS = [
 ];
 
 /** The end of the headline, in the three course colours. */
-export const HERO_GRADIENT = `linear-gradient(90deg, ${COURSES.map(course => course.colour).join(', ')})`;
+/** The headline's gradient: the courses' purple into the site's blue. */
+export const HERO_GRADIENT = 'linear-gradient(90deg, #b39ddb, #9fa8ff, #82b1ff)';

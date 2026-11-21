@@ -197,7 +197,7 @@ describe('the emails', () => {
         expect(email.html).toContain('href="https://learn.hamropedia.com/foundations/gradient-descent-and-the-learning-rate/"');
         expect(email.text).toContain('Up next in ML Foundations: Gradient descent and the learning rate');
         // With no summary yet, it still reads well.
-        expect(reminderEmail({ name: 'Ann', number: 1 }).text).toContain('press Start on the lesson marked Up next');
+        expect(reminderEmail({ name: 'Ann', number: 1 }).text).toContain('tap the lesson marked START');
     });
 
     it("never trusts the learner's summary blindly: odd numbers become 0, and links stay on the site", () => {

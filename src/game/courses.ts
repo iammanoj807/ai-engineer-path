@@ -60,7 +60,8 @@ export const COURSES: CourseInfo[] = [
         route: '/sql',
         title: 'SQL',
         tagline: 'From your first SELECT to window functions and interview problems.',
-        colour: '#f48fb1',
+        // One colour for every course: the same as ML Foundations.
+        colour: '#b39ddb',
         checkNames: ['Explain', 'Write', 'Predict', 'Edge cases'],
         units: toUnits(pathIndex.sql),
     },
@@ -69,7 +70,7 @@ export const COURSES: CourseInfo[] = [
         route: '/system-design',
         title: 'System Design',
         tagline: 'The building blocks, then real designs, the way interviews ask them.',
-        colour: '#4dd0e1',
+        colour: '#b39ddb',
         checkNames: ['Explain', 'Draw', 'Apply', 'Trade-offs'],
         units: toUnits(pathIndex.system_design),
     },

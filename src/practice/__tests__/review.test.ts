@@ -10,7 +10,7 @@ import { sqlGlossary } from '../../utils/sqlGlossary';
 import { systemDesignGlossary } from '../../utils/glossary';
 import type { GlossarySource } from '../../utils/glossaryEngine';
 import type { Course } from '../../services/progress';
-import { buildSession, guessCard, interviewCard, lessonText, type AnyTopic, type PracticeGlossary } from '../build';
+import { buildLearnSession, buildSession, guessCard, interviewCard, lessonText, type AnyTopic, type PracticeGlossary } from '../build';
 import { isTeaching, type MistakeCard, type PracticeCard } from '../cards';
 import { CARDS_PER_LESSON, buildReview, pickForLesson } from '../review';
 import type { DueLesson } from '../../game/review';
@@ -51,9 +51,9 @@ describe('guess first', () => {
         // Builds every lesson's practice: give slower machines (like GitHub's) time.
     }, 60_000);
 
-    it('comes first only when practice opens from the path', () => {
+    it('comes first in "Learn it step by step", not in the quick practice', () => {
         const { course, topic, glossary } = all[0];
-        expect(buildSession(course, topic, { glossary, sqlAnswers }, { warmUp: true })[0].kind).toBe('guess');
+        expect(buildLearnSession(course, topic, { glossary, sqlAnswers })[0].kind).toBe('guess');
         expect(buildSession(course, topic, { glossary, sqlAnswers })[0].kind).toBe('idea');
     });
 });

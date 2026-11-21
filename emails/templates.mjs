@@ -50,7 +50,7 @@ export const welcomeEmail = ({ name }) => {
 <p style="margin:0 0 14px">I made this site because learning AI shouldn't cost a fortune or feel like a maze. Every lesson is free, written in plain words, and set out in an order that makes sense: from your very first idea to the questions interviewers actually ask.</p>
 <p style="margin:0 0 8px">Here's how to get the most out of it:</p>
 <ol style="margin:0 0 18px;padding-left:22px">
-<li style="margin-bottom:8px"><b>One lesson at a time.</b> Open the path and press <b>Start</b> on the lesson marked Up next. Each one has an animation, the idea step by step, and a worked example.</li>
+<li style="margin-bottom:8px"><b>One lesson at a time.</b> Open the path and tap the lesson marked <b>START</b>. Each one has an animation, the idea step by step, and a worked example.</li>
 <li style="margin-bottom:8px"><b>Five minutes of practice after each lesson.</b> Ada and Alan, your coaches, ask quick questions and read them aloud. Every right answer earns XP.</li>
 <li><b>Come back tomorrow.</b> A few minutes a day beats one long evening a week, and your streak keeps count.</li>
 </ol>
@@ -71,7 +71,7 @@ I made this site because learning AI shouldn't cost a fortune or feel like a maz
 
 Here's how to get the most out of it:
 
-1. One lesson at a time. Open the path and press Start on the lesson marked Up next. Each one has an animation, the idea step by step, and a worked example.
+1. One lesson at a time. Open the path and tap the lesson marked START. Each one has an animation, the idea step by step, and a worked example.
 2. Five minutes of practice after each lesson. Ada and Alan, your coaches, ask quick questions and read them aloud. Every right answer earns XP.
 3. Come back tomorrow. A few minutes a day beats one long evening a week, and your streak keeps count.
 
@@ -143,7 +143,7 @@ export const reminderEmail = ({ name, number, progress: summary }) => {
 ${button(next.url, 'Continue this lesson')}
 <div style="font-size:13px;color:#6b7280;margin-top:12px">Then a five-minute practice with Ada or Alan.</div>
 </div>`
-        : `<p style="margin:0 0 22px">Open the path and press <b>Start</b> on the lesson marked Up next.</p>
+        : `<p style="margin:0 0 22px">Open the path and tap the lesson marked <b>START</b>.</p>
 <p style="margin:0 0 22px">${button(SITE, 'Continue learning')}</p>`;
     const html = page(
         `<p style="margin:0 0 14px;font-size:20px;font-weight:800">Hi ${escape(first)},</p>
@@ -156,7 +156,7 @@ ${streakLine ? `<p style="margin:0 0 16px">${escape(streakLine)}</p>` : ''}${til
 
 ${reminder.line}
 ${streakLine ? `\n${streakLine}\n` : ''}${progress && progress.xp > 0 ? `\nYou've earned ${progress.xp} XP so far.\n` : ''}
-${next ? `Up next in ${next.course}: ${next.name}\nContinue this lesson: ${next.url}\nThen a five-minute practice with Ada or Alan.` : `Open the path and press Start on the lesson marked Up next: ${SITE}`}
+${next ? `Up next in ${next.course}: ${next.name}\nContinue this lesson: ${next.url}\nThen a five-minute practice with Ada or Alan.` : `Open the path and tap the lesson marked START: ${SITE}`}
 
 See you there,
 ${FOUNDER}

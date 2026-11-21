@@ -20,7 +20,7 @@ import { sqlGlossary } from '../../src/utils/sqlGlossary';
 import { systemDesignGlossary } from '../../src/utils/glossary';
 import type { GlossarySource } from '../../src/utils/glossaryEngine';
 import { runOnPracticeDb } from '../../src/utils/sqlRunner';
-import { buildSession, interviewCard, lessonText, withFixCard, type AnyTopic, type InterviewSource, type PracticeGlossary } from '../../src/practice/build';
+import { buildLearnSession, interviewCard, lessonText, withFixCard, type AnyTopic, type InterviewSource, type PracticeGlossary } from '../../src/practice/build';
 import { genAiInterviewSet } from '../../src/data/interviewPrep/genai';
 import { mlInterviewSet } from '../../src/data/interviewPrep/ml';
 import { sqlInterviewSet } from '../../src/data/interviewPrep/sql';
@@ -102,8 +102,9 @@ const add = (guide: Guide, text: string) => {
 
 for (const { course, topics, glossary, questions } of courses) {
     for (const topic of topics as AnyTopic[]) {
-        // With the guess that opens practice from the path, and the interview question of later reviews.
-        let cards = buildSession(course, topic, { glossary, sqlAnswers }, { warmUp: true });
+        // The step-by-step lesson has every line of the quick practice, and the guess and each part's
+        // introduction too; then the interview question of later reviews.
+        let cards = buildLearnSession(course, topic, { glossary, sqlAnswers });
         if (course === 'sql') cards = withFixCard(cards, sql => runOnPracticeDb(SQL, sql));
         cards = [...cards, ...interviewCard(lessonText(topic), questions)];
         const guide = guideFor(topic.id);
