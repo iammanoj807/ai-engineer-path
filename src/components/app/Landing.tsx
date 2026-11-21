@@ -468,7 +468,7 @@ const LESSON_PARTS: { icon: ElementType; colour: string; title: string; text: st
     { icon: AnimationRoundedIcon, colour: '#b39ddb', title: 'An animation', text: 'See the idea move before you read about it. Play it, pause it, or step through it.' },
     { icon: LightbulbRoundedIcon, colour: '#ffca28', title: 'The idea, step by step', text: 'Why it exists, how it works, and the mistakes people make with it.' },
     { icon: CodeRoundedIcon, colour: '#82b1ff', title: 'A worked example', text: 'Real numbers worked through, with code that has been run.' },
-    { icon: TaskAltRoundedIcon, colour: MASTERED, title: 'Practise like a game', text: 'Bit the robot asks quick questions: match the pairs, type the missing word, put the steps in order. Hearts, XP and a streak keep you going.' },
+    { icon: TaskAltRoundedIcon, colour: MASTERED, title: 'Practise like a game', text: 'Maya and Felix ask quick questions: match the pairs, type or choose the missing word, put the steps in order. Hearts, XP and a streak keep you going.' },
     { icon: RecordVoiceOverRoundedIcon, colour: '#4dd0e1', title: 'Interview questions', text: 'Every course has an interview mode: full spoken answers, the traps, and the follow-ups.' },
     { icon: TerminalRoundedIcon, colour: COURSES.find(course => course.id === 'sql')?.colour ?? '#f48fb1', title: 'SQL that runs in the page', text: 'SQLite runs in your browser, so every query works with nothing to install.' },
 ];

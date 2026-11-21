@@ -35,7 +35,7 @@ const PRAISE = ['Correct!', 'Nice!', 'You got it!', 'Great work!', 'Spot on!', '
 /** A word of praise, the same for a card every time (no randomness while drawing). */
 export const praiseFor = (id: string) => PRAISE[[...id].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % PRAISE.length];
 
-/** Bit's mood for a card: thinking until answered, then happy or sad. */
+/** Maya's mood for a card: thinking until answered, then happy or sad. */
 export const moodFor = (feedback: Feedback): Mood => (feedback?.tone === 'right' ? 'happy' : feedback?.tone === 'wrong' ? 'sad' : 'think');
 
 /** A tappable choice: a word, a meaning, an answer. Coloured by its state. */

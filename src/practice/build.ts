@@ -188,7 +188,7 @@ const matchCard = (topic: AnyTopic, glossary: PracticeGlossary): MatchCard[] => 
 const blankCards = (topic: AnyTopic, lesson: LessonText, glossary: PracticeGlossary, count: number, avoid: ReadonlySet<string> = new Set()): BlankCard[] => {
     const own = new Set(glossary.terms.filter(term => term.taughtIn === topic.id).map(term => term.id));
     const fresh = new Set(glossary.newWordsIn(topic).map(term => term.id));
-    const candidates: { rank: number; termId: string; sentence: string; card: Omit<BlankCard, 'id' | 'kind'> }[] = [];
+    const candidates: { rank: number; termId: string; sentence: string; card: Omit<BlankCard, 'id' | 'kind' | 'choices'> }[] = [];
     [lesson.definition, ...lesson.facts, ...lesson.steps].forEach((text, textIndex) => {
         for (const sentence of sentencesOf(text)) {
             if (sentence.length < 30 || sentence.length > 220 || hasLink(sentence)) continue;
@@ -223,7 +223,20 @@ const blankCards = (topic: AnyTopic, lesson: LessonText, glossary: PracticeGloss
         if (chosen.some(other => other.termId === candidate.termId || other.sentence === candidate.sentence)) continue;
         chosen.push(candidate);
     }
-    return chosen.map((candidate, i) => ({ kind: 'blank', id: `${topic.id}-blank-${i + 1}`, ...candidate.card }));
+    // Three other words of the lesson to choose from, none of them the answer or part of it.
+    const words = lessonWords(topic, glossary);
+    const choicesFor = (answer: string, id: string) => {
+        const others = words
+            .map(term => term.term)
+            .filter(word => isTypable(word) && !answer.toLowerCase().includes(word.toLowerCase()) && !word.toLowerCase().includes(answer.toLowerCase()))
+            .filter((word, i, all) => all.findIndex(other => other.toLowerCase() === word.toLowerCase()) === i)
+            .slice(0, 3);
+        return shuffle([answer, ...others], `${id}:choices`);
+    };
+    return chosen.map((candidate, i) => {
+        const id = `${topic.id}-blank-${i + 1}`;
+        return { kind: 'blank', id, ...candidate.card, choices: choicesFor(candidate.card.answer, id) };
+    });
 };
 
 /** Openings of steps that are alternatives or asides, not the next step of one process. */

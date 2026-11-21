@@ -43,6 +43,8 @@ export interface BlankCard {
     after: string;
     /** What the missing word means: the clue. */
     clue: string;
+    /** For anyone who finds typing hard: the word among three others from the lesson, to tap instead. */
+    choices: string[];
 }
 
 /** Steps of "How it works", shuffled, to put back in order. */

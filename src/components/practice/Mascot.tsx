@@ -1,135 +1,249 @@
-// Bit: the site's own small robot, who asks the questions in practice, cheers
-// when you're right, and is a little sad (never cross) when you're not. Drawn
-// here as plain SVG with CSS movement, so it costs no images and keeps still
-// for anyone who asks their device for less motion.
+// The guides: Maya and Felix, who ask the questions in practice, cheer when
+// you're right, and look a little sad (never cross) when you're not. Drawn
+// here as plain SVG with CSS movement, so they cost no images and keep still
+// for anyone who asks their device for less motion. Who guides which lesson:
+// guides.ts.
 
 import { Box } from '@mui/material';
-
-export const MASCOT_NAME = 'Bit';
+import type { Guide } from './guides';
 
 export type Mood = 'idle' | 'think' | 'happy' | 'sad' | 'cheer';
 
-const BODY = '#dbe4ff';
-const EDGE = '#9fb3ff';
-const SCREEN = '#121a2b';
-const EYE = '#4dd0e1';
+/** How each guide looks: the same face and moods, their own hair, clothes and colours. */
+interface Look {
+    skin: string;
+    skinShade: string;
+    hair: string;
+    top: string;
+    topDark: string;
+}
+
+const LOOKS: Record<Guide, Look> = {
+    maya: { skin: '#c68863', skinShade: '#a96f4e', hair: '#2b1d16', top: '#7c8cff', topDark: '#5d6ce8' },
+    felix: { skin: '#f1c4a0', skinShade: '#d39a74', hair: '#a4512b', top: '#26a69a', topDark: '#1b7d73' },
+};
+
+const EYE = '#1f1a17';
 const CHEEK = '#f48fb1';
-const LIGHT = '#ffca28';
+const MOUTH = '#7a2e2e';
+const TONGUE = '#ef7d8a';
+const GOLD = '#ffca28';
+
+const Eye = ({ x, y }: { x: number; y: number }) => (
+    <g>
+        <ellipse cx={x} cy={y} rx="3.3" ry="4.2" fill={EYE} />
+        <circle cx={x + 1.1} cy={y - 1.5} r="1.2" fill="#fff" />
+    </g>
+);
 
 const eyes: Record<Mood, React.ReactNode> = {
     idle: (
-        <g className="bit-blink">
-            <ellipse cx="48" cy="52" rx="5" ry="6" fill={EYE} />
-            <ellipse cx="72" cy="52" rx="5" ry="6" fill={EYE} />
+        <g className="guide-blink">
+            <Eye x={50} y={55} />
+            <Eye x={70} y={55} />
         </g>
     ),
     think: (
         <g>
-            <ellipse cx="51" cy="49" rx="4.5" ry="5.5" fill={EYE} />
-            <ellipse cx="75" cy="49" rx="4.5" ry="5.5" fill={EYE} />
+            <Eye x={52} y={53} />
+            <Eye x={72} y={53} />
         </g>
     ),
     happy: (
-        <g fill="none" stroke={EYE} strokeWidth="3.5" strokeLinecap="round">
-            <path d="M43 54 q5 -8 10 0" />
-            <path d="M67 54 q5 -8 10 0" />
+        <g fill="none" stroke={EYE} strokeWidth="2.6" strokeLinecap="round">
+            <path d="M46 56 q4 -5 8 0" />
+            <path d="M66 56 q4 -5 8 0" />
         </g>
     ),
     sad: (
         <g>
-            <ellipse cx="48" cy="54" rx="4.5" ry="5" fill={EYE} />
-            <ellipse cx="72" cy="54" rx="4.5" ry="5" fill={EYE} />
-            {/* Brows raised in the middle: sad, not cross. */}
-            <path d="M42 48 l11 -4 M78 48 l-11 -4" stroke={EYE} strokeWidth="2.5" strokeLinecap="round" />
+            <Eye x={50} y={57} />
+            <Eye x={70} y={57} />
         </g>
     ),
     cheer: (
-        <g fill="none" stroke={LIGHT} strokeWidth="3.5" strokeLinecap="round">
-            <path d="M43 54 q5 -9 10 0" />
-            <path d="M67 54 q5 -9 10 0" />
+        <g fill="none" stroke={EYE} strokeWidth="2.8" strokeLinecap="round">
+            <path d="M45 56 q5 -6 10 0" />
+            <path d="M65 56 q5 -6 10 0" />
         </g>
     ),
 };
 
+const brows: Record<Mood, string> = {
+    idle: 'M45 46 q5 -3 9 -1 M66 45 q4 -2 9 1',
+    think: 'M47 44 q5 -4 10 -1 M67 45 q4 -1 9 1',
+    happy: 'M45 45 q5 -3 9 -1 M66 44 q4 -2 9 1',
+    // Raised in the middle: sad, not cross.
+    sad: 'M45 49 q5 -1 9 -4 M66 45 q4 3 9 4',
+    cheer: 'M45 43 q5 -4 9 -2 M66 41 q4 -2 9 2',
+};
+
 const mouths: Record<Mood, React.ReactNode> = {
-    idle: <path d="M54 63 q6 4 12 0" fill="none" stroke={EYE} strokeWidth="3" strokeLinecap="round" />,
-    think: <path d="M55 64 h9" fill="none" stroke={EYE} strokeWidth="3" strokeLinecap="round" />,
-    happy: <path d="M50 61 q10 10 20 0" fill="none" stroke={EYE} strokeWidth="3" strokeLinecap="round" />,
-    sad: <path d="M52 67 q8 -6 16 0" fill="none" stroke={EYE} strokeWidth="3" strokeLinecap="round" />,
-    cheer: <ellipse cx="60" cy="64" rx="7" ry="5" fill={EYE} />,
+    idle: <path d="M54 68 q6 4.5 12 0" fill="none" stroke={MOUTH} strokeWidth="2.3" strokeLinecap="round" />,
+    think: <path d="M56 69.5 q5 -1.5 9 0.5" fill="none" stroke={MOUTH} strokeWidth="2.3" strokeLinecap="round" />,
+    happy: (
+        <g>
+            <path d="M51 66 q9 11 18 0 Z" fill={MOUTH} />
+            <path d="M55 71 q5 3 10 0 q-5 -3 -10 0 Z" fill={TONGUE} />
+        </g>
+    ),
+    sad: <path d="M54 72 q6 -5 12 0" fill="none" stroke={MOUTH} strokeWidth="2.3" strokeLinecap="round" />,
+    cheer: (
+        <g>
+            <path d="M49 65 q11 15 22 0 Z" fill={MOUTH} />
+            <path d="M54 72 q6 4 12 0 q-6 -3 -12 0 Z" fill={TONGUE} />
+        </g>
+    ),
 };
 
-const arms: Record<Mood, React.ReactNode> = {
-    idle: <path d="M38 92 q-9 6 -10 14 M82 92 q9 6 10 14" />,
-    think: <path d="M38 92 q-9 6 -10 14 M82 92 q10 -2 6 -14" />,
-    happy: <path d="M38 93 q-12 1 -18 -6 M82 93 q12 1 18 -6" />,
-    sad: <path d="M38 94 q-6 8 -6 16 M82 94 q6 8 6 16" />,
-    // Out to the sides and up, clear of the head, so they show.
-    cheer: <path d="M38 92 q-16 -2 -24 -16 M82 92 q16 -2 24 -16" />,
-};
-
-/** How Bit moves in each mood. Nothing moves for a reader who prefers less motion. */
-const motion: Record<Mood, string> = {
-    idle: 'bitFloat 3.2s ease-in-out infinite',
-    think: 'bitTilt 2.4s ease-in-out infinite',
-    happy: 'bitHop 0.5s ease-out 2',
-    sad: 'bitDroop 0.6s ease-out forwards',
-    cheer: 'bitJump 0.7s ease-in-out infinite',
-};
-
-/** Bit, at `size` pixels wide, in a mood. Decorative: what Bit says is always in the text beside it. */
-const Mascot = ({ mood = 'idle', size = 64 }: { mood?: Mood; size?: number }) => (
-    <Box
-        component="svg"
-        viewBox="0 0 120 120"
-        aria-hidden
-        sx={{
-            width: size,
-            height: size,
-            flexShrink: 0,
-            overflow: 'visible',
-            animation: motion[mood],
-            transformOrigin: '50% 90%',
-            '& .bit-blink': { transformBox: 'fill-box', transformOrigin: 'center', animation: 'bitBlink 4.5s infinite' },
-            '& .bit-light': { animation: mood === 'sad' ? 'none' : 'bitGlow 1.8s ease-in-out infinite' },
-            '@keyframes bitFloat': { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-3px)' } },
-            '@keyframes bitTilt': { '0%, 100%': { transform: 'rotate(0deg)' }, '50%': { transform: 'rotate(-5deg)' } },
-            '@keyframes bitHop': { '0%, 100%': { transform: 'translateY(0)' }, '40%': { transform: 'translateY(-10px)' } },
-            '@keyframes bitDroop': { to: { transform: 'translateY(3px) rotate(-3deg)' } },
-            '@keyframes bitJump': { '0%, 100%': { transform: 'translateY(0) rotate(0)' }, '30%': { transform: 'translateY(-12px) rotate(-4deg)' }, '60%': { transform: 'translateY(-6px) rotate(4deg)' } },
-            '@keyframes bitBlink': { '0%, 92%, 100%': { transform: 'scaleY(1)' }, '95%': { transform: 'scaleY(0.1)' } },
-            '@keyframes bitGlow': { '0%, 100%': { opacity: 1 }, '50%': { opacity: 0.55 } },
-            '@media (prefers-reduced-motion: reduce)': { animation: 'none', '& *': { animation: 'none !important' } },
-        }}
-    >
-        {/* Antenna */}
-        <line x1="60" y1="24" x2="60" y2="12" stroke={EDGE} strokeWidth="4" strokeLinecap="round" />
-        <circle className="bit-light" cx="60" cy="9" r="6" fill={mood === 'sad' ? '#6b7380' : LIGHT} />
-        {/* Ears */}
-        <rect x="12" y="44" width="11" height="20" rx="5" fill={EDGE} />
-        <rect x="97" y="44" width="11" height="20" rx="5" fill={EDGE} />
-        {/* Arms, behind the body */}
-        <g fill="none" stroke={EDGE} strokeWidth="6" strokeLinecap="round">{arms[mood]}</g>
-        {/* Body */}
-        <rect x="38" y="84" width="44" height="26" rx="11" fill={BODY} stroke={EDGE} strokeWidth="3" />
-        <circle cx="60" cy="97" r="4.5" fill={mood === 'sad' ? '#6b7380' : CHEEK} />
-        {/* Head and its screen */}
-        <rect x="20" y="22" width="80" height="64" rx="22" fill={BODY} stroke={EDGE} strokeWidth="3" />
-        <rect x="30" y="33" width="60" height="42" rx="14" fill={SCREEN} />
-        {eyes[mood]}
-        {mouths[mood]}
-        {(mood === 'happy' || mood === 'cheer' || mood === 'idle') && (
-            <g fill={CHEEK} opacity="0.75">
-                <circle cx="38" cy="64" r="3.2" />
-                <circle cx="82" cy="64" r="3.2" />
-            </g>
-        )}
-    </Box>
+/** Sleeves and hands, drawn in front of the body. */
+const Arm = ({ d, hand, look }: { d: string; hand: [number, number]; look: Look }) => (
+    <g>
+        <path d={d} fill="none" stroke={look.top} strokeWidth="9" strokeLinecap="round" />
+        <circle cx={hand[0]} cy={hand[1]} r="5" fill={look.skin} />
+    </g>
 );
+
+const arms = (mood: Mood, look: Look): React.ReactNode => {
+    switch (mood) {
+        // A hand resting by the chin.
+        case 'think': return <Arm d="M33 114 Q31 96 40 86" hand={[43, 82]} look={look} />;
+        // A small wave.
+        case 'happy': return <Arm d="M90 108 Q98 94 100 82" hand={[100, 77]} look={look} />;
+        case 'cheer':
+            return (
+                <>
+                    <Arm d="M32 106 Q20 92 18 76" hand={[17, 71]} look={look} />
+                    <Arm d="M88 106 Q100 92 102 76" hand={[103, 71]} look={look} />
+                </>
+            );
+        default: return null;
+    }
+};
+
+/** Maya: a bun, a side-swept fringe, small gold earrings and a periwinkle hoodie. */
+const MayaHair = { back: (look: Look) => (
+    <>
+        <circle cx="60" cy="19" r="11" fill={look.hair} />
+        <ellipse cx="60" cy="50" rx="29" ry="31" fill={look.hair} />
+    </>
+), front: (look: Look) => <path d="M35 47 C34 29 47 23 60 23 C75 23 87 31 85 48 C79 39 70 35 59 37 C50 38 42 41 35 47 Z" fill={look.hair} /> };
+
+/** Felix: curly auburn hair, freckles, round glasses and a teal hoodie. */
+const FelixHair = { back: (look: Look) => (
+    <g fill={look.hair}>
+        <ellipse cx="60" cy="42" rx="27" ry="21" />
+        <circle cx="43" cy="28" r="9" />
+        <circle cx="54" cy="21" r="10" />
+        <circle cx="67" cy="21" r="10" />
+        <circle cx="78" cy="29" r="9" />
+    </g>
+), front: (look: Look) => (
+    <path d="M34 49 C31 31 44 21 60 21 C67 21 74 23 79 27 C86 32 89 40 86 50 C83 42 78 38 71 37 C72 34 70 32 67 32 C59 34 50 35 43 39 C38 42 36 45 34 49 Z" fill={look.hair} />
+) };
+
+/** A guide, at `size` pixels wide, in a mood. Decorative: what they say is always in the text beside them. */
+const Mascot = ({ mood = 'idle', size = 64, who = 'maya' }: { mood?: Mood; size?: number; who?: Guide }) => {
+    const look = LOOKS[who];
+    const hair = who === 'maya' ? MayaHair : FelixHair;
+    return (
+        <Box
+            component="svg"
+            viewBox="0 0 120 120"
+            aria-hidden
+            sx={{
+                width: size,
+                height: size,
+                flexShrink: 0,
+                overflow: 'visible',
+                animation: motion[mood],
+                transformOrigin: '50% 95%',
+                '& .guide-blink': { transformBox: 'fill-box', transformOrigin: 'center', animation: 'guideBlink 4.5s infinite' },
+                '& .guide-sparkle': { transformBox: 'fill-box', transformOrigin: 'center', animation: 'guideTwinkle 1.2s ease-in-out infinite' },
+                '@keyframes guideFloat': { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-2px)' } },
+                '@keyframes guideTilt': { '0%, 100%': { transform: 'rotate(0deg)' }, '50%': { transform: 'rotate(-4deg)' } },
+                '@keyframes guideHop': { '0%, 100%': { transform: 'translateY(0)' }, '40%': { transform: 'translateY(-8px)' } },
+                '@keyframes guideDroop': { to: { transform: 'translateY(2px) rotate(-3deg)' } },
+                '@keyframes guideJump': { '0%, 100%': { transform: 'translateY(0)' }, '35%': { transform: 'translateY(-9px)' } },
+                '@keyframes guideBlink': { '0%, 92%, 100%': { transform: 'scaleY(1)' }, '95%': { transform: 'scaleY(0.1)' } },
+                '@keyframes guideTwinkle': { '0%, 100%': { transform: 'scale(1)', opacity: 1 }, '50%': { transform: 'scale(0.6)', opacity: 0.6 } },
+                '@media (prefers-reduced-motion: reduce)': { animation: 'none', '& *': { animation: 'none !important' } },
+            }}
+        >
+            {hair.back(look)}
+            {/* Hoodie and neck */}
+            <path d="M22 120 C22 98 40 87 60 87 C80 87 98 98 98 120 Z" fill={look.top} />
+            <rect x="53" y="75" width="14" height="15" rx="4" fill={look.skinShade} />
+            <path d="M44 89 Q60 103 76 89" fill="none" stroke={look.topDark} strokeWidth="6" strokeLinecap="round" />
+            {who === 'maya' && <path d="M55 96 v9 M65 96 v9" stroke="#fff" strokeWidth="2" strokeLinecap="round" />}
+            {/* Ears */}
+            <circle cx="34" cy="55" r="5" fill={look.skin} />
+            <circle cx="86" cy="55" r="5" fill={look.skin} />
+            {who === 'maya' && (
+                <>
+                    <circle cx="34" cy="62" r="1.9" fill={GOLD} />
+                    <circle cx="86" cy="62" r="1.9" fill={GOLD} />
+                </>
+            )}
+            {/* Face */}
+            <ellipse cx="60" cy="53" rx="25" ry="27" fill={look.skin} />
+            {hair.front(look)}
+            <path d={brows[mood]} fill="none" stroke={look.hair} strokeWidth={who === 'felix' ? 3 : 2.4} strokeLinecap="round" />
+            {who === 'felix' && (
+                <g fill="#b9683f" opacity="0.6">
+                    <circle cx="44" cy="62" r="1" />
+                    <circle cx="48" cy="64" r="1" />
+                    <circle cx="43" cy="66" r="1" />
+                    <circle cx="76" cy="62" r="1" />
+                    <circle cx="72" cy="64" r="1" />
+                    <circle cx="77" cy="66" r="1" />
+                </g>
+            )}
+            {eyes[mood]}
+            {who === 'felix' && (
+                <g fill="rgba(255,255,255,0.1)" stroke="#1c1c1c" strokeWidth="2.2">
+                    <circle cx="50" cy="55" r="7.5" />
+                    <circle cx="70" cy="55" r="7.5" />
+                    <path d="M57.5 55 q2.5 -2 5 0 M42.5 54 L36 52 M77.5 54 L84 52" fill="none" />
+                </g>
+            )}
+            <path d="M60 58 q-2.5 5 1 6.5" fill="none" stroke={look.skinShade} strokeWidth="1.8" strokeLinecap="round" />
+            {mouths[mood]}
+            {mood !== 'sad' && (
+                <g fill={CHEEK} opacity="0.45">
+                    <circle cx="44" cy="65" r="4" />
+                    <circle cx="76" cy="65" r="4" />
+                </g>
+            )}
+            {arms(mood, look)}
+            {mood === 'think' && (
+                <g fill="rgba(255,255,255,0.75)">
+                    <circle cx="94" cy="34" r="2.2" />
+                    <circle cx="101" cy="25" r="3.2" />
+                </g>
+            )}
+            {mood === 'cheer' && (
+                <g fill={GOLD}>
+                    <path className="guide-sparkle" d="M12 40 l2 5 l5 2 l-5 2 l-2 5 l-2 -5 l-5 -2 l5 -2 Z" />
+                    <path className="guide-sparkle" d="M106 36 l1.6 4 l4 1.6 l-4 1.6 l-1.6 4 l-1.6 -4 l-4 -1.6 l4 -1.6 Z" />
+                </g>
+            )}
+        </Box>
+    );
+};
+
+/** How the guides move in each mood. Nothing moves for a reader who prefers less motion. */
+const motion: Record<Mood, string> = {
+    idle: 'guideFloat 3.2s ease-in-out infinite',
+    think: 'guideTilt 2.6s ease-in-out infinite',
+    happy: 'guideHop 0.5s ease-out 2',
+    sad: 'guideDroop 0.6s ease-out forwards',
+    cheer: 'guideJump 0.7s ease-in-out infinite',
+};
 
 export default Mascot;
 
-/** A speech bubble for Bit: what Bit says, with a tail pointing back at Bit. */
+/** A speech bubble for the guide: what they say, with a tail pointing back at them. */
 export const SpeechBubble = ({ children }: { children: React.ReactNode }) => (
     <Box
         sx={{

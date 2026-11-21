@@ -106,6 +106,18 @@ describe('cards come from the lesson, and are fair', () => {
         }
     });
 
+    it('fill the gap can be answered by choosing: the word among other words of the lesson, none containing it', () => {
+        for (const { topic, card } of cardsOf('blank')) {
+            expect(card.choices, topic.id).toContain(card.answer);
+            expect(card.choices.length, topic.id).toBeGreaterThanOrEqual(2);
+            expect(new Set(card.choices.map(word => word.toLowerCase())).size, topic.id).toBe(card.choices.length);
+            for (const word of card.choices) {
+                if (word !== card.answer) expect(word.toLowerCase().includes(card.answer.toLowerCase()), `${topic.id}: ${word}`).toBe(false);
+            }
+        }
+        expect(cardsOf('blank').filter(({ card }) => card.choices.length === 4).length).toBeGreaterThan(cardsOf('blank').length * 0.9);
+    });
+
     it("no repeats: a gap's word is rarely one already matched, or the definition the idea card showed", () => {
         let repeatsWord = 0;
         let repeatsDefinition = 0;

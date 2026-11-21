@@ -25,7 +25,7 @@ AI Engineer Path is a free learning site that takes you from zero to interview-r
 
 - **231 lessons in 27 units**, from the first idea to interview questions.
 - **Every topic is a full lesson:** an animation, the idea step by step, a worked example, and four exercises with answers.
-- **Practise like a game:** after every lesson, Bit the robot asks quick questions (match the pairs, type the missing word letter by letter, put the steps in order, fix the SQL query) with hearts, XP and a streak.
+- **Practise like a game:** after every lesson, a guide (Maya or Felix) asks quick questions (match the pairs, type the missing word letter by letter or choose it, put the steps in order, fix the SQL query) with hearts, XP, a streak and sounds.
 - **Interview questions in every course:** full spoken answers, the traps, and the follow-ups.
 - **SQL that runs in your browser:** a real SQLite engine, with nothing to install.
 - **Free, with no account needed to read.** Sign in with Google only if you want to save your progress.
@@ -79,24 +79,24 @@ Every topic teaches one idea all the way through:
 3. **A worked example** with code that has been run.
 4. **Four checks with answers** (in ML Foundations: Explain · Derive · Build · Break). Pass all four without notes and the topic is mastered.
 
-### Practise with Bit
+### Practise with Maya and Felix
 
 <p align="center">
-  <img src="docs/images/practice-idea.png" alt="Bit introduces the idea of a lesson, with its animation" width="24%">
+  <img src="docs/images/practice-idea.png" alt="The lesson's guide introduces its idea, with its animation" width="24%">
   <img src="docs/images/practice-match.png" alt="Match each word to its meaning" width="24%">
   <img src="docs/images/practice-typing.png" alt="Type the missing word, checked letter by letter" width="24%">
   <img src="docs/images/practice-summary.png" alt="Lesson complete: XP earned, first-try score and hearts left" width="24%">
 </p>
 
-Tap any lesson on the path and press **Practise**. Bit, the site's robot, teaches the idea and its new words first, then asks quick questions made from the lesson itself:
+Tap any lesson on the path and press **Practise**. The lesson's guide, Maya or Felix, teaches the idea and its new words first, then asks quick questions made from the lesson itself:
 
 - **Match the pairs:** each word to what it means.
-- **Fill the gap:** type the missing word; every letter is checked as you type.
+- **Fill the gap:** type the missing word, checked letter by letter as you type (Backspace works), or choose it from four words if typing is hard.
 - **Put the steps in order:** how it works, step by step.
 - **Spot the mistake:** the one common mistake among true statements.
 - **SQL:** predict how many rows a query returns, write a query (it runs and is checked against the answer's rows), and fix a query with one small bug.
 
-A wrong answer costs a heart and the card comes back at the end. Finishing earns XP and keeps your streak.
+A right answer chimes; a wrong one costs a heart and the card comes back at the end (sound can be turned off). Finishing earns XP and keeps your streak.
 
 ### Run SQL in the page
 
@@ -118,7 +118,7 @@ Reading every lesson is free without an account. Sign in with Google to:
 - keep a **daily streak** and set a **daily goal** of 10, 30, 50 or 80 XP,
 - see the **same progress on your phone and your laptop**.
 
-Only you can see your progress.
+Only you can see your progress, and you can delete your account and all of it at any time from the account menu.
 
 ## The full curriculum
 

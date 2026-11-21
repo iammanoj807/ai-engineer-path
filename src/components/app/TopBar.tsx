@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import {
     AppBar,
@@ -20,12 +20,16 @@ import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import RouteRoundedIcon from '@mui/icons-material/RouteRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
+import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
 import GoogleIcon from '@mui/icons-material/Google';
 import { COURSES } from '../../game/courses';
 import { coursePath, placeOf } from '../../game/addresses';
 import { useGameStats } from '../../game/useProgress';
 import { signIn, signOut, useAccount, useTracksProgress } from '../../services/account';
 import { FLAME, XP_GOLD } from './colours';
+
+// Loaded only when someone opens it.
+const DeleteAccountDialog = lazy(() => import('./DeleteAccountDialog'));
 
 const NAV = [{ to: '/', label: 'Path' }, ...COURSES.map(course => ({ to: coursePath(course), label: course.title }))];
 
@@ -49,50 +53,72 @@ const Stat = ({ icon, value, colour, label }: { icon: React.ReactNode; value: nu
 const AccountButton = () => {
     const account = useAccount();
     const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+    const [deleting, setDeleting] = useState(false);
+    // Stays open after the account is gone (signed out by then), to say it's done.
+    const deleteDialog = deleting && (
+        <Suspense fallback={null}>
+            <DeleteAccountDialog onClose={() => setDeleting(false)} />
+        </Suspense>
+    );
 
-    if (account.status === 'off' || account.status === 'loading') return null;
-
-    if (account.status === 'guest') {
-        return (
-            <Tooltip title="Keep your progress on every device">
-                <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={<GoogleIcon />}
-                    onClick={() => void signIn()}
-                    sx={{ minHeight: 40, borderColor: 'rgba(255,255,255,0.25)', color: 'text.primary', whiteSpace: 'nowrap' }}
-                >
-                    Sign in
-                </Button>
-            </Tooltip>
-        );
-    }
-
+    // One shape for every state, so the delete dialog keeps its place (and what it is showing)
+    // when deleting signs the person out.
     return (
         <>
-            <IconButton onClick={event => setAnchor(event.currentTarget)} aria-label="Your account" sx={{ p: 0.5 }}>
-                <Avatar src={account.photo} alt={account.name ?? 'You'} sx={{ width: 34, height: 34 }} />
-            </IconButton>
-            <Menu anchorEl={anchor} open={!!anchor} onClose={() => setAnchor(null)}>
-                <Box sx={{ px: 2, py: 1 }}>
-                    <Typography fontWeight={700}>{account.name ?? 'Signed in'}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                        Progress saved to your account
-                    </Typography>
-                </Box>
-                <Divider />
-                <MenuItem
-                    onClick={() => {
-                        setAnchor(null);
-                        void signOut();
-                    }}
-                >
-                    <ListItemIcon>
-                        <LogoutRoundedIcon fontSize="small" />
-                    </ListItemIcon>
-                    Sign out
-                </MenuItem>
-            </Menu>
+            {account.status === 'guest' && (
+                <Tooltip title="Keep your progress on every device">
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<GoogleIcon />}
+                        onClick={() => void signIn()}
+                        sx={{ minHeight: 40, borderColor: 'rgba(255,255,255,0.25)', color: 'text.primary', whiteSpace: 'nowrap' }}
+                    >
+                        Sign in
+                    </Button>
+                </Tooltip>
+            )}
+            {account.status === 'signed-in' && (
+                <IconButton onClick={event => setAnchor(event.currentTarget)} aria-label="Your account" sx={{ p: 0.5 }}>
+                    <Avatar src={account.photo} alt={account.name ?? 'You'} sx={{ width: 34, height: 34 }} />
+                </IconButton>
+            )}
+            {account.status === 'signed-in' && (
+                <Menu anchorEl={anchor} open={!!anchor} onClose={() => setAnchor(null)}>
+                    <Box sx={{ px: 2, py: 1 }}>
+                        <Typography fontWeight={700}>{account.name ?? 'Signed in'}</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            Progress saved to your account
+                        </Typography>
+                    </Box>
+                    <Divider />
+                    <MenuItem
+                        onClick={() => {
+                            setAnchor(null);
+                            void signOut();
+                        }}
+                    >
+                        <ListItemIcon>
+                            <LogoutRoundedIcon fontSize="small" />
+                        </ListItemIcon>
+                        Sign out
+                    </MenuItem>
+                    <Divider />
+                    <MenuItem
+                        onClick={() => {
+                            setAnchor(null);
+                            setDeleting(true);
+                        }}
+                        sx={{ color: '#ef9a9a' }}
+                    >
+                        <ListItemIcon sx={{ color: 'inherit' }}>
+                            <DeleteForeverRoundedIcon fontSize="small" />
+                        </ListItemIcon>
+                        Delete account
+                    </MenuItem>
+                </Menu>
+            )}
+            {deleteDialog}
         </>
     );
 };

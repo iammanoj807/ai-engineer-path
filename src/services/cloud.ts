@@ -6,8 +6,10 @@
 import { initializeApp } from 'firebase/app';
 import {
     GoogleAuthProvider,
+    deleteUser,
     getAuth,
     onAuthStateChanged,
+    reauthenticateWithPopup,
     signInWithPopup,
     signOut,
     type Auth,
@@ -21,6 +23,7 @@ import {
     persistentLocalCache,
     persistentMultipleTabManager,
     setDoc,
+    writeBatch,
     type Firestore,
 } from 'firebase/firestore';
 import type { FirebaseConfig } from './account';
@@ -131,4 +134,20 @@ export const signInWithGoogle = async () => {
 
 export const signOutUser = async () => {
     if (auth) await signOut(auth);
+};
+
+/**
+ * Delete the account and everything saved in it. Google asks the person to
+ * sign in once more first: it confirms it's really them, and Firebase only
+ * deletes an account that signed in moments ago. If they close that window,
+ * nothing is deleted. Then the progress documents go, then the account.
+ */
+export const deleteAccountAndProgress = async () => {
+    const user = auth?.currentUser;
+    if (!auth || !db || !user) throw new Error('Not signed in');
+    await reauthenticateWithPopup(user, new GoogleAuthProvider());
+    const batch = writeBatch(db);
+    for (const name of DOC_NAMES) batch.delete(progressDoc(user.uid, name));
+    await batch.commit();
+    await deleteUser(user);
 };

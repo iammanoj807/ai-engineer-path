@@ -8,6 +8,7 @@ import { ProseText } from '../../learning/GlossaryText';
 import { usePractice } from '../context';
 import { Body, CardHeader, Footer } from '../parts';
 import { RIGHT, WRONG, bigButton, choiceSx, moodFor, praiseFor, shakeSx, type CardProps, type Feedback } from '../style';
+import { playPop, playWrong } from '../sound';
 
 // ============ MATCH THE PAIRS ============
 
@@ -26,7 +27,10 @@ export const MatchCardView = ({ card, accent, onDone }: CardProps<MatchCard>) =>
         if (!nextTerm || !nextMeaning) return;
         if (nextTerm === nextMeaning) {
             setMatched(m => [...m, nextTerm]);
+            // The last pair gets the "right" chime from the footer instead.
+            if (matched.length + 1 < card.pairs.length) playPop();
         } else {
+            playWrong();
             setMisses(misses + 1);
             // `at` changes with every miss, so the shake plays again even on the same pair.
             setWrong({ term: nextTerm, meaning: nextMeaning, at: misses + 1 });

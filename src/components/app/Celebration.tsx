@@ -16,6 +16,7 @@ import { XP_PER_CHECK, XP_TOPIC_BONUS, checksPassedIn, readDailyGoal } from '../
 import { onCelebrate, onDayXp, type Celebration as CelebrationEvent } from '../../services/progress';
 import { FLAME, XP_GOLD } from './colours';
 import Mascot from '../practice/Mascot';
+import { playComplete } from '../practice/sound';
 
 interface Shown {
     course: CourseInfo;
@@ -80,6 +81,9 @@ const Celebration = () => {
         setCopied(false);
     };
     const [copied, setCopied] = useState(false);
+    useEffect(() => {
+        if (shown) playComplete();
+    }, [shown]);
 
     /** Share a finished unit: the phone's own share sheet, or the link copied. */
     const shareUnit = async (course: CourseInfo, unit: PathUnit) => {
@@ -107,7 +111,10 @@ const Celebration = () => {
                 {shown && (
                     <DialogContent sx={{ textAlign: 'center', p: { xs: 3, sm: 4 } }}>
                         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                            <Mascot mood="cheer" size={104} />
+                            <Stack direction="row" spacing={1} justifyContent="center">
+                                <Mascot mood="cheer" size={96} who="maya" />
+                                <Mascot mood="cheer" size={96} who="felix" />
+                            </Stack>
                         </Box>
                         <Typography variant="h5" sx={{ fontWeight: 800, mt: 1 }}>
                             {shown.unitComplete && shown.unit ? `Unit ${shown.unit.number} complete!` : 'Topic mastered!'}

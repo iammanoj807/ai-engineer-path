@@ -13,6 +13,8 @@ import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
 import LocalFireDepartmentRoundedIcon from '@mui/icons-material/LocalFireDepartmentRounded';
 import GoogleIcon from '@mui/icons-material/Google';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
+import VolumeUpRoundedIcon from '@mui/icons-material/VolumeUpRounded';
+import VolumeOffRoundedIcon from '@mui/icons-material/VolumeOffRounded';
 import IosShareRoundedIcon from '@mui/icons-material/IosShareRounded';
 import { courseById } from '../../game/courses';
 import { SITE_URL, topicPath } from '../../game/addresses';
@@ -29,9 +31,11 @@ import { useTracksProgress } from '../../services/account';
 import { GlossaryProvider, GlossaryTopic } from '../learning/GlossaryText';
 import { FLAME, XP_GOLD } from '../app/colours';
 import { PracticeContext } from './context';
-import Mascot, { MASCOT_NAME } from './Mascot';
+import Mascot from './Mascot';
+import { GUIDE_NAMES, guideFor, type Guide } from './guides';
 import { Body, Footer } from './parts';
 import { PANEL, RIGHT, WRONG, bigButton } from './style';
+import { playComplete, playOut, setSoundOn, useSoundOn } from './sound';
 import { IdeaCardView, WordsCardView } from './cards/TeachCards';
 import { MatchCardView, MistakeCardView, OrderCardView, RecallCardView } from './cards/ChoiceCards';
 import { BlankCardView } from './cards/BlankCard';
@@ -65,12 +69,12 @@ const CardView = ({ card, accent, onDone }: { card: PracticeCard; accent: string
     }
 };
 
-/** A full-card message from Bit: getting ready, out of hearts, fix your mistakes, leaving. */
-const Moment = ({ mood, title, children, actions }: { mood: 'think' | 'sad' | 'happy' | 'cheer' | 'idle'; title: string; children?: React.ReactNode; actions: React.ReactNode }) => (
+/** A full-card message from Maya: getting ready, out of hearts, fix your mistakes, leaving. */
+const Moment = ({ guide, mood, title, children, actions }: { guide: Guide; mood: 'think' | 'sad' | 'happy' | 'cheer' | 'idle'; title: string; children?: React.ReactNode; actions: React.ReactNode }) => (
     <>
         <Body>
             <Stack alignItems="center" textAlign="center" spacing={2} sx={{ pt: { xs: 4, sm: 8 } }}>
-                <Mascot mood={mood} size={128} />
+                <Mascot mood={mood} size={128} who={guide} />
                 <Typography id="practice-question" component="h2" sx={{ fontWeight: 800, fontSize: { xs: '1.5rem', sm: '1.9rem' }, color: '#fff' }}>
                     {title}
                 </Typography>
@@ -126,6 +130,7 @@ const Summary = ({
         (['explain', 'write', 'predict', 'edge'] as const).filter(check => progress.sql?.checks[topicId]?.[check] === true)
     );
     const [trackingAtStart] = useState(tracking);
+    useEffect(() => playComplete(), []);
     const proven = useMemo(
         () => (course === 'sql' ? checksProven(cards.filter((card): card is SqlCard => card.kind === 'predict' || card.kind === 'write'), outcomes) : []),
         [course, cards, outcomes]
@@ -173,7 +178,7 @@ const Summary = ({
         <>
             <Body>
                 <Stack alignItems="center" textAlign="center" spacing={1.5} sx={{ pt: { xs: 1, sm: 3 } }}>
-                    <Mascot mood="cheer" size={120} />
+                    <Mascot mood="cheer" size={120} who={guideFor(topicId)} />
                     <Typography id="practice-question" component="h2" sx={{ fontWeight: 800, fontSize: { xs: '1.7rem', sm: '2.1rem' }, color: '#fff' }}>
                         {perfect ? 'Perfect lesson!' : 'Lesson complete!'}
                     </Typography>
@@ -227,7 +232,7 @@ const Summary = ({
                     </Box>
                 )}
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 3, textAlign: 'center' }}>
-                    Enjoying {MASCOT_NAME} and the lessons?{' '}
+                    Enjoying {GUIDE_NAMES[guideFor(topicId)]} and the lessons?{' '}
                     <Link href={REPO} target="_blank" rel="noopener" sx={{ fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 0.25, verticalAlign: 'bottom' }}>
                         <StarRoundedIcon sx={{ fontSize: 18, color: XP_GOLD }} /> Star the project on GitHub
                     </Link>
@@ -275,6 +280,11 @@ const PracticeSession = ({ course, topicId, onClose }: { course: Course; topicId
     const [fixed, setFixed] = useState(0);
     const [hearts, setHearts] = useState(HEARTS);
     const [leaving, setLeaving] = useState(false);
+    const sound = useSoundOn();
+
+    useEffect(() => {
+        if (phase === 'out') playOut();
+    }, [phase]);
 
     useEffect(() => {
         let live = true;
@@ -299,8 +309,9 @@ const PracticeSession = ({ course, topicId, onClose }: { course: Course; topicId
         };
     }, [course, topicId, attempt]);
 
+    const guide = guideFor(topicId);
     const setting = useMemo(
-        () => ({ course, topicId, prose: (text: string) => (sources ? sources.glossary.segmentText(text) : text) }),
+        () => ({ course, topicId, guide: guideFor(topicId), prose: (text: string) => (sources ? sources.glossary.segmentText(text) : text) }),
         [course, topicId, sources]
     );
 
@@ -353,6 +364,7 @@ const PracticeSession = ({ course, topicId, onClose }: { course: Course; topicId
     if (failed) {
         content = (
             <Moment
+                guide={guide}
                 mood="sad"
                 title="Practice didn't load"
                 actions={
@@ -366,13 +378,14 @@ const PracticeSession = ({ course, topicId, onClose }: { course: Course; topicId
         );
     } else if (!cards || !sources) {
         content = (
-            <Moment mood="think" title="Getting your practice ready…" actions={<CircularProgress size={28} />}>
-                {MASCOT_NAME} is picking the cards for this lesson.
+            <Moment guide={guide} mood="think" title="Getting your practice ready…" actions={<CircularProgress size={28} />}>
+                {GUIDE_NAMES[guide]} is picking the cards for this lesson.
             </Moment>
         );
     } else if (leaving) {
         content = (
             <Moment
+                guide={guide}
                 mood="sad"
                 title="Leave this practice?"
                 actions={
@@ -392,6 +405,7 @@ const PracticeSession = ({ course, topicId, onClose }: { course: Course; topicId
     } else if (phase === 'out') {
         content = (
             <Moment
+                guide={guide}
                 mood="sad"
                 title="Out of hearts"
                 actions={
@@ -411,6 +425,7 @@ const PracticeSession = ({ course, topicId, onClose }: { course: Course; topicId
     } else if (phase === 'mistakes') {
         content = (
             <Moment
+                guide={guide}
                 mood="think"
                 title="Let's fix your mistakes"
                 actions={
@@ -466,6 +481,9 @@ const PracticeSession = ({ course, topicId, onClose }: { course: Course; topicId
                     aria-label={`${Math.min(doneSoFar, total)} of ${total} cards done`}
                     sx={{ flex: 1, height: 14, borderRadius: 7, bgcolor: 'rgba(255,255,255,0.08)', '& .MuiLinearProgress-bar': { bgcolor: phase === 'retry' ? XP_GOLD : accent, borderRadius: 7 } }}
                 />
+                <IconButton onClick={() => setSoundOn(!sound)} aria-label={sound ? 'Turn sound off' : 'Turn sound on'} aria-pressed={sound} sx={{ color: 'text.secondary' }}>
+                    {sound ? <VolumeUpRoundedIcon /> : <VolumeOffRoundedIcon />}
+                </IconButton>
                 <Stack direction="row" spacing={0.5} alignItems="center" aria-label={`${hearts} ${hearts === 1 ? 'heart' : 'hearts'} left`} sx={{ pr: 1 }}>
                     <FavoriteRoundedIcon key={hearts} sx={{ color: hearts > 0 ? WRONG : 'text.disabled', ...(hearts < HEARTS ? { animation: 'heartLost 0.5s', '@keyframes heartLost': { '0%': { transform: 'scale(1.5)' }, '100%': { transform: 'scale(1)' } } } : {}) }} />
                     <Typography sx={{ fontWeight: 800, color: hearts > 0 ? WRONG : 'text.disabled', minWidth: 12 }}>{hearts}</Typography>

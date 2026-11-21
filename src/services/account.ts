@@ -114,6 +114,27 @@ export const signOut = async () => {
     await (await cloud).signOutUser();
 };
 
+/**
+ * Delete the signed-in account and all its progress. Resolves 'deleted', or
+ * 'cancelled' when the person closed Google's window (nothing was deleted).
+ * Throws an Error whose message says what to do.
+ */
+export const deleteAccount = async (): Promise<'deleted' | 'cancelled'> => {
+    if (!cloud) throw new Error('Sign-in is not available right now. Reload the page and try again.');
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) throw new Error('You are offline. Connect to the internet and try again.');
+    try {
+        await (await cloud).deleteAccountAndProgress();
+        return 'deleted';
+    } catch (error) {
+        const code = (error as { code?: string }).code ?? '';
+        if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return 'cancelled';
+        console.error('Could not delete the account:', error);
+        if (code === 'auth/popup-blocked') throw new Error('Your browser blocked the Google window. Allow pop-ups for this site and try again.');
+        if (code === 'auth/user-mismatch') throw new Error('That was a different Google account. Choose the account you are signed in with.');
+        throw new Error('The account could not be deleted. Check your connection and try again.');
+    }
+};
+
 export const useAccount = (): AccountState =>
     useSyncExternalStore(
         callback => {
