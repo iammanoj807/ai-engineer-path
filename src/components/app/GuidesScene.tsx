@@ -1,134 +1,159 @@
-// The front page's guides: Pia and Hamish take turns to say what the site is,
-// each line filling their speech bubble while their mouth moves. Tap either to
-// hear them say hello in their own voice. Still, with the whole first line
-// shown, for anyone who asks their device for less motion.
+// The front page's guides, teaching at a chalkboard. Pia and Hamish take turns:
+// as each one talks (mouth moving, arm up to the board), their point is written
+// on the board in chalk. Then both cheer, the board is wiped, and it starts again.
+//
+// It tells its story without sound (browsers only play sound after a tap), but
+// tapping a guide still plays their hello. Anyone who asks their device for
+// less motion sees the whole board at once, with the guides still.
 
 import { useEffect, useState } from 'react';
 import { Box, ButtonBase, Stack, Typography } from '@mui/material';
-import VolumeUpRoundedIcon from '@mui/icons-material/VolumeUpRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import Mascot, { type Mood } from '../practice/Mascot';
 import { GUIDE_NAMES, type Guide } from '../practice/guides';
 import { mouthOnly, primeVoice, say, stopSpeaking } from '../practice/voice';
 import { GREETING_LINES } from '../../practice/lines';
 
-const SCRIPT: { guide: Guide; text: string }[] = [
-    { guide: 'pia', text: "Hi! I'm Pia." },
-    { guide: 'hamish', text: "And I'm Hamish. We're your guides." },
-    { guide: 'pia', text: 'Every lesson starts with the idea, one step at a time.' },
-    { guide: 'hamish', text: 'Then five minutes of practice. Hearts, XP and a streak!' },
-    { guide: 'pia', text: "Ready? Let's learn together!" },
+/** Each point on the board, and who teaches it. */
+const POINTS: { guide: Guide; text: string }[] = [
+    { guide: 'pia', text: 'Watch the idea move' },
+    { guide: 'hamish', text: 'Read it, step by step' },
+    { guide: 'pia', text: 'Practise for five minutes' },
+    { guide: 'hamish', text: 'Earn XP, keep your streak' },
 ];
+const FINALE = POINTS.length;
 
-const TYPE_MS = 32;
-const HOLD_MS = 2200;
+const WRITE_MS = 1100;
+const HOLD_MS = 1500;
+const CHEER_MS = 2800;
+const WIPE_MS = 600;
+
+const CHALK = '#f4f1e8';
+const CHALK_YELLOW = '#ffe082';
+const BOARD = '#1f3a30';
+const FRAME = '#8d6e4e';
 
 const lessMotion = () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
+/** Chalk appearing left to right, as if written. */
+const writing = {
+    animation: `chalkWrite ${WRITE_MS}ms ease-out both`,
+    '@keyframes chalkWrite': { from: { clipPath: 'inset(0 100% 0 0)' }, to: { clipPath: 'inset(0 0 0 0)' } },
+};
+
 const GuidesScene = () => {
     const [still] = useState(lessMotion);
-    const [line, setLine] = useState(0);
-    const [shown, setShown] = useState(still ? SCRIPT[0].text.length : 0);
-    /** A guide saying hello out loud, after a tap: the bubbles wait. */
-    const [greeting, setGreeting] = useState<Guide | null>(null);
-    const current = greeting ? { guide: greeting, text: GREETING_LINES[greeting] } : SCRIPT[line];
-    const last = !greeting && line === SCRIPT.length - 1;
+    /** 0 to 3: the point being written; 4: both cheer. */
+    const [step, setStep] = useState(still ? FINALE : 0);
+    const [wiping, setWiping] = useState(false);
 
-    // Each line fills in letter by letter while the guide's mouth moves, then waits, then the next.
     useEffect(() => {
-        if (still || greeting) return;
-        const { guide, text } = SCRIPT[line];
-        mouthOnly(guide, text.length * TYPE_MS + 150);
-        let count = 0;
-        let next = 0;
-        const typing = window.setInterval(() => {
-            count += 1;
-            setShown(count);
-            if (count >= text.length) {
-                window.clearInterval(typing);
-                next = window.setTimeout(() => {
-                    setShown(0);
-                    setLine(at => (at + 1) % SCRIPT.length);
-                }, line === SCRIPT.length - 1 ? HOLD_MS * 2 : HOLD_MS);
-            }
-        }, TYPE_MS);
-        return () => {
-            window.clearInterval(typing);
-            window.clearTimeout(next);
-        };
-    }, [line, still, greeting]);
+        if (still) return;
+        const timers: number[] = [];
+        if (step < FINALE) {
+            mouthOnly(POINTS[step].guide, WRITE_MS + 250);
+            timers.push(window.setTimeout(() => setStep(step + 1), WRITE_MS + HOLD_MS));
+        } else {
+            mouthOnly('pia', 1300);
+            timers.push(window.setTimeout(() => setWiping(true), CHEER_MS));
+            timers.push(
+                window.setTimeout(() => {
+                    setWiping(false);
+                    setStep(0);
+                }, CHEER_MS + WIPE_MS),
+            );
+        }
+        return () => timers.forEach(timer => window.clearTimeout(timer));
+    }, [step, still]);
 
     useEffect(() => stopSpeaking, []);
 
     const hello = (guide: Guide) => {
-        // The tap lets the page play sound (iPhones need it), then the guide says hello.
+        // The tap lets the page play sound (browsers need one), then the guide says hello.
         primeVoice();
-        setGreeting(guide);
         say(GREETING_LINES[guide], guide);
-        window.setTimeout(() => setGreeting(at => (at === guide ? null : at)), 5200);
     };
 
-    const moodOf = (guide: Guide): Mood => (last ? 'cheer' : current.guide === guide ? 'happy' : 'idle');
-    const text = greeting || still ? current.text : current.text.slice(0, shown);
+    const teacher = step < FINALE ? POINTS[step].guide : null;
+    const moodOf = (guide: Guide): Mood => (step === FINALE ? 'cheer' : teacher === guide ? 'happy' : 'idle');
+    const written = still ? POINTS.length : Math.min(step + 1, POINTS.length);
 
     return (
         <Box
             role="group"
-            aria-label="Pia and Hamish, your guides"
+            aria-label="Pia and Hamish, your guides, at a chalkboard"
             sx={{
-                position: 'relative',
                 borderRadius: 5,
                 px: { xs: 2, sm: 3 },
                 pt: { xs: 2.5, sm: 3 },
-                pb: 2,
+                pb: 1.5,
                 border: '1px solid rgba(255,255,255,0.08)',
-                background: 'radial-gradient(ellipse at 50% 100%, rgba(41,121,255,0.22), transparent 62%), radial-gradient(circle at 15% 10%, rgba(179,157,219,0.14), transparent 45%), #121722',
-                overflow: 'hidden',
+                background: 'radial-gradient(ellipse at 50% 100%, rgba(41,121,255,0.2), transparent 62%), #121722',
             }}
         >
-            {/* The speech bubble, its tail pointing at whoever is talking. */}
+            {/* The chalkboard. */}
             <Box
-                aria-hidden
                 sx={{
                     position: 'relative',
-                    minHeight: { xs: 76, sm: 84 },
-                    display: 'flex',
-                    alignItems: 'center',
-                    px: 2.25,
-                    py: 1.5,
-                    borderRadius: 3,
-                    bgcolor: '#fff',
-                    color: '#151921',
-                    boxShadow: '0 10px 30px -12px rgba(0,0,0,0.6)',
-                    '&::after': {
-                        content: '""',
-                        position: 'absolute',
-                        bottom: -9,
-                        left: current.guide === 'pia' ? '22%' : 'auto',
-                        right: current.guide === 'hamish' ? '22%' : 'auto',
-                        width: 18,
-                        height: 18,
-                        bgcolor: '#fff',
-                        transform: 'rotate(45deg)',
-                        transition: 'left 0.3s, right 0.3s',
-                    },
+                    borderRadius: 2,
+                    border: `8px solid ${FRAME}`,
+                    boxShadow: 'inset 0 0 30px rgba(0,0,0,0.45), 0 12px 30px -14px rgba(0,0,0,0.8)',
+                    background: `radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.06), transparent 60%), ${BOARD}`,
+                    px: { xs: 2, sm: 3 },
+                    py: { xs: 1.75, sm: 2.25 },
+                    opacity: wiping ? 0 : 1,
+                    transition: `opacity ${WIPE_MS}ms`,
                 }}
             >
-                <Typography sx={{ fontWeight: 800, fontSize: { xs: '1.05rem', sm: '1.2rem' }, lineHeight: 1.35 }}>
-                    <Box component="span" sx={{ color: current.guide === 'pia' ? '#5d6ce8' : '#1b7d73', mr: 0.75 }}>
-                        {GUIDE_NAMES[current.guide]}:
-                    </Box>
-                    {text}
-                    {!greeting && !still && shown < current.text.length && (
-                        <Box component="span" sx={{ display: 'inline-block', width: '0.5ch', ml: 0.25, borderBottom: '2px solid #151921', animation: 'caret 0.8s steps(1) infinite', '@keyframes caret': { '50%': { opacity: 0 } } }} />
-                    )}
+                <Typography sx={{ color: CHALK_YELLOW, fontWeight: 800, fontSize: { xs: '1rem', sm: '1.1rem' }, letterSpacing: 0.5, mb: 1.25 }}>
+                    Every lesson:
                 </Typography>
+                <Box component="ol" sx={{ listStyle: 'none', m: 0, p: 0, display: 'grid', gap: { xs: 1, sm: 1.25 } }}>
+                    {/* Every line keeps its place from the start (hidden until written), so nothing below moves. */}
+                    {POINTS.map((point, i) => (
+                        <Stack
+                            key={`${point.text}-${i < written ? 'written' : 'blank'}`}
+                            component="li"
+                            direction="row"
+                            spacing={1.25}
+                            alignItems="center"
+                            sx={{ visibility: i < written ? 'visible' : 'hidden', ...(still || i !== step ? {} : writing) }}
+                        >
+                            <Box sx={{ width: 26, height: 26, flexShrink: 0, borderRadius: '50%', border: `2px solid ${CHALK}`, display: 'grid', placeItems: 'center', color: CHALK, fontWeight: 800, fontSize: '0.85rem' }}>
+                                {step > i || still ? <CheckRoundedIcon sx={{ fontSize: 17 }} /> : i + 1}
+                            </Box>
+                            <Typography sx={{ color: CHALK, fontWeight: 700, fontSize: { xs: '1.05rem', sm: '1.15rem' }, textShadow: '0 0 1px rgba(255,255,255,0.4)' }}>
+                                {point.text}
+                            </Typography>
+                            <Typography sx={{ color: point.guide === 'pia' ? '#b6beff' : '#80e3d6', fontSize: '0.8rem', fontWeight: 700, opacity: 0.85, display: { xs: 'none', sm: 'block' } }}>
+                                {GUIDE_NAMES[point.guide]}
+                            </Typography>
+                        </Stack>
+                    ))}
+                </Box>
+                <Typography
+                    key={step === FINALE ? 'finale' : 'waiting'}
+                    aria-hidden={step !== FINALE && !still}
+                    sx={{
+                        mt: { xs: 1.25, sm: 1.5 },
+                        color: CHALK_YELLOW,
+                        fontWeight: 800,
+                        fontSize: { xs: '1.2rem', sm: '1.35rem' },
+                        visibility: step === FINALE || still ? 'visible' : 'hidden',
+                        ...(step === FINALE && !still ? writing : {}),
+                    }}
+                >
+                    Let&apos;s learn together!
+                </Typography>
+                {/* The chalk tray. */}
+                <Box sx={{ position: 'absolute', left: '12%', right: '12%', bottom: -14, height: 6, borderRadius: 1, bgcolor: '#6d5440' }}>
+                    <Box sx={{ position: 'absolute', left: '18%', top: -4, width: 22, height: 5, borderRadius: 1, bgcolor: CHALK }} />
+                    <Box sx={{ position: 'absolute', left: '30%', top: -4, width: 16, height: 5, borderRadius: 1, bgcolor: CHALK_YELLOW }} />
+                </Box>
             </Box>
-            {/* For screen readers: who they are, once (the bubbles above change every few seconds). */}
-            <Typography sx={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
-                Pia and Hamish are your guides. They teach each lesson's idea, then ask quick practice questions.
-            </Typography>
 
-            <Stack direction="row" justifyContent="space-around" alignItems="flex-end" sx={{ mt: { xs: 2, sm: 2.5 } }}>
+            {/* The guides, under the board: tap one to hear them say hello. */}
+            <Stack direction="row" justifyContent="space-around" alignItems="flex-end" sx={{ mt: { xs: 2.5, sm: 3 } }}>
                 {(['pia', 'hamish'] as const).map(guide => (
                     <ButtonBase
                         key={guide}
@@ -137,18 +162,14 @@ const GuidesScene = () => {
                         sx={{ flexDirection: 'column', borderRadius: 4, p: 0.5, '&:focus-visible': { outline: '3px solid #90caf9' } }}
                     >
                         <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-                            <Mascot who={guide} mood={moodOf(guide)} size={168} />
+                            <Mascot who={guide} mood={moodOf(guide)} size={150} />
                         </Box>
                         <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
-                            <Mascot who={guide} mood={moodOf(guide)} size={124} />
+                            <Mascot who={guide} mood={moodOf(guide)} size={118} />
                         </Box>
-                        <Typography sx={{ mt: 0.5, fontWeight: 800, color: guide === 'pia' ? '#9aa6ff' : '#4dd0c1' }}>{GUIDE_NAMES[guide]}</Typography>
+                        <Typography sx={{ mt: 0.25, fontWeight: 800, color: guide === 'pia' ? '#9aa6ff' : '#4dd0c1' }}>{GUIDE_NAMES[guide]}</Typography>
                     </ButtonBase>
                 ))}
-            </Stack>
-            <Stack direction="row" spacing={0.75} alignItems="center" justifyContent="center" sx={{ mt: 1, color: 'text.secondary' }}>
-                <VolumeUpRoundedIcon sx={{ fontSize: 18 }} />
-                <Typography variant="body2">Tap Pia or Hamish to hear them say hello</Typography>
             </Stack>
         </Box>
     );
