@@ -4,14 +4,16 @@
 
 ### A free, step-by-step roadmap to becoming an AI engineer
 
-Machine learning from the maths up, SQL from your first `SELECT`, and system design the way interviews ask it.<br>
-231 full lessons, free to read in your browser.
+Learn machine learning from the maths up, SQL from your first `SELECT`, and system design the way interviews ask it.<br>
+231 lessons that start from scratch and go all the way to interview questions.
 
 [![ML Foundations: 98 lessons](https://img.shields.io/badge/ML_Foundations-98_lessons-b39ddb?style=for-the-badge&labelColor=151921)](https://learn.hamropedia.com/foundations/)
 [![SQL: 61 lessons](https://img.shields.io/badge/SQL-61_lessons-f48fb1?style=for-the-badge&labelColor=151921)](https://learn.hamropedia.com/sql/)
 [![System Design: 72 lessons](https://img.shields.io/badge/System_Design-72_lessons-4dd0e1?style=for-the-badge&labelColor=151921)](https://learn.hamropedia.com/system-design/)
 
-**[Start learning at learn.hamropedia.com →](https://learn.hamropedia.com)**
+### [Start learning at learn.hamropedia.com →](https://learn.hamropedia.com)
+
+Free · No sign-up needed to read · Works on your phone
 
 </div>
 
@@ -19,90 +21,67 @@ Machine learning from the maths up, SQL from your first `SELECT`, and system des
 
 [![AI Engineer Path: learn ML, SQL and system design, one step at a time](docs/images/front-page.png)](https://learn.hamropedia.com)
 
-## What it is
+## What you get
 
-AI Engineer Path is a free learning site that takes you from zero to interview-ready in three courses: **ML Foundations**, **SQL** and **System Design**. Each course is a path of units, and each unit is a short run of lessons in the order they are meant to be taken, so you always know what to learn next.
+- **One clear next step.** Each course is a path of units, with lessons in the order they are meant to be taken. The next lesson is always marked **START**.
+- **Every lesson in full.** An animation, the idea step by step, a worked example, and exercises with answers.
+- **Practice that feels like a game.** Five-minute sessions after each lesson, with hearts, XP, a streak and two friendly guides, Maya and Felix.
+- **SQL that runs in your browser.** A real SQLite engine and six practice tables, with nothing to install.
+- **Ready for interviews.** Every course has interview questions with full spoken answers, the traps, and the follow-ups.
 
-- **231 lessons in 27 units**, from the first idea to interview questions.
-- **Every topic is a full lesson:** an animation, the idea step by step, a worked example, and four exercises with answers.
-- **Practise like a game:** after every lesson, a guide (Maya or Felix) asks quick questions (match the pairs, type the missing word letter by letter or choose it, put the steps in order, fix the SQL query) with hearts, XP, a streak and sounds.
-- **Interview questions in every course:** full spoken answers, the traps, and the follow-ups.
-- **SQL that runs in your browser:** a real SQLite engine, with nothing to install.
-- **Free, with no account needed to read.** Sign in with Google only if you want to save your progress.
+## Choose your course
 
-## The pathway
+| Course | Take it if you want to… | Size |
+|---|---|---|
+| **[ML Foundations](https://learn.hamropedia.com/foundations/)** | understand machine learning from the maths up, through deep learning and LLMs, and build it yourself | 8 units · 98 lessons |
+| **[SQL](https://learn.hamropedia.com/sql/)** | get answers from data, from your first `SELECT` to window functions and interview problems | 9 units · 61 lessons |
+| **[System Design](https://learn.hamropedia.com/system-design/)** | design real systems and answer high-level, low-level and AI/ML design interviews | 10 units · 72 lessons |
 
-Three courses, each a path of units from the very start. Pick the one you need most, or take them side by side.
-
-```mermaid
-%%{init: {"flowchart": {"rankSpacing": 26, "nodeSpacing": 40}}}%%
-flowchart LR
-    subgraph ML["ML Foundations · 98 lessons"]
-        direction TB
-        ml0["0 · Toolkit"] --> ml1["1 · Math"] --> ml2["2 · Classic ML"] --> ml3["3 · Deep learning"] --> ml4["4 · LLMs"] --> ml5["5 · AI engineering"] --> ml6["6 · Systems"] --> ml7["7 · Gen and RL"]
-    end
-    subgraph SQL["SQL · 61 lessons"]
-        direction TB
-        sql0["0 · Start here"] --> sql1["1 · Reading data"] --> sql2["2 · Summarising"] --> sql3["3 · Joins"] --> sql4["4 · Subqueries and CTEs"] --> sql5["5 · Window functions"] --> sql6["6 · Building and changing"] --> sql7["7 · Performance"] --> sql8["8 · Interview problems"]
-    end
-    subgraph SD["System Design · 72 lessons"]
-        direction TB
-        sd0["0 · Interview basics"] --> sd1["1 · Networking"] --> sd2["2 · Core concepts"] --> sd3["3 · Data"] --> sd4["4 · Distributed"] --> sd5["5 · OOP and SOLID"] --> sd6["6 · Patterns"] --> sd7["7 · LLD practice"] --> sd8["8 · HLD practice"] --> sd9["9 · AI/ML design"]
-    end
-    ML ~~~ SQL ~~~ SD
-    classDef ml fill:#b39ddb,stroke:#7e57c2,color:#111,stroke-width:1px
-    classDef sql fill:#f48fb1,stroke:#d81b60,color:#111,stroke-width:1px
-    classDef sd fill:#4dd0e1,stroke:#00838f,color:#111,stroke-width:1px
-    class ml0,ml1,ml2,ml3,ml4,ml5,ml6,ml7 ml
-    class sql0,sql1,sql2,sql3,sql4,sql5,sql6,sql7,sql8 sql
-    class sd0,sd1,sd2,sd3,sd4,sd5,sd6,sd7,sd8,sd9 sd
-```
-
-Every unit and lesson has its own page on the site: see [the full curriculum](#the-full-curriculum) below for all the links.
+Not sure? If your goal is AI engineering, start with **ML Foundations** and take **SQL** alongside it. Add **System Design** when you start preparing for interviews.
 
 ## How it works
 
 ### Follow the path
 
-[![The ML Foundations path: units as banners, topics as nodes, and the next topic marked START](docs/images/path.png)](https://learn.hamropedia.com/foundations/)
+[![The ML Foundations path: units as banners, lessons as nodes, and the next lesson marked START](docs/images/path.png)](https://learn.hamropedia.com/foundations/)
 
-Each course is drawn as a winding path. The next topic is always marked **START**, so there is one obvious next step. Only the unit you are on is open; tap any other unit to see its topics. Each unit has a **Guide** with its big picture and extra practice.
+Each course is drawn as a winding path. Tap a lesson to read it or practise it. Each unit also has a **Guide** with its big picture and extra practice.
 
-### Learn each topic in full
+### Learn each lesson in full
 
 [![A lesson's animation: gradient descent stepping down a curve, with a tab for each learning rate](docs/images/lesson-animation.png)](https://learn.hamropedia.com/foundations/gradient-descent-and-the-learning-rate/)
 
-Every topic teaches one idea all the way through:
+Every lesson teaches one idea all the way through:
 
 1. **An animation** you can play, pause and step through.
 2. **The idea, step by step:** why it exists, how it works, and the mistakes people make.
 3. **A worked example** with code that has been run.
-4. **Four checks with answers** (in ML Foundations: Explain · Derive · Build · Break). Pass all four without notes and the topic is mastered.
+4. **Four checks with answers.** In ML Foundations they are Explain, Derive, Build and Break. Pass all four without notes and the lesson is mastered.
 
 ### Practise with Maya and Felix
 
 <p align="center">
-  <img src="docs/images/practice-idea.png" alt="The lesson's guide introduces its idea, with its animation" width="24%">
+  <img src="docs/images/practice-idea.png" alt="Felix introduces a lesson's idea, with its animation" width="24%">
   <img src="docs/images/practice-match.png" alt="Match each word to its meaning" width="24%">
   <img src="docs/images/practice-typing.png" alt="Type the missing word, checked letter by letter" width="24%">
   <img src="docs/images/practice-summary.png" alt="Lesson complete: XP earned, first-try score and hearts left" width="24%">
 </p>
 
-Tap any lesson on the path and press **Practise**. The lesson's guide, Maya or Felix, teaches the idea and its new words first, then asks quick questions made from the lesson itself:
+Tap any lesson on the path and press **Practise**. The lesson's guide teaches the idea and its new words first, then asks quick questions made from the lesson itself:
 
 - **Match the pairs:** each word to what it means.
-- **Fill the gap:** type the missing word, checked letter by letter as you type (Backspace works), or choose it from four words if typing is hard.
+- **Fill the gap:** type the missing word, checked letter by letter, or choose it from four words if typing is hard.
 - **Put the steps in order:** how it works, step by step.
 - **Spot the mistake:** the one common mistake among true statements.
-- **SQL:** predict how many rows a query returns, write a query (it runs and is checked against the answer's rows), and fix a query with one small bug.
+- **SQL:** predict how many rows a query returns, write a query that is checked against the answer's rows, and fix a query with one small bug.
 
-A right answer chimes; a wrong one costs a heart and the card comes back at the end (sound can be turned off). Finishing earns XP and keeps your streak.
+A right answer chimes. A wrong one costs a heart, and the card comes back at the end so it sticks. Finishing earns XP and keeps your streak.
 
 ### Run SQL in the page
 
 [![A SQL lesson's practice box: a GROUP BY query and its result table](docs/images/sql-run.png)](https://learn.hamropedia.com/sql/group-by-one-result-row-per-group/)
 
-The SQL course comes with six practice tables and a real SQLite engine in the page. Write a query, press **Run**, and see the rows.
+Write a query, press **Run**, and see the rows straight away.
 
 ### Practise for interviews
 
@@ -112,15 +91,17 @@ Each course has an **Interview questions** mode. Say your answer out loud, then 
 
 ### Save your progress (optional)
 
-Reading every lesson is free without an account. Sign in with Google to:
+Every lesson is free to read without an account. Sign in with Google to:
 
-- keep the **XP** from every practice and every check (10 XP a check, 20 more for mastering a topic),
-- keep a **daily streak** and set a **daily goal** of 10, 30, 50 or 80 XP,
+- keep your **XP** from every practice and every check,
+- keep a **daily streak** and set a **daily goal**,
 - see the **same progress on your phone and your laptop**.
 
-Only you can see your progress, and you can delete your account and all of it at any time from the account menu.
+Only you can see your progress. You can delete your account, and all of it, at any time from the account menu.
 
 ## The full curriculum
+
+Every unit and lesson has its own page. Open a course's list to jump straight to any lesson.
 
 ### ML Foundations
 
@@ -497,10 +478,27 @@ The building blocks, then real designs, the way interviews ask them. **10 units 
 
 </details>
 
-## Support
+## Questions
 
-The site is free. If it helps you, you can [buy me a coffee](https://buymeacoffee.com/manojthapa).
+**Is it really free?**<br>
+Yes. Every lesson is open to read, with no account and no paywall.
 
-Want to help? Fixing a confusing sentence is a great first contribution: see [CONTRIBUTING.md](CONTRIBUTING.md).
+**Do I need to know maths or coding first?**<br>
+No. ML Foundations teaches the maths it needs in Unit 1. Its code is in Python, so basic Python helps. SQL and System Design start from zero.
+
+**Does it work on my phone?**<br>
+Yes. The lessons and the practice are made for phone screens too.
+
+**Is my progress private?**<br>
+Yes. Only you can see it, and you can delete it with your account at any time.
+
+**I found a mistake in a lesson.**<br>
+Thank you! [Open an issue](https://github.com/iammanoj807/ai-engineer-path/issues/new/choose), or fix it yourself: see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Support the project
+
+- **Star this repository** so other learners can find it.
+- **Share a lesson** with a friend who is learning too.
+- **[Buy me a coffee](https://buymeacoffee.com/manojthapa)** if the site helps you.
 
 <sub>Running the site yourself or forking it? See the [developer notes](docs/DEVELOPMENT.md).</sub>
