@@ -5,7 +5,7 @@
 // sign-in and progress is kept in the browser instead.
 
 import { useSyncExternalStore } from 'react';
-import { localBackend, requireSignInToSave, runPendingSave, switchBackend } from './progress';
+import { localBackend, markSeenToday, requireSignInToSave, runPendingSave, switchBackend } from './progress';
 
 const config = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY as string | undefined,
@@ -76,6 +76,7 @@ export const startAccount = () => {
                 rememberSignedIn(true);
                 set({ status: 'signed-in', name: user.name, photo: user.photo });
                 runPendingSave();
+                void markSeenToday();
             },
             onSignedOut: () => {
                 switchBackend(localBackend('guest'));

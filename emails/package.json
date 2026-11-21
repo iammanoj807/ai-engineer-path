@@ -1,0 +1,13 @@
+{
+  "name": "ai-engineer-path-emails",
+  "private": true,
+  "description": "The welcome and reminder emails, sent by a scheduled GitHub Action (see emails/README.md).",
+  "type": "module",
+  "scripts": {
+    "send": "node send.mjs"
+  },
+  "dependencies": {
+    "firebase-admin": "^14.5.1",
+    "nodemailer": "^10.6.1"
+  }
+}

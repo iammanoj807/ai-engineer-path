@@ -18,6 +18,7 @@ import { checksPassedIn, type ChecksDoc } from '../../game/xp';
 import type { PracticeRecord } from '../../services/progress';
 import { useTracksProgress } from '../../services/account';
 import PracticeDialog from '../practice/PracticeDialog';
+import { primeVoice } from '../practice/voice';
 import { MASTERED, XP_GOLD } from './colours';
 
 export const CARD = { p: { xs: 2, sm: 2.5 }, borderRadius: 3, bgcolor: 'background.paper', border: '1px solid rgba(255,255,255,0.08)' } as const;
@@ -439,6 +440,8 @@ const CoursePath = ({
                         onOpenTopic(popover.topic.id);
                     }}
                     onPractice={() => {
+                        // This tap lets an iPhone speak: the guide reads the questions aloud.
+                        primeVoice();
                         setPopover(null);
                         setPractising(popover.topic.id);
                     }}

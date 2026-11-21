@@ -1,6 +1,7 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import {
+    Alert,
     AppBar,
     Avatar,
     Box,
@@ -8,9 +9,12 @@ import {
     Divider,
     IconButton,
     ListItemIcon,
+    ListItemText,
     Menu,
     MenuItem,
+    Snackbar,
     Stack,
+    Switch,
     Toolbar,
     Tooltip,
     Typography,
@@ -21,11 +25,13 @@ import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import RouteRoundedIcon from '@mui/icons-material/RouteRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
+import MailOutlineRoundedIcon from '@mui/icons-material/MailOutlineRounded';
 import GoogleIcon from '@mui/icons-material/Google';
 import { COURSES } from '../../game/courses';
 import { coursePath, placeOf } from '../../game/addresses';
 import { useGameStats } from '../../game/useProgress';
 import { signIn, signOut, useAccount, useTracksProgress } from '../../services/account';
+import { setEmailReminders } from '../../services/progress';
 import { FLAME, XP_GOLD } from './colours';
 
 // Loaded only when someone opens it.
@@ -50,8 +56,53 @@ const Stat = ({ icon, value, colour, label }: { icon: React.ReactNode; value: nu
     </Tooltip>
 );
 
+/**
+ * The "turn reminders off" link in every email opens /?emails=off. Signed in,
+ * that turns them off at once; signed out, it asks to sign in first.
+ */
+const EmailOptOut = () => {
+    const { pathname, search } = useLocation();
+    const navigate = useNavigate();
+    const account = useAccount();
+    const asked = new URLSearchParams(search).get('emails') === 'off';
+    const [done, setDone] = useState(false);
+
+    useEffect(() => {
+        if (!asked || account.status !== 'signed-in') return;
+        void setEmailReminders(false).then(() => {
+            setDone(true);
+            navigate(pathname, { replace: true });
+        });
+    }, [asked, account.status, navigate, pathname]);
+
+    return (
+        <>
+            <Snackbar open={asked && account.status === 'guest'} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+                <Alert
+                    severity="info"
+                    variant="filled"
+                    action={
+                        <Button color="inherit" size="small" onClick={() => void signIn()} sx={{ fontWeight: 800 }}>
+                            Sign in
+                        </Button>
+                    }
+                >
+                    Sign in to turn off reminder emails.
+                </Alert>
+            </Snackbar>
+            <Snackbar open={done} autoHideDuration={7000} onClose={() => setDone(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+                <Alert severity="success" variant="filled" onClose={() => setDone(false)}>
+                    Reminder emails are off. You can turn them back on from your account menu.
+                </Alert>
+            </Snackbar>
+        </>
+    );
+};
+
 const AccountButton = () => {
     const account = useAccount();
+    const { progress } = useGameStats();
+    const reminders = progress.activity?.emails !== false;
     const [anchor, setAnchor] = useState<HTMLElement | null>(null);
     const [deleting, setDeleting] = useState(false);
     // Stays open after the account is gone (signed out by then), to say it's done.
@@ -102,6 +153,17 @@ const AccountButton = () => {
                             <LogoutRoundedIcon fontSize="small" />
                         </ListItemIcon>
                         Sign out
+                    </MenuItem>
+                    <MenuItem role="menuitemcheckbox" aria-checked={reminders} onClick={() => void setEmailReminders(!reminders)} sx={{ alignItems: 'flex-start' }}>
+                        <ListItemIcon sx={{ mt: 0.5 }}>
+                            <MailOutlineRoundedIcon fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText
+                            primary="Reminder emails"
+                            secondary={"A nudge if you're away a week"}
+                            slotProps={{ secondary: { sx: { fontSize: '0.8rem' } } }}
+                        />
+                        <Switch size="small" checked={reminders} tabIndex={-1} aria-hidden sx={{ ml: 1.5, pointerEvents: 'none' }} />
                     </MenuItem>
                     <Divider />
                     <MenuItem
@@ -213,6 +275,7 @@ const TopBar = () => {
                         </Box>
                     )}
                     <AccountButton />
+                    <EmailOptOut />
                 </Stack>
             </Toolbar>
         </AppBar>

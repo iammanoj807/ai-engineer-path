@@ -1,0 +1,63 @@
+# Learner emails
+
+Two kinds of email go to learners who sign in with Google:
+
+- **Welcome:** within an hour of signing in for the first time, by first name.
+- **Reminder:** when someone hasn't learned for 7 days. Then once a week, at most 4 in a row (the 4th says it's the last). Coming back resets the count. Anyone can turn reminders off from the account menu, or with the link at the bottom of every email.
+
+A scheduled GitHub Action sends them ([`.github/workflows/emails.yml`](../.github/workflows/emails.yml)): every hour for welcomes, every day at 09:45 UTC for reminders. It's free, and needs no server and no paid Firebase plan.
+
+**It is off until you set it up.** Nothing runs until `EMAILS_START` is set, and nothing is sent until `EMAILS_LIVE` is `true`. Until then it's a dry run that only counts.
+
+## Set it up
+
+### 1. Choose how to send
+
+Any email service with SMTP works. Two good free options:
+
+| | Gmail | Resend |
+|---|---|---|
+| Learners see | your Gmail address | an address like `hello@hamropedia.com` |
+| Free limit | about 500 a day | 3,000 a month, 100 a day |
+| Setup | an app password | add your domain's DNS records |
+| `SMTP_HOST` | `smtp.gmail.com` | `smtp.resend.com` |
+| `SMTP_PORT` | `465` | `465` |
+| `SMTP_USER` | your Gmail address | `resend` |
+| `SMTP_PASS` | an [app password](https://myaccount.google.com/apppasswords) (needs 2-Step Verification) | your Resend API key |
+| `MAIL_FROM` | `AI Engineer Path <you@gmail.com>` | `AI Engineer Path <hello@hamropedia.com>` |
+
+Gmail is the quickest start. An address on your own domain looks more trustworthy and lands in spam less often.
+
+### 2. Get a Firebase service account key
+
+Firebase console → **Project settings** → **Service accounts** → **Generate new private key**. This downloads a JSON file. It has full access to your project, so never commit it or share it: it goes only into the GitHub secret below. Then delete the downloaded file.
+
+### 3. Add the settings to GitHub
+
+Repository → **Settings** → **Secrets and variables** → **Actions**.
+
+**Secrets** (hidden):
+
+- `FIREBASE_SERVICE_ACCOUNT`: the whole JSON file's contents
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`: from step 1
+
+**Variables:**
+
+- `MAIL_FROM`: from step 1
+- `EMAILS_START`: when emails begin, as a UTC time, for example `2026-11-22T00:00:00Z`. Only people who sign up after this get a welcome, so existing members aren't all emailed at once. Reminders only go to people who have used the site since this time.
+- `EMAILS_LIVE`: leave this out for now.
+
+### 4. Try a dry run
+
+**Actions** → **Learner emails** → **Run workflow**, once with `welcome` and once with `reminders`. The log shows how many emails it would send. The repository is public, so the log never shows names or addresses: only counts and the first characters of each account id.
+
+### 5. Switch it on
+
+Add the variable `EMAILS_LIVE` = `true`. To test, sign in to the site with a spare Google account: the welcome email arrives within the hour.
+
+## Good to know
+
+- **To change the wording,** edit [`templates.mjs`](templates.mjs). To change the timing or the limit of 4 reminders, edit the numbers at the top of [`plan.mjs`](plan.mjs). The tests in [`__tests__/`](__tests__/) check every rule: run `npm test` from the repository's root.
+- **What it stores:** a small log per learner at `mail/{uid}` in Firestore (when they were welcomed and reminded), so nobody gets the same email twice. Learners can't read it (the Firestore rules refuse everything outside their own progress). When an account is deleted, its log is removed by the next daily run.
+- **GitHub pauses scheduled workflows** in a public repository after 60 days without a commit. If emails stop, open the Actions tab and enable the workflow again.
+- **Firestore reads:** the daily reminder run reads 2 documents per account, which fits Firestore's free 50,000 reads a day up to about 25,000 accounts.

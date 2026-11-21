@@ -1,9 +1,10 @@
-// The pieces every practice card shares: the guide and the question at the top, the
+// The pieces every practice card shares: the guide saying the question at the top, the
 // scrolling body, and the bar along the bottom that turns green or red with
 // the result and holds the next button. (Colours and helpers: style.ts.)
 
-import { useEffect, type ReactNode } from 'react';
-import { Box, Stack, Typography } from '@mui/material';
+import { useEffect, useRef, type ReactNode } from 'react';
+import { Box, IconButton, Stack, Typography } from '@mui/material';
+import VolumeUpRoundedIcon from '@mui/icons-material/VolumeUpRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
@@ -11,10 +12,22 @@ import Mascot, { SpeechBubble, type Mood } from './Mascot';
 import { usePractice } from './context';
 import { PANEL, RIGHT, WRONG, type Feedback } from './style';
 import { playRight, playWrong } from './sound';
+import { canSpeak, say, useVoiceOn } from './voice';
 
-/** The card's title, then the lesson's guide saying the question in a speech bubble. */
+/** The card's title, then the lesson's guide saying the question in a speech bubble (and out loud). */
 export const CardHeader = ({ title, accent, mood = 'idle', children }: { title: string; accent: string; mood?: Mood; children: ReactNode }) => {
     const { guide } = usePractice();
+    const voice = useVoiceOn() && canSpeak();
+    const question = useRef<HTMLHeadingElement>(null);
+    const spoken = useRef('');
+    // Read the question when the card appears, and again only if its words change.
+    useEffect(() => {
+        const text = question.current?.textContent ?? '';
+        if (text && text !== spoken.current) {
+            spoken.current = text;
+            say(text, guide);
+        }
+    });
     return (
     <Box sx={{ mb: 2.5 }}>
         <Typography variant="caption" sx={{ display: 'block', fontWeight: 800, letterSpacing: 1.2, color: accent, mb: 1.25 }}>
@@ -28,9 +41,21 @@ export const CardHeader = ({ title, accent, mood = 'idle', children }: { title: 
                 <Mascot mood={mood} size={58} who={guide} />
             </Box>
             <SpeechBubble>
-                <Typography id="practice-question" component="h2" sx={{ fontWeight: 700, fontSize: { xs: '1.05rem', sm: '1.2rem' }, color: '#fff', lineHeight: 1.45 }}>
-                    {children}
-                </Typography>
+                <Stack direction="row" alignItems="flex-start" spacing={1}>
+                    <Typography ref={question} id="practice-question" component="h2" sx={{ flex: 1, fontWeight: 700, fontSize: { xs: '1.05rem', sm: '1.2rem' }, color: '#fff', lineHeight: 1.45 }}>
+                        {children}
+                    </Typography>
+                    {voice && (
+                        <IconButton
+                            size="small"
+                            onClick={() => say(question.current?.textContent ?? '', guide)}
+                            aria-label="Hear the question again"
+                            sx={{ mt: -0.5, mr: -1, color: 'text.secondary' }}
+                        >
+                            <VolumeUpRoundedIcon fontSize="small" />
+                        </IconButton>
+                    )}
+                </Stack>
             </SpeechBubble>
         </Stack>
     </Box>

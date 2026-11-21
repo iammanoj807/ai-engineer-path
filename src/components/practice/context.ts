@@ -12,6 +12,6 @@ export interface PracticeSetting {
     prose: (text: string) => Prose;
 }
 
-export const PracticeContext = createContext<PracticeSetting>({ course: 'foundations', topicId: '', guide: 'maya', prose: text => text });
+export const PracticeContext = createContext<PracticeSetting>({ course: 'foundations', topicId: '', guide: 'pia', prose: text => text });
 
 export const usePractice = () => useContext(PracticeContext);

@@ -44,11 +44,15 @@ export interface SqlProgress {
 
 /**
  * Each day's study, keyed by the learner's local date: how many checks (or
- * builds) were ticked, and the XP earned in practice sessions.
+ * builds) were ticked, and the XP earned in practice sessions. Also the last
+ * day a signed-in learner opened the site, and whether they want reminder
+ * emails (emails/ sends them; false means never).
  */
 export interface Activity {
     days: Record<string, number>;
     xp?: Record<string, number>;
+    lastSeen?: string;
+    emails?: boolean;
 }
 
 interface Docs {
@@ -75,7 +79,12 @@ const normalize = <N extends DocName>(name: N, raw: unknown): Docs[N] => {
         case 'sql_queries':
             return { queries: asObject(data.queries) } as Docs[N];
         case 'activity':
-            return { days: asObject(data.days), xp: asObject(data.xp) } as Docs[N];
+            return {
+                days: asObject(data.days),
+                xp: asObject(data.xp),
+                ...(typeof data.lastSeen === 'string' ? { lastSeen: data.lastSeen } : {}),
+                ...(typeof data.emails === 'boolean' ? { emails: data.emails } : {}),
+            } as Docs[N];
         default:
             return { checks: asObject(data.checks), practice: asObject(data.practice) } as Docs[N];
     }
@@ -400,6 +409,31 @@ export const savePracticeResult = async (course: Course, topicId: string, result
     }
     if (result.checks?.length) saving.push(saveChecks(course, topicId, Object.fromEntries(result.checks.map(check => [check, true]))));
     await Promise.all(saving);
+};
+
+// ============ EMAILS ============
+
+/**
+ * Note that a signed-in learner opened the site today (once a day), so the
+ * reminder emails never go to someone who has been visiting.
+ */
+export const markSeenToday = async (): Promise<void> => {
+    if (!canSave()) return;
+    await whenLoaded('activity');
+    const today = localDay();
+    if (state.activity?.lastSeen === today) return;
+    try {
+        await write('activity', { lastSeen: today });
+    } catch (error) {
+        console.error('Could not note today\'s visit:', error);
+    }
+};
+
+/** Turn the weekly reminder emails on or off (signed in only). */
+export const setEmailReminders = async (on: boolean): Promise<void> => {
+    if (!canSave()) return;
+    await whenLoaded('activity');
+    await write('activity', { emails: on });
 };
 
 // Keep today's count current even before the home page subscribes.

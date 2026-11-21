@@ -1,4 +1,4 @@
-// The guides: Maya and Felix, who ask the questions in practice, cheer when
+// The guides: Pia and Hamish, who ask the questions in practice, cheer when
 // you're right, and look a little sad (never cross) when you're not. Drawn
 // here as plain SVG with CSS movement, so they cost no images and keep still
 // for anyone who asks their device for less motion. Who guides which lesson:
@@ -19,8 +19,8 @@ interface Look {
 }
 
 const LOOKS: Record<Guide, Look> = {
-    maya: { skin: '#c68863', skinShade: '#a96f4e', hair: '#2b1d16', top: '#7c8cff', topDark: '#5d6ce8' },
-    felix: { skin: '#f1c4a0', skinShade: '#d39a74', hair: '#a4512b', top: '#26a69a', topDark: '#1b7d73' },
+    pia: { skin: '#c68863', skinShade: '#a96f4e', hair: '#2b1d16', top: '#7c8cff', topDark: '#5d6ce8' },
+    hamish: { skin: '#f1c4a0', skinShade: '#d39a74', hair: '#a4512b', top: '#26a69a', topDark: '#1b7d73' },
 };
 
 const EYE = '#1f1a17';
@@ -121,16 +121,16 @@ const arms = (mood: Mood, look: Look): React.ReactNode => {
     }
 };
 
-/** Maya: a bun, a side-swept fringe, small gold earrings and a periwinkle hoodie. */
-const MayaHair = { back: (look: Look) => (
+/** Pia: a bun, a side-swept fringe, small gold earrings and a periwinkle hoodie. */
+const PiaHair = { back: (look: Look) => (
     <>
         <circle cx="60" cy="19" r="11" fill={look.hair} />
         <ellipse cx="60" cy="50" rx="29" ry="31" fill={look.hair} />
     </>
 ), front: (look: Look) => <path d="M35 47 C34 29 47 23 60 23 C75 23 87 31 85 48 C79 39 70 35 59 37 C50 38 42 41 35 47 Z" fill={look.hair} /> };
 
-/** Felix: curly auburn hair, freckles, round glasses and a teal hoodie. */
-const FelixHair = { back: (look: Look) => (
+/** Hamish: curly auburn hair, freckles, round glasses and a teal hoodie. */
+const HamishHair = { back: (look: Look) => (
     <g fill={look.hair}>
         <ellipse cx="60" cy="42" rx="27" ry="21" />
         <circle cx="43" cy="28" r="9" />
@@ -143,9 +143,9 @@ const FelixHair = { back: (look: Look) => (
 ) };
 
 /** A guide, at `size` pixels wide, in a mood. Decorative: what they say is always in the text beside them. */
-const Mascot = ({ mood = 'idle', size = 64, who = 'maya' }: { mood?: Mood; size?: number; who?: Guide }) => {
+const Mascot = ({ mood = 'idle', size = 64, who = 'pia' }: { mood?: Mood; size?: number; who?: Guide }) => {
     const look = LOOKS[who];
-    const hair = who === 'maya' ? MayaHair : FelixHair;
+    const hair = who === 'pia' ? PiaHair : HamishHair;
     return (
         <Box
             component="svg"
@@ -175,11 +175,11 @@ const Mascot = ({ mood = 'idle', size = 64, who = 'maya' }: { mood?: Mood; size?
             <path d="M22 120 C22 98 40 87 60 87 C80 87 98 98 98 120 Z" fill={look.top} />
             <rect x="53" y="75" width="14" height="15" rx="4" fill={look.skinShade} />
             <path d="M44 89 Q60 103 76 89" fill="none" stroke={look.topDark} strokeWidth="6" strokeLinecap="round" />
-            {who === 'maya' && <path d="M55 96 v9 M65 96 v9" stroke="#fff" strokeWidth="2" strokeLinecap="round" />}
+            {who === 'pia' && <path d="M55 96 v9 M65 96 v9" stroke="#fff" strokeWidth="2" strokeLinecap="round" />}
             {/* Ears */}
             <circle cx="34" cy="55" r="5" fill={look.skin} />
             <circle cx="86" cy="55" r="5" fill={look.skin} />
-            {who === 'maya' && (
+            {who === 'pia' && (
                 <>
                     <circle cx="34" cy="62" r="1.9" fill={GOLD} />
                     <circle cx="86" cy="62" r="1.9" fill={GOLD} />
@@ -188,8 +188,8 @@ const Mascot = ({ mood = 'idle', size = 64, who = 'maya' }: { mood?: Mood; size?
             {/* Face */}
             <ellipse cx="60" cy="53" rx="25" ry="27" fill={look.skin} />
             {hair.front(look)}
-            <path d={brows[mood]} fill="none" stroke={look.hair} strokeWidth={who === 'felix' ? 3 : 2.4} strokeLinecap="round" />
-            {who === 'felix' && (
+            <path d={brows[mood]} fill="none" stroke={look.hair} strokeWidth={who === 'hamish' ? 3 : 2.4} strokeLinecap="round" />
+            {who === 'hamish' && (
                 <g fill="#b9683f" opacity="0.6">
                     <circle cx="44" cy="62" r="1" />
                     <circle cx="48" cy="64" r="1" />
@@ -200,7 +200,7 @@ const Mascot = ({ mood = 'idle', size = 64, who = 'maya' }: { mood?: Mood; size?
                 </g>
             )}
             {eyes[mood]}
-            {who === 'felix' && (
+            {who === 'hamish' && (
                 <g fill="rgba(255,255,255,0.1)" stroke="#1c1c1c" strokeWidth="2.2">
                     <circle cx="50" cy="55" r="7.5" />
                     <circle cx="70" cy="55" r="7.5" />

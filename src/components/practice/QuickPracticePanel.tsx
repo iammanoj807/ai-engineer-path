@@ -9,6 +9,7 @@ import { TAP } from '../learning/learning';
 import Mascot from './Mascot';
 import { GUIDE_NAMES, guideFor } from './guides';
 import PracticeDialog from './PracticeDialog';
+import { primeVoice } from './voice';
 
 const QuickPracticePanel = ({ course, topicId, accent }: { course: Course; topicId: string; accent: string }) => {
     const [open, setOpen] = useState(false);
@@ -33,7 +34,11 @@ const QuickPracticePanel = ({ course, topicId, accent }: { course: Course; topic
                 </Box>
                 <Button
                     variant="contained"
-                    onClick={() => setOpen(true)}
+                    onClick={() => {
+                        // This tap lets an iPhone speak: the guide reads the questions aloud.
+                        primeVoice();
+                        setOpen(true);
+                    }}
                     startIcon={<PlayArrowRoundedIcon />}
                     sx={{ minHeight: TAP, px: 2.5, fontWeight: 800, textTransform: 'none', bgcolor: accent, color: '#0b0f14', '&:hover': { bgcolor: accent, filter: 'brightness(1.1)' } }}
                 >

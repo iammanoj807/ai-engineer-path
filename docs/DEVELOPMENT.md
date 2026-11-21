@@ -53,6 +53,10 @@ The live site uses the Firebase project `ai-engineer-path-807` (Auth with Google
 
 For local development, put the same values in `.env.local` (see `.env.example`).
 
+## Welcome and reminder emails
+
+Signed-in learners get a welcome email, and a reminder when they have been away a week. A scheduled GitHub Action sends them, and it stays off until it is set up: see [emails/README.md](../emails/README.md).
+
 ## Stack
 
 React 19 · TypeScript · Vite · MUI · Mermaid · sql.js (SQLite in WebAssembly) · Firebase Auth and Firestore (optional) · GitHub Pages

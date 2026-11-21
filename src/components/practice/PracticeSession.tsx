@@ -15,6 +15,8 @@ import GoogleIcon from '@mui/icons-material/Google';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import VolumeUpRoundedIcon from '@mui/icons-material/VolumeUpRounded';
 import VolumeOffRoundedIcon from '@mui/icons-material/VolumeOffRounded';
+import RecordVoiceOverRoundedIcon from '@mui/icons-material/RecordVoiceOverRounded';
+import VoiceOverOffRoundedIcon from '@mui/icons-material/VoiceOverOffRounded';
 import IosShareRoundedIcon from '@mui/icons-material/IosShareRounded';
 import { courseById } from '../../game/courses';
 import { SITE_URL, topicPath } from '../../game/addresses';
@@ -36,6 +38,7 @@ import { GUIDE_NAMES, guideFor, type Guide } from './guides';
 import { Body, Footer } from './parts';
 import { PANEL, RIGHT, WRONG, bigButton } from './style';
 import { playComplete, playOut, setSoundOn, useSoundOn } from './sound';
+import { canSpeak, say, setVoiceOn, stopSpeaking, useVoiceOn } from './voice';
 import { IdeaCardView, WordsCardView } from './cards/TeachCards';
 import { MatchCardView, MistakeCardView, OrderCardView, RecallCardView } from './cards/ChoiceCards';
 import { BlankCardView } from './cards/BlankCard';
@@ -69,8 +72,13 @@ const CardView = ({ card, accent, onDone }: { card: PracticeCard; accent: string
     }
 };
 
-/** A full-card message from Maya: getting ready, out of hearts, fix your mistakes, leaving. */
-const Moment = ({ guide, mood, title, children, actions }: { guide: Guide; mood: 'think' | 'sad' | 'happy' | 'cheer' | 'idle'; title: string; children?: React.ReactNode; actions: React.ReactNode }) => (
+/** A full-card message from the guide: getting ready, out of hearts, fix your mistakes, leaving. */
+const Moment = ({ guide, mood, title, children, actions, quiet = false }: { guide: Guide; mood: 'think' | 'sad' | 'happy' | 'cheer' | 'idle'; title: string; children?: React.ReactNode; actions: React.ReactNode; quiet?: boolean }) => {
+    // The guide says the message out loud (not "getting ready": the first card follows at once).
+    useEffect(() => {
+        if (!quiet) say(title, guide);
+    }, [title, guide, quiet]);
+    return (
     <>
         <Body>
             <Stack alignItems="center" textAlign="center" spacing={2} sx={{ pt: { xs: 4, sm: 8 } }}>
@@ -83,7 +91,8 @@ const Moment = ({ guide, mood, title, children, actions }: { guide: Guide; mood:
         </Body>
         <Footer feedback={null}>{actions}</Footer>
     </>
-);
+    );
+};
 
 // ============ THE END ============
 
@@ -131,6 +140,11 @@ const Summary = ({
     );
     const [trackingAtStart] = useState(tracking);
     useEffect(() => playComplete(), []);
+    // After the tune, the guide says how it went.
+    useEffect(() => {
+        const timer = window.setTimeout(() => say(perfect ? 'Perfect lesson!' : 'Lesson complete!', guideFor(topicId)), 1100);
+        return () => window.clearTimeout(timer);
+    }, [perfect, topicId]);
     const proven = useMemo(
         () => (course === 'sql' ? checksProven(cards.filter((card): card is SqlCard => card.kind === 'predict' || card.kind === 'write'), outcomes) : []),
         [course, cards, outcomes]
@@ -281,6 +295,10 @@ const PracticeSession = ({ course, topicId, onClose }: { course: Course; topicId
     const [hearts, setHearts] = useState(HEARTS);
     const [leaving, setLeaving] = useState(false);
     const sound = useSoundOn();
+    const voice = useVoiceOn();
+
+    // Closing practice stops the guide mid-sentence.
+    useEffect(() => stopSpeaking, []);
 
     useEffect(() => {
         if (phase === 'out') playOut();
@@ -378,7 +396,7 @@ const PracticeSession = ({ course, topicId, onClose }: { course: Course; topicId
         );
     } else if (!cards || !sources) {
         content = (
-            <Moment guide={guide} mood="think" title="Getting your practice ready…" actions={<CircularProgress size={28} />}>
+            <Moment guide={guide} mood="think" title="Getting your practice ready…" actions={<CircularProgress size={28} />} quiet>
                 {GUIDE_NAMES[guide]} is picking the cards for this lesson.
             </Moment>
         );
@@ -481,7 +499,12 @@ const PracticeSession = ({ course, topicId, onClose }: { course: Course; topicId
                     aria-label={`${Math.min(doneSoFar, total)} of ${total} cards done`}
                     sx={{ flex: 1, height: 14, borderRadius: 7, bgcolor: 'rgba(255,255,255,0.08)', '& .MuiLinearProgress-bar': { bgcolor: phase === 'retry' ? XP_GOLD : accent, borderRadius: 7 } }}
                 />
-                <IconButton onClick={() => setSoundOn(!sound)} aria-label={sound ? 'Turn sound off' : 'Turn sound on'} aria-pressed={sound} sx={{ color: 'text.secondary' }}>
+                {canSpeak() && (
+                    <IconButton onClick={() => setVoiceOn(!voice)} aria-label={voice ? "Turn the guide's voice off" : "Turn the guide's voice on"} aria-pressed={voice} sx={{ color: 'text.secondary' }}>
+                        {voice ? <RecordVoiceOverRoundedIcon /> : <VoiceOverOffRoundedIcon />}
+                    </IconButton>
+                )}
+                <IconButton onClick={() => setSoundOn(!sound)} aria-label={sound ? 'Turn sound effects off' : 'Turn sound effects on'} aria-pressed={sound} sx={{ color: 'text.secondary' }}>
                     {sound ? <VolumeUpRoundedIcon /> : <VolumeOffRoundedIcon />}
                 </IconButton>
                 <Stack direction="row" spacing={0.5} alignItems="center" aria-label={`${hearts} ${hearts === 1 ? 'heart' : 'hearts'} left`} sx={{ pr: 1 }}>

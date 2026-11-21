@@ -72,6 +72,7 @@ const DeleteAccountDialog = ({ onClose }: { onClose: () => void }) => {
                             <li>your {saved.xp} XP{saved.streak > 0 ? ` and your ${saved.streak}-day streak` : ''}</li>
                             <li>every lesson you ticked or practised, in all three courses</li>
                             <li>your saved SQL queries</li>
+                            <li>and we stop emailing you</li>
                         </Box>
                         <Typography sx={{ mt: 1.5, fontWeight: 700, color: WRONG }}>It can't be undone.</Typography>
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5, lineHeight: 1.55 }}>
