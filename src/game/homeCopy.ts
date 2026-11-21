@@ -10,10 +10,8 @@ export const HOME_UNITS = COURSES.reduce((n, course) => n + course.units.length,
 export const HERO = {
     title: 'Learn ML, SQL and system design,',
     titleEnd: 'one step at a time.',
-    lead: `${HOME_LESSONS} lessons that start from scratch and go all the way to interview questions. Every topic has an animation, the idea step by step, a worked example, exercises with answers, and quick practice like a game.`,
-    start: 'Start learning',
+    lead: 'Enjoy reading, with diagrams, animations and quizzes along the way.',
     browse: 'See the courses',
-    firstLesson: 'First lesson:',
 } as const;
 
 export const HERO_STATS = [

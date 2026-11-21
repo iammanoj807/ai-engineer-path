@@ -31,7 +31,7 @@ import CoursePath, { CARD } from './CoursePath';
 import GuestNote from './GuestNote';
 import ReviewCard from './ReviewCard';
 import { signIn, useAccount, useTracksProgress, wasSignedIn } from '../../services/account';
-import { CourseShowcase, Hero, LessonAnatomy, PathSection, StartBand } from './Landing';
+import { CourseShowcase, Hero, LessonAnatomy, PathSection } from './Landing';
 import GoogleIcon from '@mui/icons-material/Google';
 import LockRoundedIcon from '@mui/icons-material/LockRounded';
 
@@ -290,7 +290,7 @@ const HomePage = () => {
     if (frontPage) {
         return (
             <Box sx={{ width: '100%', maxWidth: 1120, mx: 'auto' }}>
-                <Hero course={course} onSeeCourses={() => scrollToSection('courses')} />
+                <Hero onSeeCourses={() => scrollToSection('courses')} />
                 <Box sx={{ mt: SECTION_GAP }}>
                     <CourseShowcase
                         onShowPath={id => {
@@ -302,13 +302,10 @@ const HomePage = () => {
                 <Box sx={{ mt: SECTION_GAP }}>
                     <LessonAnatomy />
                 </Box>
-                <Box sx={{ mt: SECTION_GAP }}>
+                <Box sx={{ mt: SECTION_GAP, mb: { xs: 2, md: 4 } }}>
                     <PathSection selected={selected} onSelect={select}>
                         {path}
                     </PathSection>
-                </Box>
-                <Box sx={{ mt: SECTION_GAP, mb: { xs: 2, md: 4 } }}>
-                    <StartBand course={course} onSeeCourses={() => scrollToSection('courses')} />
                 </Box>
             </Box>
         );

@@ -1,7 +1,6 @@
 // The front page for visitors who are not signed in: what the site is, with
 // the guides Ada and Alan saying hello, the three courses, what every lesson
-// gives you, the path itself, and a last nudge to start. It asks no one to sign
-// in: the top bar offers that, and the site asks only when progress needs saving.
+// gives you, and the path itself. It asks no one to sign in: the top bar offers that, and the site asks only when progress needs saving.
 // Signed-in learners get their dashboard instead (HomePage.tsx).
 //
 // It reads only the course outline (COURSES, from pathIndex.json), never a
@@ -10,7 +9,6 @@
 import { useEffect, useState, type ElementType, type ReactNode } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { Box, Button, ButtonBase, Stack, Typography } from '@mui/material';
-import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import PsychologyRoundedIcon from '@mui/icons-material/PsychologyRounded';
@@ -25,7 +23,6 @@ import TerminalRoundedIcon from '@mui/icons-material/TerminalRounded';
 import { COURSES, type CourseInfo } from '../../game/courses';
 import { coursePath, topicPath } from '../../game/addresses';
 import type { Course } from '../../services/progress';
-import Mascot from '../practice/Mascot';
 import GuidesScene from './GuidesScene';
 import { MASTERED, XP_GOLD } from './colours';
 import { HERO, HERO_GRADIENT, HERO_STATS } from '../../game/homeCopy';
@@ -279,8 +276,7 @@ const LessonPreview = () => {
 
 // ============ HERO ============
 
-export const Hero = ({ course, onSeeCourses }: { course: CourseInfo; onSeeCourses: () => void }) => {
-    const first = course.units[0]?.topics[0];
+export const Hero = ({ onSeeCourses }: { onSeeCourses: () => void }) => {
     return (
         <Box
             component="section"
@@ -313,16 +309,6 @@ export const Hero = ({ course, onSeeCourses }: { course: CourseInfo; onSeeCourse
                 </Typography>
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mt: 4 }}>
                     <Button
-                        component={RouterLink}
-                        to={first ? topicPath(course, first.id) : coursePath(course)}
-                        variant="contained"
-                        size="large"
-                        startIcon={<PlayArrowRoundedIcon />}
-                        sx={{ fontWeight: 800, px: 3.5, minHeight: 52, fontSize: '1.05rem', boxShadow: '0 10px 30px -10px rgba(41,121,255,0.7)' }}
-                    >
-                        {HERO.start}
-                    </Button>
-                    <Button
                         variant="outlined"
                         size="large"
                         endIcon={<ArrowDownwardRoundedIcon />}
@@ -332,15 +318,6 @@ export const Hero = ({ course, onSeeCourses }: { course: CourseInfo; onSeeCourse
                         {HERO.browse}
                     </Button>
                 </Stack>
-                {first && (
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
-                        {HERO.firstLesson}{' '}
-                        <Box component="span" sx={{ color: 'text.primary', fontWeight: 700 }}>
-                            {first.name}
-                        </Box>{' '}
-                        ({course.title})
-                    </Typography>
-                )}
                 <Stack direction="row" spacing={{ xs: 3.5, sm: 5 }} sx={{ mt: 4, pt: 3, borderTop: `1px solid ${LINE}` }}>
                     {HERO_STATS.map(stat => (
                         <Box key={stat.label}>
@@ -533,67 +510,3 @@ export const PathSection = ({ selected, onSelect, children }: { selected: Course
         <Box sx={{ maxWidth: 560, mx: 'auto' }}>{children}</Box>
     </Box>
 );
-
-// ============ START ============
-
-/** The last nudge: both guides cheering, and the first lesson one tap away. No sign-in here. */
-export const StartBand = ({ course, onSeeCourses }: { course: CourseInfo; onSeeCourses: () => void }) => {
-    const first = course.units[0]?.topics[0];
-    return (
-        <Box
-            component="section"
-            aria-labelledby="start-title"
-            sx={{
-                borderRadius: 5,
-                px: { xs: 3, sm: 4, md: 5 },
-                py: { xs: 4, md: 5 },
-                border: '1px solid rgba(41,121,255,0.3)',
-                background: 'radial-gradient(circle at 50% 120%, rgba(41,121,255,0.28), transparent 60%), radial-gradient(circle at 0% 0%, rgba(179,157,219,0.12), transparent 45%), #121722',
-                display: 'grid',
-                gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'auto minmax(0, 1fr) auto' },
-                gap: { xs: 2, md: 4 },
-                alignItems: 'center',
-                textAlign: 'center',
-            }}
-        >
-            <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-                <Mascot who="ada" mood="cheer" size={132} />
-            </Box>
-            <Stack direction="row" justifyContent="center" spacing={2} sx={{ display: { xs: 'flex', md: 'none' } }}>
-                <Mascot who="ada" mood="cheer" size={96} />
-                <Mascot who="alan" mood="cheer" size={96} />
-            </Stack>
-            <Box>
-                <Typography id="start-title" component="h2" sx={{ fontWeight: 800, color: HEADING, fontSize: { xs: '1.6rem', sm: '2.1rem' }, lineHeight: 1.2, letterSpacing: '-0.015em' }}>
-                    Your first lesson is one tap away
-                </Typography>
-                <Typography color="text.secondary" sx={{ mt: 1.25, maxWidth: 560, mx: 'auto' }}>
-                    Free, with nothing to set up. Watch the idea move, read it step by step, then practise for five minutes with Ada and Alan.
-                </Typography>
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} justifyContent="center" sx={{ mt: 3 }}>
-                    <Button
-                        component={RouterLink}
-                        to={first ? topicPath(course, first.id) : coursePath(course)}
-                        variant="contained"
-                        size="large"
-                        startIcon={<PlayArrowRoundedIcon />}
-                        sx={{ fontWeight: 800, px: 3.5, minHeight: 52, fontSize: '1.05rem', boxShadow: '0 10px 30px -10px rgba(41,121,255,0.7)' }}
-                    >
-                        Start learning
-                    </Button>
-                    <Button
-                        variant="outlined"
-                        size="large"
-                        onClick={onSeeCourses}
-                        sx={{ fontWeight: 700, px: 3, minHeight: 52, fontSize: '1.05rem', color: 'text.primary', borderColor: 'rgba(255,255,255,0.2)' }}
-                    >
-                        See the courses
-                    </Button>
-                </Stack>
-            </Box>
-            <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-                <Mascot who="alan" mood="cheer" size={132} />
-            </Box>
-        </Box>
-    );
-};
