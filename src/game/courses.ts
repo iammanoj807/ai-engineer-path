@@ -60,7 +60,7 @@ export const COURSES: CourseInfo[] = [
         route: '/sql',
         title: 'SQL',
         tagline: 'From your first SELECT to window functions and interview problems.',
-        colour: '#ffb74d',
+        colour: '#f48fb1',
         checkNames: ['Explain', 'Write', 'Predict', 'Edge cases'],
         units: toUnits(pathIndex.sql),
     },

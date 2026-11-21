@@ -477,7 +477,7 @@ const LESSON_PARTS: { icon: ElementType; colour: string; title: string; text: st
     { icon: CodeRoundedIcon, colour: '#82b1ff', title: 'A worked example', text: 'Real numbers worked through, with code that has been run.' },
     { icon: TaskAltRoundedIcon, colour: MASTERED, title: 'Four checks, with answers', text: 'Four exercises for every topic. Pass all four without notes and the topic is mastered.' },
     { icon: RecordVoiceOverRoundedIcon, colour: '#4dd0e1', title: 'Interview questions', text: 'Every course has an interview mode: full spoken answers, the traps, and the follow-ups.' },
-    { icon: TerminalRoundedIcon, colour: '#ffb74d', title: 'SQL that runs in the page', text: 'SQLite runs in your browser, so every query works with nothing to install.' },
+    { icon: TerminalRoundedIcon, colour: COURSES.find(course => course.id === 'sql')?.colour ?? '#f48fb1', title: 'SQL that runs in the page', text: 'SQLite runs in your browser, so every query works with nothing to install.' },
 ];
 
 export const LessonAnatomy = () => (
