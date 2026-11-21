@@ -25,7 +25,7 @@ import { genAiInterviewSet } from '../../src/data/interviewPrep/genai';
 import { mlInterviewSet } from '../../src/data/interviewPrep/ml';
 import { sqlInterviewSet } from '../../src/data/interviewPrep/sql';
 import { systemDesignInterviewSet } from '../../src/data/interviewPrep/systemDesign';
-import { GREETING_LINES, MOMENT_LINES, cardLine } from '../../src/practice/lines';
+import { GREETING_LINES, MOMENT_LINES, READ_LINES, cardLine } from '../../src/practice/lines';
 import { GUIDES, guideFor, type Guide } from '../../src/components/practice/guides';
 import { clipKey, tidyLine } from '../../src/components/practice/clipKey';
 
@@ -115,6 +115,8 @@ for (const { course, topics, glossary, questions } of courses) {
 }
 // The moments can come in any lesson, so both guides say them.
 for (const guide of GUIDES) for (const text of Object.values(MOMENT_LINES)) add(guide, text);
+// What each coach says before each part of a step-by-step lesson.
+for (const guide of GUIDES) for (const text of Object.values(READ_LINES)) add(guide, text);
 // Each guide's hello on the front page.
 for (const guide of GUIDES) add(guide, GREETING_LINES[guide]);
 

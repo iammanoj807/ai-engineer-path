@@ -5,6 +5,18 @@
 
 import type { PracticeCard } from './cards';
 import type { Guide } from '../components/practice/guides';
+import type { LessonSlot } from './lesson';
+
+/** What the coach says before each part of a step-by-step lesson. */
+export const READ_LINES: Record<LessonSlot, string> = {
+    why: 'First, why does this matter?',
+    idea: "Here's the idea.",
+    steps: "Here's how it works, one step at a time.",
+    analogy: 'Think of it like this.',
+    example: "Let's work through an example.",
+    facts: 'These are the points to remember.',
+    mistakes: 'Watch out for these common mistakes.',
+};
 
 const NUMBER_WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six'];
 const counted = (n: number) => NUMBER_WORDS[n] ?? String(n);
@@ -14,6 +26,8 @@ export const cardLine = (card: PracticeCard, options: { choosing?: boolean } = {
     switch (card.kind) {
         case 'guess':
             return 'Before we learn, take a guess. True or false?';
+        case 'read':
+            return READ_LINES[card.part.slot];
         case 'idea':
             return `Let's learn something new: ${card.title}`;
         case 'words': {

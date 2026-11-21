@@ -5,6 +5,7 @@
 
 import type { SqlResultTable } from '../data/sql';
 import type { PredictCard, RowOrder, WriteCard } from './sql';
+import type { LessonPart } from './lesson';
 
 export type { PredictCard, WriteCard } from './sql';
 
@@ -17,6 +18,13 @@ export interface GuessCard {
     kind: 'guess';
     id: string;
     statements: { text: string; isTrue: boolean }[];
+}
+
+/** Teaching, in "Learn it step by step": one part of the lesson (src/practice/lesson.ts). */
+export interface ReadCard {
+    kind: 'read';
+    id: string;
+    part: LessonPart;
 }
 
 /** Teaching: the lesson's one-line idea, its picture, and an everyday comparison. */
@@ -98,16 +106,17 @@ export interface FixCard {
     hint: string;
 }
 
-export type PracticeCard = GuessCard | IdeaCard | WordsCard | MatchCard | BlankCard | OrderCard | MistakeCard | RecallCard | PredictCard | WriteCard | FixCard;
+export type PracticeCard = GuessCard | ReadCard | IdeaCard | WordsCard | MatchCard | BlankCard | OrderCard | MistakeCard | RecallCard | PredictCard | WriteCard | FixCard;
 
 /** Cards that teach rather than ask: they can't be got wrong (a guess is only a guess). */
-export const isTeaching = (card: PracticeCard) => card.kind === 'idea' || card.kind === 'words' || card.kind === 'guess';
+export const isTeaching = (card: PracticeCard) => card.kind === 'idea' || card.kind === 'words' || card.kind === 'guess' || card.kind === 'read';
 
 /** Cards that ask and are checked: these cost a heart when missed, and come back once at the end. */
 export const isChecked = (card: PracticeCard) => !isTeaching(card) && card.kind !== 'recall';
 
 export const CARD_TITLES: Record<PracticeCard['kind'], string> = {
     guess: 'Take a guess',
+    read: 'Learn',
     idea: 'New idea',
     words: 'New words',
     match: 'Match the pairs',
@@ -122,4 +131,10 @@ export const CARD_TITLES: Record<PracticeCard['kind'], string> = {
 
 /** A card's title; a SQL problem's own question is "Solve the problem". */
 export const cardTitle = (card: PracticeCard) =>
-    card.kind === 'write' ? card.label.charAt(0) + card.label.slice(1).toLowerCase() : card.kind === 'recall' && card.interview ? 'Interview question' : CARD_TITLES[card.kind];
+    card.kind === 'write'
+        ? card.label.charAt(0) + card.label.slice(1).toLowerCase()
+        : card.kind === 'recall' && card.interview
+          ? 'Interview question'
+          : card.kind === 'read'
+            ? card.part.title
+            : CARD_TITLES[card.kind];

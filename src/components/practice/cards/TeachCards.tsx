@@ -3,9 +3,10 @@
 // is only a guess: no hearts, no score. Wrong or right, it makes the answer
 // stick when the lesson shows it (the pretesting effect).
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Box, Button, ButtonBase, Stack, Typography } from '@mui/material';
-import type { GuessCard, IdeaCard, WordsCard } from '../../../practice/cards';
+import type { GuessCard, IdeaCard, ReadCard, WordsCard } from '../../../practice/cards';
+import { LessonPartBody } from '../LessonPart';
 import { cardLine } from '../../../practice/lines';
 import { ANIMATIONS } from '../../../practice/load';
 import { AnimatedScene } from '../../learning/anim/AnimatedScene';
@@ -96,6 +97,45 @@ export const GuessCardView = ({ card, accent, onDone }: CardProps<GuessCard>) =>
                         Let&apos;s learn
                     </Button>
                 ) : null}
+            </Footer>
+        </>
+    );
+};
+
+/**
+ * One part of the lesson, in "Learn it step by step". The steps of "how it
+ * works" come one at a time (Next step), so each is read before the next.
+ */
+export const ReadCardView = ({ card, accent, onDone }: CardProps<ReadCard>) => {
+    const { prose } = usePractice();
+    const { part } = card;
+    const steps = part.slot === 'steps' ? (part.items?.length ?? 0) : 0;
+    const [shown, setShown] = useState(1);
+    const end = useRef<HTMLDivElement>(null);
+    const allShown = steps <= 1 || shown >= steps;
+    // Each new step slides in at the bottom: keep it in view.
+    useEffect(() => {
+        if (shown > 1) end.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }, [shown]);
+    return (
+        <>
+            <Body>
+                <CardHeader title={part.title} accent={accent} mood="happy" speak={cardLine(card)}>
+                    {cardLine(card)}
+                </CardHeader>
+                <LessonPartBody part={part} prose={prose} accent={accent} shown={steps > 1 ? shown : undefined} />
+                <Box ref={end} />
+            </Body>
+            <Footer feedback={null}>
+                {allShown ? (
+                    <Button variant="contained" onClick={() => onDone(DONE)} sx={bigButton} autoFocus disableFocusRipple>
+                        Continue
+                    </Button>
+                ) : (
+                    <Button variant="contained" onClick={() => setShown(n => n + 1)} sx={bigButton} autoFocus disableFocusRipple>
+                        Next step · {shown + 1} of {steps}
+                    </Button>
+                )}
             </Footer>
         </>
     );

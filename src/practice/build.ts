@@ -11,7 +11,8 @@ import type { SqlResultTable, SqlTopic, SqlTopicAnswers } from '../data/sql';
 import type { SDTopic } from '../data/systemDesign';
 import type { Course } from '../services/progress';
 import type { GlossaryTerm, TextSegment } from '../utils/glossaryEngine';
-import type { BlankCard, GuessCard, IdeaCard, MatchCard, MistakeCard, OrderCard, PracticeCard, RecallCard, WordsCard } from './cards';
+import { isTeaching, type BlankCard, type GuessCard, type IdeaCard, type MatchCard, type MistakeCard, type OrderCard, type PracticeCard, type ReadCard, type RecallCard, type WordsCard } from './cards';
+import { lessonOutline, type LessonSlot } from './lesson';
 import { seedOf, sqlFixCard, sqlPracticeCards, type WriteCard } from './sql';
 import { isTypable } from './typing';
 
@@ -359,6 +360,51 @@ export const withFixCard = (cards: PracticeCard[], run: (sql: string) => SqlResu
     if (!fix) return cards;
     const out = [...cards.slice(0, at + 1), fix, ...cards.slice(at + 1)];
     // Keep the session to its usual length: drop the last exercise if needed.
-    const exercises = out.filter(card => card.kind !== 'idea' && card.kind !== 'words').length;
+    const exercises = out.filter(card => !isTeaching(card)).length;
     return exercises > MAX_EXERCISES ? out.slice(0, -1) : out;
+};
+
+/**
+ * "Learn it step by step": the whole lesson inside practice. A guess first,
+ * then each part of the lesson (why it matters, the idea, how it works, a
+ * comparison, a worked example, what to remember, the common mistakes), each
+ * followed by the question that checks it. Learning in small parts with a
+ * question after each works better than reading it all, then testing
+ * (interpolated testing). The questions are the same as the quick practice's.
+ */
+export const buildLearnSession = (course: Course, topic: AnyTopic, sources: SessionSources): PracticeCard[] => {
+    const lesson = lessonText(topic);
+    const quick = buildSession(course, topic, sources);
+    const words = quick.filter(card => card.kind === 'words');
+    const exercises = quick.filter(card => !isTeaching(card));
+    /** Take the next exercise of one of these kinds out of the list (`all`: every one). */
+    const take = (kinds: PracticeCard['kind'][], all = true) => {
+        const taken = exercises.filter(card => kinds.includes(card.kind)).slice(0, all ? undefined : 1);
+        for (const card of taken) exercises.splice(exercises.indexOf(card), 1);
+        return taken;
+    };
+    const outline = lessonOutline(topic);
+    const read = (slot: LessonSlot): ReadCard[] =>
+        outline.filter(part => part.slot === slot).map((part, i) => ({ kind: 'read', id: `${topic.id}-read-${slot}${i ? `-${i + 1}` : ''}`, part }));
+    // The comparison has its own part here, so the idea card shows just the idea and its picture.
+    const idea: IdeaCard = { ...ideaCard(lesson), analogy: undefined };
+    return [
+        ...guessCard(lesson),
+        ...read('why'),
+        idea,
+        ...read('idea'),
+        ...words,
+        ...take(['match']),
+        ...read('steps'),
+        ...take(['order']),
+        ...read('analogy'),
+        ...read('example'),
+        ...take(['blank'], false),
+        ...take(['predict', 'write']),
+        ...read('facts'),
+        ...read('mistakes'),
+        ...take(['mistake']),
+        // What is left: the recall question, a second gap to fill.
+        ...exercises,
+    ];
 };

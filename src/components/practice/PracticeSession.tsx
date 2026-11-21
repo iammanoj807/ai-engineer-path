@@ -27,7 +27,7 @@ import { courseById } from '../../game/courses';
 import { SITE_URL, topicPath } from '../../game/addresses';
 import { useGameStats } from '../../game/useProgress';
 import { SQL_CHECK_LABELS, type SqlCheckKey } from '../../data/sql';
-import { buildSession, interviewCard, lessonText, withFixCard } from '../../practice/build';
+import { buildLearnSession, buildSession, interviewCard, lessonText, withFixCard } from '../../practice/build';
 import { buildReview } from '../../practice/review';
 import { INTERVALS, scheduleAfter, type DueLesson } from '../../game/review';
 import { localDay } from '../../game/day';
@@ -48,7 +48,9 @@ import { Body, Footer } from './parts';
 import { PANEL, RIGHT, WRONG, bigButton } from './style';
 import { playComplete, playOut, setSoundOn, useSoundOn } from './sound';
 import { canSpeak, prefetchLines, say, setVoiceOn, stopSpeaking, useVoiceOn } from './voice';
-import { GuessCardView, IdeaCardView, WordsCardView } from './cards/TeachCards';
+import { GuessCardView, IdeaCardView, ReadCardView, WordsCardView } from './cards/TeachCards';
+import LessonNotes from './LessonNotes';
+import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import { MatchCardView, MistakeCardView, OrderCardView, RecallCardView } from './cards/ChoiceCards';
 import { BlankCardView } from './cards/BlankCard';
 import { FixCardView, PredictCardView, WriteCardView } from './cards/SqlCards';
@@ -69,6 +71,7 @@ const scoreFor = (cards: PracticeCard[], outcomes: Record<string, CardOutcome>) 
 const CardView = ({ card, accent, onDone }: { card: PracticeCard; accent: string; onDone: (outcome: CardOutcome) => void }) => {
     switch (card.kind) {
         case 'guess': return <GuessCardView card={card} accent={accent} onDone={onDone} />;
+        case 'read': return <ReadCardView card={card} accent={accent} onDone={onDone} />;
         case 'idea': return <IdeaCardView card={card} accent={accent} onDone={onDone} />;
         case 'words': return <WordsCardView card={card} accent={accent} onDone={onDone} />;
         case 'match': return <MatchCardView card={card} accent={accent} onDone={onDone} />;
@@ -406,15 +409,15 @@ const PracticeSession = ({
     course,
     topicId,
     onClose,
-    warmUp = false,
+    learn = false,
     review,
 }: {
     course: Course;
     /** The lesson; in a review, the first lesson due (whose guide opens and closes it). */
     topicId: string;
     onClose: () => void;
-    /** Opened straight from the path: start with a guess before the teaching. */
-    warmUp?: boolean;
+    /** "Learn it step by step": the whole lesson, part by part, with a question after each. */
+    learn?: boolean;
     /** A review of these due lessons, instead of one lesson's practice. */
     review?: DueLesson[];
 }) => {
@@ -442,6 +445,8 @@ const PracticeSession = ({
     const [fixed, setFixed] = useState(0);
     const [hearts, setHearts] = useState(HEARTS);
     const [leaving, setLeaving] = useState(false);
+    /** The lesson notes, open beside the practice. */
+    const [notesOpen, setNotesOpen] = useState(false);
     const sound = useSoundOn();
     const voice = useVoiceOn();
 
@@ -459,10 +464,11 @@ const PracticeSession = ({
             const engine = course === 'sql' ? await loadSqlEngine() : null;
             const questions = review ? await loadInterviewQuestions(course) : [];
             /** A lesson's cards: its practice, and (for reviews) its interview question. */
-            const cardsFor = (id: string, options: { warmUp?: boolean } = {}) => {
+            const cardsFor = (id: string, options: { learn?: boolean } = {}) => {
                 const topic = loaded.findTopic(id);
                 if (!topic) return [];
-                let built = buildSession(course, topic, { glossary: loaded.glossary, sqlAnswers: loaded.sqlAnswers }, options);
+                const sessionSources = { glossary: loaded.glossary, sqlAnswers: loaded.sqlAnswers };
+                let built = options.learn ? buildLearnSession(course, topic, sessionSources) : buildSession(course, topic, sessionSources);
                 if (engine) built = withFixCard(built, sql => runOnPracticeDb(engine, sql));
                 return review ? [...built, ...interviewCard(lessonText(topic), questions)] : built;
             };
@@ -474,7 +480,7 @@ const PracticeSession = ({
                 owners = Object.fromEntries(items.map(item => [item.card.id, item.topicId]));
             } else {
                 if (!loaded.findTopic(topicId)) throw new Error(`No lesson ${topicId}`);
-                built = cardsFor(topicId, { warmUp });
+                built = cardsFor(topicId, { learn });
                 owners = Object.fromEntries(built.map(card => [card.id, topicId]));
             }
             if (built.length === 0) throw new Error('Nothing to practise');
@@ -494,7 +500,7 @@ const PracticeSession = ({
         return () => {
             live = false;
         };
-    }, [course, topicId, attempt, review, warmUp]);
+    }, [course, topicId, attempt, review, learn]);
 
     const openLesson = (id = topicId) => {
         onClose();
@@ -502,8 +508,8 @@ const PracticeSession = ({
     };
 
     const restart = () => {
-        // Again: no guess this time, they have just learned it.
-        setCards(previous => previous?.filter(card => card.kind !== 'guess') ?? previous);
+        // Again: the quick practice this time (no guess, no lesson parts), they have just learned it.
+        setCards(previous => previous?.filter(card => card.kind !== 'guess' && card.kind !== 'read') ?? previous);
         setRound(r => r + 1);
         setPhase('play');
         setIndex(0);
@@ -690,6 +696,11 @@ const PracticeSession = ({
                     aria-label={`${Math.min(doneSoFar, total)} of ${total} cards done`}
                     sx={{ flex: 1, height: 14, borderRadius: 7, bgcolor: 'rgba(255,255,255,0.08)', '& .MuiLinearProgress-bar': { bgcolor: phase === 'retry' ? XP_GOLD : accent, borderRadius: 7 } }}
                 />
+                {sources && (
+                    <IconButton onClick={() => setNotesOpen(true)} aria-label="Open the lesson notes" sx={{ color: 'text.secondary' }}>
+                        <MenuBookRoundedIcon />
+                    </IconButton>
+                )}
                 {canSpeak() && (
                     <IconButton onClick={() => setVoiceOn(!voice)} aria-label={voice ? "Turn the coach's voice off" : "Turn the coach's voice on"} aria-pressed={voice} sx={{ color: 'text.secondary' }}>
                         {voice ? <RecordVoiceOverRoundedIcon /> : <VoiceOverOffRoundedIcon />}
@@ -709,6 +720,17 @@ const PracticeSession = ({
                 {sources ? (
                     <GlossaryProvider source={sources.pageGlossary} openTopic={id => openLesson(id)}>
                         <GlossaryTopic topicId={currentTopic}>{content}</GlossaryTopic>
+                        {/* The lesson for reference: in a review, the lesson of the card on screen. */}
+                        {sources.findTopic(currentTopic) && (
+                            <LessonNotes
+                                topic={sources.findTopic(currentTopic)!}
+                                lessonUrl={topicPath(info, currentTopic)}
+                                accent={accent}
+                                prose={setting.prose}
+                                open={notesOpen}
+                                onClose={() => setNotesOpen(false)}
+                            />
+                        )}
                     </GlossaryProvider>
                 ) : (
                     content

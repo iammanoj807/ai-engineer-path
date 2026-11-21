@@ -67,7 +67,12 @@ Every lesson teaches one idea all the way through:
   <img src="docs/images/practice-summary.png" alt="Lesson complete: XP earned, first-try score and hearts left" width="24%">
 </p>
 
-Tap any lesson on the path and press **Practise**. After a quick true-or-false guess, the lesson's coach teaches the idea and its new words, then asks quick questions made from the lesson itself, reading each one aloud:
+Tap any lesson on the path and choose:
+
+- **Learn it step by step** (about 15 minutes): the whole lesson inside practice. A quick guess first, then each part of the lesson (why it matters, the idea, how it works one step at a time, a worked example, what to remember, the common mistakes), each followed by a question that checks it.
+- **Quick practice** (5 minutes): for a lesson you have already learned.
+
+A 📖 button inside practice opens the lesson notes, with a link to the full lesson page. In both, the lesson's coach then asks quick questions made from the lesson itself, reading each one aloud:
 
 - **Match the pairs:** each word to what it means.
 - **Fill the gap:** type the missing word, checked letter by letter, or choose it from four words if typing is hard.

@@ -13,6 +13,7 @@ import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
+import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
 import type { CourseInfo, PathTopic, PathUnit } from '../../game/courses';
 import { checksPassedIn, type ChecksDoc } from '../../game/xp';
 import type { PracticeRecord } from '../../services/progress';
@@ -313,8 +314,36 @@ const TopicPopover = ({
     anchor: HTMLElement;
     onClose: () => void;
     onStart: () => void;
-    onPractice: () => void;
-}) => (
+    /** `learn`: the whole lesson step by step; else the quick practice. */
+    onPractice: (learn: boolean) => void;
+}) => {
+    const learnButton = (main: boolean) => (
+        <Button
+            fullWidth
+            variant={main ? 'contained' : 'outlined'}
+            startIcon={<SchoolRoundedIcon />}
+            onClick={() => onPractice(true)}
+            sx={main
+                ? { mt: 2, fontWeight: 800, minHeight: 48, bgcolor: course.colour, color: '#0B0E14', '&:hover': { bgcolor: course.colour, filter: 'brightness(1.1)' } }
+                : { mt: 1, fontWeight: 700, minHeight: 44, color: 'text.primary', borderColor: 'rgba(255,255,255,0.2)' }}
+        >
+            {main ? 'Learn it step by step' : 'Learn it again, step by step'} · about 15 min
+        </Button>
+    );
+    const quickButton = (main: boolean) => (
+        <Button
+            fullWidth
+            variant={main ? 'contained' : 'outlined'}
+            startIcon={<BoltRoundedIcon />}
+            onClick={() => onPractice(false)}
+            sx={main
+                ? { mt: 2, fontWeight: 800, minHeight: 48, bgcolor: course.colour, color: '#0B0E14', '&:hover': { bgcolor: course.colour, filter: 'brightness(1.1)' } }
+                : { mt: 1, fontWeight: 700, minHeight: 44, color: 'text.primary', borderColor: 'rgba(255,255,255,0.2)' }}
+        >
+            Quick practice · 5 min
+        </Button>
+    );
+    return (
     <Popover
         open
         anchorEl={anchor}
@@ -333,20 +362,15 @@ const TopicPopover = ({
                 Practised {practised.times === 1 ? 'once' : `${practised.times} times`} · best {practised.best}% right first time
             </Typography>
         )}
-        <Button
-            fullWidth
-            variant="contained"
-            startIcon={<BoltRoundedIcon />}
-            onClick={onPractice}
-            sx={{ mt: 2, fontWeight: 800, minHeight: 48, bgcolor: course.colour, color: '#0B0E14', '&:hover': { bgcolor: course.colour, filter: 'brightness(1.1)' } }}
-        >
-            {practised ? 'Practise again' : 'Practise'} · about 5 min
-        </Button>
-        <Button fullWidth variant="outlined" onClick={onStart} sx={{ mt: 1, fontWeight: 700, minHeight: 44, color: 'text.primary', borderColor: 'rgba(255,255,255,0.2)' }}>
-            {passed >= 4 ? 'Review the lesson' : passed > 0 ? 'Continue the lesson' : 'Read the lesson'}
+        {/* New lesson: learn it step by step first. Already practised: a quick practice first. */}
+        {practised ? quickButton(true) : learnButton(true)}
+        {practised ? learnButton(false) : quickButton(false)}
+        <Button fullWidth onClick={onStart} sx={{ mt: 1, fontWeight: 700, minHeight: 40, color: 'text.secondary' }}>
+            {passed >= 4 ? 'Review the full lesson' : passed > 0 ? 'Continue the full lesson' : 'Read the full lesson'}
         </Button>
     </Popover>
-);
+    );
+};
 
 const CoursePath = ({
     course,
@@ -365,8 +389,8 @@ const CoursePath = ({
 }) => {
     const tracking = useTracksProgress();
     const [popover, setPopover] = useState<{ topic: PathTopic; el: HTMLElement } | null>(null);
-    /** The lesson being practised, straight from the path. */
-    const [practising, setPractising] = useState<string | null>(null);
+    /** The lesson being practised, straight from the path, and how. */
+    const [practising, setPractising] = useState<{ topicId: string; learn: boolean } | null>(null);
     const topics = course.units.flatMap(unit => unit.topics);
     const firstOpen = topics.find(topic => checksPassedIn(doc, topic.id) < 4)?.id;
     const order = new Map(topics.map((topic, i) => [topic.id, i]));
@@ -439,16 +463,15 @@ const CoursePath = ({
                         setPopover(null);
                         onOpenTopic(popover.topic.id);
                     }}
-                    onPractice={() => {
-                        // This tap lets an iPhone speak: the guide reads the questions aloud.
+                    onPractice={learn => {
+                        // This tap lets an iPhone speak: the coach reads the questions aloud.
                         primeVoice();
                         setPopover(null);
-                        setPractising(popover.topic.id);
+                        setPractising({ topicId: popover.topic.id, learn });
                     }}
                 />
             )}
-            {/* Straight from the path, so practice starts with a guess before the teaching. */}
-            {practising && <PracticeDialog course={course.id} topicId={practising} warmUp onClose={() => setPractising(null)} />}
+            {practising && <PracticeDialog course={course.id} topicId={practising.topicId} learn={practising.learn} onClose={() => setPractising(null)} />}
         </Stack>
     );
 };
