@@ -86,18 +86,18 @@ const App = () => (
                     sx={{
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: 0.75,
-                        px: 1.5,
-                        py: 0.5,
+                        gap: 0.5,
+                        px: 1,
+                        py: 0.25,
                         borderRadius: 999,
                         bgcolor: '#ffdd00',
                         color: '#1a1a1a',
-                        fontSize: '0.85rem',
+                        fontSize: '0.75rem',
                         fontWeight: 700,
                         '&:hover': { bgcolor: '#ffe733', color: '#000' },
                     }}
                 >
-                    <CoffeeRoundedIcon sx={{ fontSize: 18 }} />
+                    <CoffeeRoundedIcon sx={{ fontSize: 14 }} />
                     Buy me a coffee
                 </Link>
             </Box>

@@ -155,21 +155,6 @@ button:focus-visible {
 @media (min-width: 900px) {
   .seo-hero { grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr); gap: 56px; padding-top: 32px; }
 }
-.seo-page.seo-home .seo-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0 0 24px;
-  padding: 4.8px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
-  font-size: 0.85rem;
-  font-weight: 700;
-  line-height: 1.5;
-  color: #d7d2ce;
-}
-.seo-dot { width: 8px; height: 8px; flex-shrink: 0; border-radius: 50%; background: #66bb6a; box-shadow: 0 0 0 4px #66bb6a33; }
 .seo-page.seo-home h1 { margin: 0; font-weight: 800; color: #fff; font-size: 2.3rem; line-height: 1.07; letter-spacing: -0.025em; }
 .seo-grad { display: inline-block; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
 .seo-page.seo-home .seo-lead { margin: 20px 0 0; max-width: 520px; color: #b0bec5; font-size: 1.05rem; line-height: 1.6; }

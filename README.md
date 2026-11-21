@@ -67,7 +67,7 @@ Every lesson teaches one idea all the way through:
   <img src="docs/images/practice-summary.png" alt="Lesson complete: XP earned, first-try score and hearts left" width="24%">
 </p>
 
-Tap any lesson on the path and press **Practise**. The lesson's coach teaches the idea and its new words first, then asks quick questions made from the lesson itself, reading each one aloud:
+Tap any lesson on the path and press **Practise**. After a quick true-or-false guess, the lesson's coach teaches the idea and its new words, then asks quick questions made from the lesson itself, reading each one aloud:
 
 - **Match the pairs:** each word to what it means.
 - **Fill the gap:** type the missing word, checked letter by letter, or choose it from four words if typing is hard.

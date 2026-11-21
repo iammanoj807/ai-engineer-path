@@ -8,7 +8,6 @@ export const HOME_LESSONS = COURSES.reduce((n, course) => n + course.units.reduc
 export const HOME_UNITS = COURSES.reduce((n, course) => n + course.units.length, 0);
 
 export const HERO = {
-    chip: 'Free. Every lesson is open, no account needed.',
     title: 'Learn ML, SQL and system design,',
     titleEnd: 'one step at a time.',
     lead: `${HOME_LESSONS} lessons that start from scratch and go all the way to interview questions. Every topic has an animation, the idea step by step, a worked example, exercises with answers, and quick practice like a game.`,

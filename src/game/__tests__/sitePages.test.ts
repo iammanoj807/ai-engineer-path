@@ -104,7 +104,6 @@ const homeBody = () => {
     const course = COURSES[0];
     const first = course.units[0].topics[0];
     const hero = `<section class="seo-hero"><div class="seo-hero-text">`
-        + `<p class="seo-chip"><span class="seo-dot"></span>${esc(HERO.chip)}</p>`
         + `<h1>${esc(HERO.title)} <span class="seo-grad" style="background-image:${HERO_GRADIENT}">${esc(HERO.titleEnd)}</span></h1>`
         + `<p class="seo-lead">${esc(HERO.lead)}</p>`
         + `<p class="seo-ctas"><a class="seo-btn seo-btn-main" href="${esc(topicPath(course, first.id))}">${icon(PLAY_ICON)}${esc(HERO.start)}</a>`

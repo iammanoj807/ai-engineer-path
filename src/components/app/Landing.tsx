@@ -294,15 +294,6 @@ export const Hero = ({ course, onSeeCourses }: { course: CourseInfo; onSeeCourse
             }}
         >
             <Box>
-                <Stack
-                    direction="row"
-                    spacing={1}
-                    alignItems="center"
-                    sx={{ display: 'inline-flex', px: 1.5, py: 0.6, mb: 3, borderRadius: 999, border: `1px solid ${LINE}`, bgcolor: 'rgba(255,255,255,0.03)' }}
-                >
-                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: MASTERED, boxShadow: `0 0 0 4px ${MASTERED}33`, flexShrink: 0 }} />
-                    <Typography sx={{ fontSize: '0.85rem', fontWeight: 700 }}>{HERO.chip}</Typography>
-                </Stack>
                 <Typography
                     id="home-title"
                     component="h1"
