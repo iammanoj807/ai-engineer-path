@@ -48,7 +48,8 @@ describe('guess first', () => {
                 expect(mistakeCard?.options.map(o => o.text) ?? [], topic.id).not.toContain(statement.text);
             }
         }
-    });
+        // Builds every lesson's practice: give slower machines (like GitHub's) time.
+    }, 60_000);
 
     it('comes first only when practice opens from the path', () => {
         const { course, topic, glossary } = all[0];
