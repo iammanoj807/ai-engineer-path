@@ -1,13 +1,15 @@
-// The front page for visitors who are not signed in: what the site is, the
-// three courses, what every lesson gives you, the path itself, and signing in
-// to keep progress. Signed-in learners get their dashboard instead (HomePage.tsx).
+// The front page for visitors who are not signed in: what the site is, with
+// the guides Pia and Hamish saying hello, the three courses, what every lesson
+// gives you, the path itself, and a last nudge to start. It asks no one to sign
+// in: the top bar offers that, and the site asks only when progress needs saving.
+// Signed-in learners get their dashboard instead (HomePage.tsx).
 //
 // It reads only the course outline (COURSES, from pathIndex.json), never a
 // lesson, so the first visit stays small.
 
 import { useEffect, useState, type ElementType, type ReactNode } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import { Alert, Box, Button, ButtonBase, Stack, Typography } from '@mui/material';
+import { Box, Button, ButtonBase, Stack, Typography } from '@mui/material';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
@@ -20,17 +22,12 @@ import CodeRoundedIcon from '@mui/icons-material/CodeRounded';
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
 import RecordVoiceOverRoundedIcon from '@mui/icons-material/RecordVoiceOverRounded';
 import TerminalRoundedIcon from '@mui/icons-material/TerminalRounded';
-import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
-import LocalFireDepartmentRoundedIcon from '@mui/icons-material/LocalFireDepartmentRounded';
-import FlagRoundedIcon from '@mui/icons-material/FlagRounded';
-import DevicesRoundedIcon from '@mui/icons-material/DevicesRounded';
-import GoogleIcon from '@mui/icons-material/Google';
 import { COURSES, type CourseInfo } from '../../game/courses';
 import { coursePath, topicPath } from '../../game/addresses';
-import { DAILY_GOALS, XP_PER_CHECK, XP_TOPIC_BONUS } from '../../game/xp';
 import type { Course } from '../../services/progress';
-import { signIn, useAccount } from '../../services/account';
-import { FLAME, MASTERED, XP_GOLD } from './colours';
+import Mascot from '../practice/Mascot';
+import GuidesScene from './GuidesScene';
+import { MASTERED, XP_GOLD } from './colours';
 import { HERO, HERO_GRADIENT, HERO_STATS } from '../../game/homeCopy';
 
 const HEADING = '#fff';
@@ -364,7 +361,7 @@ export const Hero = ({ course, onSeeCourses }: { course: CourseInfo; onSeeCourse
                     ))}
                 </Stack>
             </Box>
-            <LessonPreview />
+            <GuidesScene />
         </Box>
     );
 };
@@ -475,15 +472,17 @@ const LESSON_PARTS: { icon: ElementType; colour: string; title: string; text: st
 
 export const LessonAnatomy = () => (
     <Box component="section" aria-labelledby="lesson-title">
-        <SectionHeading id="lesson-title" eyebrow="WHAT YOU GET" title="Every topic is a full lesson">
-            Each topic teaches one idea all the way through, then lets you practise it and prove it: four exercises with answers, checked when you pass them without notes.
+        <SectionHeading id="lesson-title" eyebrow="WHAT YOU GET" title="Inside every lesson">
+            Each lesson teaches one idea all the way through, then lets you practise it and prove it: four exercises with answers, checked when you pass them without notes.
         </SectionHeading>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(2, minmax(0, 1fr))', md: 'repeat(3, minmax(0, 1fr))' }, gap: 2 }}>
+        {/* A real lesson's picture beside what every lesson has. */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 0.95fr) minmax(0, 1.2fr)' }, gap: { xs: 3, md: 4 }, alignItems: 'center' }}>
+        <LessonPreview />
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1.5 }}>
             {LESSON_PARTS.map(({ icon: Icon, colour, title, text }) => (
-                // Icon beside the text on a phone, above it on wider screens.
                 <Box
                     key={title}
-                    sx={{ display: 'flex', flexDirection: { xs: 'row', sm: 'column' }, gap: { xs: 2, sm: 2 }, alignItems: 'flex-start', p: { xs: 2, sm: 2.75 }, borderRadius: 3, border: `1px solid ${LINE}`, bgcolor: '#151921' }}
+                    sx={{ display: 'flex', gap: 1.75, alignItems: 'flex-start', p: 2, borderRadius: 3, border: `1px solid ${LINE}`, bgcolor: '#151921' }}
                 >
                     <Box sx={{ width: 42, height: 42, flexShrink: 0, borderRadius: 2.5, display: 'grid', placeItems: 'center', bgcolor: `${colour}1f`, color: colour }}>
                         <Icon />
@@ -498,6 +497,7 @@ export const LessonAnatomy = () => (
                     </Box>
                 </Box>
             ))}
+        </Box>
         </Box>
     </Box>
 );
@@ -543,65 +543,65 @@ export const PathSection = ({ selected, onSelect, children }: { selected: Course
     </Box>
 );
 
-// ============ SIGN IN ============
+// ============ START ============
 
-const PERKS: { icon: ElementType; colour: string; text: string }[] = [
-    { icon: BoltRoundedIcon, colour: XP_GOLD, text: `XP for every practice, ${XP_PER_CHECK} for each check, ${XP_TOPIC_BONUS} more for mastering a topic` },
-    { icon: LocalFireDepartmentRoundedIcon, colour: FLAME, text: 'A streak for every day you tick a check' },
-    { icon: FlagRoundedIcon, colour: '#82b1ff', text: `A daily goal of ${DAILY_GOALS.map(goal => goal.xp).join(', ').replace(/, (\d+)$/, ' or $1')} XP` },
-    { icon: DevicesRoundedIcon, colour: '#4dd0e1', text: 'The same progress on your phone and your laptop' },
-];
-
-export const SignInBand = () => {
-    const account = useAccount();
-    if (account.status === 'off' || account.status === 'signed-in') return null;
+/** The last nudge: both guides cheering, and the first lesson one tap away. No sign-in here. */
+export const StartBand = ({ course, onSeeCourses }: { course: CourseInfo; onSeeCourses: () => void }) => {
+    const first = course.units[0]?.topics[0];
     return (
         <Box
             component="section"
-            aria-labelledby="signin-title"
+            aria-labelledby="start-title"
             sx={{
-                borderRadius: 4,
-                p: { xs: 3, sm: 4, md: 5 },
-                border: '1px solid rgba(41,121,255,0.35)',
-                background:
-                    'radial-gradient(circle at 100% 0%, rgba(41,121,255,0.22), transparent 55%), radial-gradient(circle at 0% 100%, rgba(179,157,219,0.12), transparent 50%), #121722',
+                borderRadius: 5,
+                px: { xs: 3, sm: 4, md: 5 },
+                py: { xs: 4, md: 5 },
+                border: '1px solid rgba(41,121,255,0.3)',
+                background: 'radial-gradient(circle at 50% 120%, rgba(41,121,255,0.28), transparent 60%), radial-gradient(circle at 0% 0%, rgba(179,157,219,0.12), transparent 45%), #121722',
+                display: 'grid',
+                gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'auto minmax(0, 1fr) auto' },
+                gap: { xs: 2, md: 4 },
+                alignItems: 'center',
+                textAlign: 'center',
             }}
         >
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 1fr) auto' }, gap: { xs: 3.5, md: 6 }, alignItems: 'center' }}>
-                <Box>
-                    <Typography id="signin-title" component="h2" sx={{ fontWeight: 800, color: HEADING, fontSize: { xs: '1.5rem', sm: '1.9rem' }, lineHeight: 1.2 }}>
-                        Keep your progress, on every device
-                    </Typography>
-                    <Typography color="text.secondary" sx={{ mt: 1 }}>
-                        Sign in with Google to tick off checks as you pass them. Reading stays free without an account.
-                    </Typography>
-                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1.5, mt: 3 }}>
-                        {PERKS.map(({ icon: Icon, colour, text }) => (
-                            <Stack key={text} direction="row" spacing={1.25} alignItems="center">
-                                <Icon sx={{ color: colour, fontSize: 22, flexShrink: 0 }} />
-                                <Typography variant="body2" sx={{ color: 'text.primary' }}>
-                                    {text}
-                                </Typography>
-                            </Stack>
-                        ))}
-                    </Box>
-                </Box>
-                <Stack spacing={1.25} alignItems={{ xs: 'stretch', md: 'center' }}>
-                    {account.error && <Alert severity="warning">{account.error}</Alert>}
+            <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+                <Mascot who="pia" mood="cheer" size={132} />
+            </Box>
+            <Stack direction="row" justifyContent="center" spacing={2} sx={{ display: { xs: 'flex', md: 'none' } }}>
+                <Mascot who="pia" mood="cheer" size={96} />
+                <Mascot who="hamish" mood="cheer" size={96} />
+            </Stack>
+            <Box>
+                <Typography id="start-title" component="h2" sx={{ fontWeight: 800, color: HEADING, fontSize: { xs: '1.6rem', sm: '2.1rem' }, lineHeight: 1.2, letterSpacing: '-0.015em' }}>
+                    Your first lesson is one tap away
+                </Typography>
+                <Typography color="text.secondary" sx={{ mt: 1.25, maxWidth: 560, mx: 'auto' }}>
+                    Free, with nothing to set up. Watch the idea move, read it step by step, then practise for five minutes with Pia and Hamish.
+                </Typography>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} justifyContent="center" sx={{ mt: 3 }}>
                     <Button
+                        component={RouterLink}
+                        to={first ? topicPath(course, first.id) : coursePath(course)}
                         variant="contained"
                         size="large"
-                        startIcon={<GoogleIcon />}
-                        onClick={() => void signIn()}
-                        disabled={account.status === 'loading'}
-                        sx={{ fontWeight: 800, minHeight: 52, px: 3.5, fontSize: '1.05rem', whiteSpace: 'nowrap' }}
+                        startIcon={<PlayArrowRoundedIcon />}
+                        sx={{ fontWeight: 800, px: 3.5, minHeight: 52, fontSize: '1.05rem', boxShadow: '0 10px 30px -10px rgba(41,121,255,0.7)' }}
                     >
-                        Sign in with Google
+                        Start learning
                     </Button>
-                    <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center' }}>
-                        Only you can see your progress.
-                    </Typography>
+                    <Button
+                        variant="outlined"
+                        size="large"
+                        onClick={onSeeCourses}
+                        sx={{ fontWeight: 700, px: 3, minHeight: 52, fontSize: '1.05rem', color: 'text.primary', borderColor: 'rgba(255,255,255,0.2)' }}
+                    >
+                        See the courses
+                    </Button>
                 </Stack>
+            </Box>
+            <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+                <Mascot who="hamish" mood="cheer" size={132} />
             </Box>
         </Box>
     );

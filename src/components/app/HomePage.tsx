@@ -32,7 +32,7 @@ import { FLAME, MASTERED, XP_GOLD } from './colours';
 import CoursePath, { CARD, CheckDots } from './CoursePath';
 import GuestNote from './GuestNote';
 import { signIn, useAccount, useTracksProgress, wasSignedIn } from '../../services/account';
-import { CourseShowcase, Hero, LessonAnatomy, PathSection, SignInBand } from './Landing';
+import { CourseShowcase, Hero, LessonAnatomy, PathSection, StartBand } from './Landing';
 import GoogleIcon from '@mui/icons-material/Google';
 import LockRoundedIcon from '@mui/icons-material/LockRounded';
 
@@ -357,7 +357,7 @@ const HomePage = () => {
                     </PathSection>
                 </Box>
                 <Box sx={{ mt: SECTION_GAP, mb: { xs: 2, md: 4 } }}>
-                    <SignInBand />
+                    <StartBand course={course} onSeeCourses={() => scrollToSection('courses')} />
                 </Box>
             </Box>
         );

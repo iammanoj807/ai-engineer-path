@@ -17,7 +17,6 @@ import { useCourseNav } from '../../game/useCourseNav';
 import { placeOf, topicPath } from '../../game/addresses';
 import { useTracksProgress } from '../../services/account';
 import CoursePath from './CoursePath';
-import GuestNote from './GuestNote';
 
 const PathLearn = ({
     course,
@@ -106,7 +105,6 @@ const PathLearn = ({
     return (
         <Box>
             {intro}
-            <GuestNote compact />
             <TextField
                 type="search"
                 value={query}

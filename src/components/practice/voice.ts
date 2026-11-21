@@ -240,6 +240,20 @@ export const stopSpeaking = () => {
 };
 
 /**
+ * Move a guide's mouth for a moment with no sound, as their speech bubble
+ * fills in (the front page). Never over a line they are really saying.
+ */
+export const mouthOnly = (guide: Guide, ms: number) => {
+    if (playing || synth()?.speaking) return;
+    const clock = () => performance.now() / 1000;
+    const start = clock();
+    setTalk({ guide, frames: CHATTER.slice(0, Math.ceil((ms / 1000) * 12)), fps: 12, clock, start });
+    window.setTimeout(() => {
+        if (talk?.start === start) setTalk(null);
+    }, ms);
+};
+
+/**
  * Call from the tap that opens practice. iPhones let a page play sound, and
  * speak, only after it has done so during a tap: this does both, silently.
  */

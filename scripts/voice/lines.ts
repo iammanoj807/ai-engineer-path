@@ -21,7 +21,7 @@ import { systemDesignGlossary } from '../../src/utils/glossary';
 import type { GlossarySource } from '../../src/utils/glossaryEngine';
 import { runOnPracticeDb } from '../../src/utils/sqlRunner';
 import { buildSession, withFixCard, type AnyTopic, type PracticeGlossary } from '../../src/practice/build';
-import { MOMENT_LINES, cardLine } from '../../src/practice/lines';
+import { GREETING_LINES, MOMENT_LINES, cardLine } from '../../src/practice/lines';
 import { GUIDES, guideFor, type Guide } from '../../src/components/practice/guides';
 import { clipKey, tidyLine } from '../../src/components/practice/clipKey';
 
@@ -108,6 +108,8 @@ for (const { course, topics, glossary } of courses) {
 }
 // The moments can come in any lesson, so both guides say them.
 for (const guide of GUIDES) for (const text of Object.values(MOMENT_LINES)) add(guide, text);
+// Each guide's hello on the front page.
+for (const guide of GUIDES) add(guide, GREETING_LINES[guide]);
 
 const list = [...lines.values()].sort((a, b) => a.guide.localeCompare(b.guide) || a.text.localeCompare(b.text));
 mkdirSync('generated', { recursive: true });

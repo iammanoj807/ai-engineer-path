@@ -4,6 +4,7 @@
 // what is shown.
 
 import type { PracticeCard } from './cards';
+import type { Guide } from '../components/practice/guides';
 
 const NUMBER_WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six'];
 const counted = (n: number) => NUMBER_WORDS[n] ?? String(n);
@@ -34,6 +35,12 @@ export const cardLine = (card: PracticeCard, options: { choosing?: boolean } = {
         case 'fix':
             return `This query has one small bug. Fix it so it does this: ${card.prompt}`;
     }
+};
+
+/** What each guide says when tapped on the front page. */
+export const GREETING_LINES: Record<Guide, string> = {
+    pia: "Hi! I'm Pia. Let's learn together, one small step at a time.",
+    hamish: "Hey, I'm Hamish. Ready for your first lesson? It only takes a few minutes.",
 };
 
 /** Full-screen moments in a session, and the end. */
