@@ -4,6 +4,7 @@
 
 import { Box, Button, Stack, Typography } from '@mui/material';
 import type { IdeaCard, WordsCard } from '../../../practice/cards';
+import { cardLine } from '../../../practice/lines';
 import { ANIMATIONS } from '../../../practice/load';
 import { AnimatedScene } from '../../learning/anim/AnimatedScene';
 import { useTopicAnimation } from '../../learning/anim/useTopicAnimation';
@@ -29,7 +30,7 @@ export const IdeaCardView = ({ card, accent, onDone }: CardProps<IdeaCard>) => {
     return (
         <>
             <Body>
-                <CardHeader title="New idea" accent={accent} mood="happy">
+                <CardHeader title="New idea" accent={accent} mood="happy" speak={cardLine(card)}>
                     Let's learn something new: <Box component="span" sx={{ color: accent }}>{card.title}</Box>
                 </CardHeader>
                 <Stack spacing={2}>
@@ -58,8 +59,8 @@ export const WordsCardView = ({ card, accent, onDone }: CardProps<WordsCard>) =>
     return (
         <>
             <Body>
-                <CardHeader title="New words" accent={accent} mood="happy">
-                    {card.words.length} words you'll meet in this lesson. Read them, then we'll practise.
+                <CardHeader title="New words" accent={accent} mood="happy" speak={cardLine(card)}>
+                    {cardLine(card)}
                 </CardHeader>
                 <Stack spacing={1.5}>
                     {card.words.map(word => (

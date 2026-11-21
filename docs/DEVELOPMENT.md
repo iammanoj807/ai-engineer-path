@@ -53,6 +53,22 @@ The live site uses the Firebase project `ai-engineer-path-807` (Auth with Google
 
 For local development, put the same values in `.env.local` (see `.env.example`).
 
+## The guides' voices
+
+Pia and Hamish say every practice line out loud, and their mouths move in step. The lines are recorded ahead of time with [Kokoro](https://github.com/thewh1teagle/kokoro-onnx), a free open-source voice model (Apache-2.0), into `public/voice/`: one small MP3 per line, and `manifest.json` with each line's mouth shapes. The voices are set in `scripts/voice/lines.ts` (`VOICE_MODELS`).
+
+After lessons change, record the new lines (only new or changed lines are recorded; unused recordings are deleted):
+
+```bash
+npx vite-node scripts/voice/lines.ts          # every line, to generated/voice-lines.json
+# once: Python 3.12, the model and ffmpeg
+uv venv --python 3.12 .voice && uv pip install --python .voice/bin/python kokoro-onnx soundfile numpy
+#   download kokoro-v1.0.onnx and voices-v1.0.bin from the kokoro-onnx releases (model-files-v1.0) into a folder
+.voice/bin/python scripts/voice/record.py --model <that folder>
+```
+
+A line that has no recording yet is still spoken, by the device's own voice, but only in a voice of the guide's gender.
+
 ## Welcome and reminder emails
 
 Signed-in learners get a welcome email, and a reminder when they have been away a week. A scheduled GitHub Action sends them, and it stays off until it is set up: see [emails/README.md](../emails/README.md).

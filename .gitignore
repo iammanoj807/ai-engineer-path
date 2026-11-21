@@ -32,3 +32,6 @@ dist-ssr
 
 # Firebase deploy cache
 .firebase/
+
+# The voice model's Python environment (scripts/voice)
+.voice

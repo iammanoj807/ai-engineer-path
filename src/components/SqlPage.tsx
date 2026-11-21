@@ -67,6 +67,9 @@ import {
     StepBar,
     ReferencePanel,
     Block,
+    Callout,
+    MUST_KNOW,
+    MISTAKE,
     Bullets,
     NumberedSteps,
     CodeBlock,
@@ -334,12 +337,12 @@ const LessonBody = ({ topic, accent, marked }: { topic: SqlLesson; accent: strin
                 ))}
             </Stack>
         </Block>
-        <Block title="Must-know points">
-            <Bullets items={marked('keyPoints')} marker={accent} />
-        </Block>
-        <Block title="Common mistakes">
-            <Bullets items={marked('mistakes')} marker={WARNING} />
-        </Block>
+        <Callout kind="mustKnow">
+            <Bullets items={marked('keyPoints')} marker={MUST_KNOW} />
+        </Callout>
+        <Callout kind="mistakes">
+            <Bullets items={marked('mistakes')} marker={MISTAKE} />
+        </Callout>
         {topic.dialects && topic.dialects.length > 0 && (
             <Block title="In other databases">
                 <Bullets items={marked('dialects')} />
@@ -393,9 +396,9 @@ const ProblemBody = ({ topic, accent, marked }: { topic: SqlProblem; accent: str
                     <Block title="Edge cases to say out loud">
                         <Bullets items={marked('edgeCases')} marker={accent} />
                     </Block>
-                    <Block title="Common mistakes">
-                        <Bullets items={marked('mistakes')} marker={WARNING} />
-                    </Block>
+                    <Callout kind="mistakes">
+                        <Bullets items={marked('mistakes')} marker={MISTAKE} />
+                    </Callout>
                     {topic.dialects && topic.dialects.length > 0 && (
                         <Block title="In other databases">
                             <Bullets items={marked('dialects')} />

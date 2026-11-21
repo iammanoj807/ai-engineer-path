@@ -4,8 +4,10 @@
 // for anyone who asks their device for less motion. Who guides which lesson:
 // guides.ts.
 
+import { useEffect, useState } from 'react';
 import { Box } from '@mui/material';
 import type { Guide } from './guides';
+import { useTalk } from './voice';
 
 export type Mood = 'idle' | 'think' | 'happy' | 'sad' | 'cheer';
 
@@ -94,6 +96,57 @@ const mouths: Record<Mood, React.ReactNode> = {
             <path d="M54 72 q6 4 12 0 q-6 -3 -12 0 Z" fill={TONGUE} />
         </g>
     ),
+};
+
+/** The mouth while talking, one shape per moment of the recording: closed, open by degrees, or rounded. */
+const TALKING: Record<string, React.ReactNode> = {
+    '0': <path d="M54.5 69 q5.5 2.4 11 0" fill="none" stroke={MOUTH} strokeWidth="2.3" strokeLinecap="round" />,
+    '1': <ellipse cx="60" cy="69" rx="5.2" ry="2.3" fill={MOUTH} />,
+    '2': (
+        <g>
+            <path d="M53 66.6 q7 9.4 14 0 Z" fill={MOUTH} />
+            <path d="M56 70.8 q4 2.2 8 0 q-4 -2 -8 0 Z" fill={TONGUE} />
+        </g>
+    ),
+    '3': (
+        <g>
+            <path d="M51.5 66 q8.5 12.4 17 0 Z" fill={MOUTH} />
+            <path d="M55 72.2 q5 3 10 0 q-5 -2.6 -10 0 Z" fill={TONGUE} />
+        </g>
+    ),
+    o: <ellipse cx="60" cy="69" rx="3.3" ry="3.5" fill={MOUTH} />,
+    O: (
+        <g>
+            <ellipse cx="60" cy="69.6" rx="4.3" ry="5.3" fill={MOUTH} />
+            <ellipse cx="60" cy="72.8" rx="2.6" ry="1.4" fill={TONGUE} />
+        </g>
+    ),
+};
+
+/** For anyone who asks for less motion: the mouth still moves, but only a little. */
+const GENTLE: Record<string, string> = { '2': '1', '3': '1', O: 'o' };
+
+const lessMotion = () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+/** The mood's mouth, or, while this guide is talking, the shape for this moment of their line. */
+const Mouth = ({ who, mood }: { who: Guide; mood: Mood }) => {
+    const talk = useTalk(who);
+    const [shape, setShape] = useState('0');
+    useEffect(() => {
+        if (!talk) return;
+        const gentle = lessMotion();
+        let frame = 0;
+        const tick = () => {
+            const at = Math.floor((talk.clock() - talk.start) * talk.fps);
+            const next = at < 0 ? '0' : talk.frames[at] ?? '0';
+            setShape(gentle ? GENTLE[next] ?? next : next);
+            frame = requestAnimationFrame(tick);
+        };
+        frame = requestAnimationFrame(tick);
+        return () => cancelAnimationFrame(frame);
+    }, [talk]);
+    // Talking mouths are drawn a little larger than the resting ones: lively, and easy to see.
+    return talk ? <g transform="translate(60 69) scale(1.2) translate(-60 -69)">{TALKING[shape] ?? TALKING['0']}</g> : <>{mouths[mood]}</>;
 };
 
 /** Sleeves and hands, drawn in front of the body. */
@@ -208,7 +261,7 @@ const Mascot = ({ mood = 'idle', size = 64, who = 'pia' }: { mood?: Mood; size?:
                 </g>
             )}
             <path d="M60 58 q-2.5 5 1 6.5" fill="none" stroke={look.skinShade} strokeWidth="1.8" strokeLinecap="round" />
-            {mouths[mood]}
+            <Mouth who={who} mood={mood} />
             {mood !== 'sad' && (
                 <g fill={CHEEK} opacity="0.45">
                     <circle cx="44" cy="65" r="4" />

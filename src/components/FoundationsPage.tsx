@@ -61,6 +61,9 @@ import {
     StepBar,
     ReferencePanel,
     Block,
+    Callout,
+    MUST_KNOW,
+    MISTAKE,
     Bullets,
     NumberedSteps,
     CodeBlock,
@@ -89,8 +92,6 @@ const INTERVIEW_SETS = [genAiInterviewSet, mlInterviewSet];
 const INTERVIEW_ACCENT = CYAN;
 
 const topicName = (topicId: string) => allFoundationTopics.find(topic => topic.id === topicId)?.name;
-/** Bullet colour for common mistakes, as on the other study pages. */
-const WARNING = '#ffa726';
 
 // ============ SMALL PIECES ============
 
@@ -297,12 +298,12 @@ const TopicCard = ({
                                 </Stack>
                             </Block>
                         )}
-                        <Block title="Must-know points">
-                            <Bullets items={marked('keyPoints')} marker={accent} />
-                        </Block>
-                        <Block title="Common mistakes">
-                            <Bullets items={marked('mistakes')} marker={WARNING} />
-                        </Block>
+                        <Callout kind="mustKnow">
+                            <Bullets items={marked('keyPoints')} marker={MUST_KNOW} />
+                        </Callout>
+                        <Callout kind="mistakes">
+                            <Bullets items={marked('mistakes')} marker={MISTAKE} />
+                        </Callout>
                     </Stack>
 
                     {/* ---- STEP 2 ---- optional extras */}
@@ -479,18 +480,7 @@ const FoundationsPage = () => {
                                     Self-paced · {foundationPhases.length} units · {allFoundationTopics.length} lessons · in order
                                 </Typography>
                             </Box>
-                            <Stack direction="row" spacing={1.5} alignItems="flex-end" flexWrap="wrap" useFlexGap>
-                                <TextSizeControl value={textSize} onChange={changeTextSize} />
-                                <Button
-                                    variant="outlined"
-                                    startIcon={<MenuBookRoundedIcon />}
-                                    onClick={() => setGlossaryOpen(true)}
-                                    aria-haspopup="dialog"
-                                    sx={{ minHeight: TAP, px: 2, textTransform: 'none', fontWeight: 700, color: 'text.primary', borderColor: 'rgba(255,255,255,0.2)' }}
-                                >
-                                    Glossary
-                                </Button>
-                            </Stack>
+                            <TextSizeControl value={textSize} onChange={changeTextSize} />
                         </Stack>
                         <GlossaryDrawer open={glossaryOpen} onClose={() => setGlossaryOpen(false)} onOpenTopic={openTopic} />
                         <Typography
@@ -503,23 +493,34 @@ const FoundationsPage = () => {
                         <Typography variant="body1" color="text.secondary">
                             AI and ML from scratch. Every topic is a full lesson: an animation, the idea step by step, a worked example and exercises with answers. Videos and readings are optional extras.
                         </Typography>
-                        <ToggleButtonGroup
-                            exclusive
-                            value={mode}
-                            onChange={(_, value: Mode | null) => changeMode(value)}
-                            aria-label="Mode"
-                            sx={{ mt: 2.5 }}
-                        >
-                            {MODES.map(value => (
-                                <ToggleButton
-                                    key={value}
-                                    value={value}
-                                    sx={{ minHeight: TAP, px: 3, textTransform: 'none', fontWeight: 700, '&:focus': { outline: 'none' } }}
-                                >
-                                    {value === 'learn' ? 'Learn' : 'Interview questions'}
-                                </ToggleButton>
-                            ))}
-                        </ToggleButtonGroup>
+                        {/* Mode, and the glossary beside it (the same as SQL and System Design). */}
+                        <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mt: 2.5 }}>
+                            <ToggleButtonGroup
+                                exclusive
+                                value={mode}
+                                onChange={(_, value: Mode | null) => changeMode(value)}
+                                aria-label="Mode"
+                            >
+                                {MODES.map(value => (
+                                    <ToggleButton
+                                        key={value}
+                                        value={value}
+                                        sx={{ minHeight: TAP, px: 3, textTransform: 'none', fontWeight: 700, '&:focus': { outline: 'none' } }}
+                                    >
+                                        {value === 'learn' ? 'Learn' : 'Interview questions'}
+                                    </ToggleButton>
+                                ))}
+                            </ToggleButtonGroup>
+                            <Button
+                                variant="outlined"
+                                startIcon={<MenuBookRoundedIcon />}
+                                onClick={() => setGlossaryOpen(true)}
+                                aria-haspopup="dialog"
+                                sx={{ minHeight: TAP, px: 2, textTransform: 'none', fontWeight: 700, color: 'text.primary', borderColor: 'rgba(255,255,255,0.2)' }}
+                            >
+                                Glossary
+                            </Button>
+                        </Stack>
                     </Box>
 
                     {mode === 'interview' ? (

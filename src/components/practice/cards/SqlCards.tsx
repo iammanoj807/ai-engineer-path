@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { Alert, Box, Button, ButtonBase, CircularProgress, Collapse, TextField, Typography } from '@mui/material';
 import TableChartRoundedIcon from '@mui/icons-material/TableChartRounded';
 import type { FixCard, PredictCard, WriteCard } from '../../../practice/cards';
+import { cardLine } from '../../../practice/lines';
 import { compareResults, type RowOrder, type Verdict } from '../../../practice/sql';
 import type { SqlResultTable } from '../../../data/sql';
 import { loadSqlEngine } from '../../../utils/sqlEngine';
@@ -57,7 +58,7 @@ export const PredictCardView = ({ card, accent, onDone }: CardProps<PredictCard>
     return (
         <>
             <Body>
-                <CardHeader title="Predict the rows" accent={accent} mood={moodFor(feedback)}>
+                <CardHeader title="Predict the rows" accent={accent} mood={moodFor(feedback)} speak={cardLine(card)}>
                     How many rows does this query return?
                 </CardHeader>
                 <CodeBlock code={card.sql} language="sql" />
@@ -127,6 +128,7 @@ const QueryCard = ({
     id,
     title,
     prompt,
+    speak,
     start,
     answerSql,
     expected,
@@ -138,6 +140,8 @@ const QueryCard = ({
     id: string;
     title: string;
     prompt: React.ReactNode;
+    /** The prompt's words, for the guide to say. */
+    speak: string;
     start: string;
     answerSql: string;
     expected: SqlResultTable;
@@ -196,7 +200,7 @@ const QueryCard = ({
     return (
         <>
             <Body>
-                <CardHeader title={title} accent={accent} mood={moodFor(feedback)}>
+                <CardHeader title={title} accent={accent} mood={moodFor(feedback)} speak={speak}>
                     {prompt}
                 </CardHeader>
                 <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
@@ -303,6 +307,7 @@ export const WriteCardView = ({ card, accent, onDone }: CardProps<WriteCard>) =>
         id={card.id}
         title={card.label.charAt(0) + card.label.slice(1).toLowerCase()}
         prompt={<ProseText value={card.prompt} />}
+        speak={cardLine(card)}
         start=""
         answerSql={card.answerSql}
         expected={card.expected}
@@ -321,6 +326,7 @@ export const FixCardView = ({ card, accent, onDone }: CardProps<FixCard>) => (
                 This query has one small bug. Fix it so it does this: <Box component="span" sx={{ fontWeight: 400 }}><ProseText value={card.prompt} /></Box>
             </>
         }
+        speak={cardLine(card)}
         start={card.brokenSql}
         answerSql={card.answerSql}
         expected={card.expected}

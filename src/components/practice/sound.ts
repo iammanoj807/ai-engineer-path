@@ -61,6 +61,27 @@ const audio = (): AudioContext | null => {
     return context;
 };
 
+/** The shared audio engine (the guides' voices play through it too). */
+export const audioContext = audio;
+
+/**
+ * Call from the tap that opens practice: starts the audio engine inside the
+ * tap, with a silent moment, which iPhones need before a page may play sound.
+ */
+export const unlockAudio = () => {
+    const ac = audio();
+    if (!ac) return;
+    if (ac.state !== 'running') void ac.resume().catch(() => {});
+    try {
+        const silent = ac.createBufferSource();
+        silent.buffer = ac.createBuffer(1, 1, 22050);
+        silent.connect(ac.destination);
+        silent.start();
+    } catch {
+        // Nothing to unlock.
+    }
+};
+
 // Phones pause a page's audio when the screen locks, a call comes in or another app plays.
 // Browsers only let it start again on a tap or a key, so any tap wakes it for the next sound.
 // (It never starts audio on its own: only audio a practice sound already started.)

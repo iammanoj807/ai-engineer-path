@@ -12,10 +12,10 @@ on:
   workflow_dispatch:
     inputs:
       pass:
-        description: Which emails
+        description: Which emails ("test" sends every email once to the EMAILS_TEST_TO secret)
         type: choice
-        options: [welcome, reminders]
-        default: welcome
+        options: [test, welcome, reminders]
+        default: test
 
 permissions:
   contents: read
@@ -26,7 +26,8 @@ concurrency:
 
 jobs:
   send:
-    if: vars.EMAILS_START != ''
+    # Scheduled runs wait for set-up; a run by hand (like a test) can go any time.
+    if: vars.EMAILS_START != '' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
@@ -46,6 +47,8 @@ jobs:
           EMAILS_START: ${{ vars.EMAILS_START }}
           LIVE: ${{ vars.EMAILS_LIVE }}
           MAIL_FROM: ${{ vars.MAIL_FROM }}
+          MAIL_REPLY_TO: ${{ vars.MAIL_REPLY_TO }}
+          TEST_TO: ${{ secrets.EMAILS_TEST_TO }}
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           SMTP_HOST: ${{ secrets.SMTP_HOST }}
           SMTP_PORT: ${{ secrets.SMTP_PORT }}

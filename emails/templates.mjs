@@ -1,8 +1,12 @@
-// The emails themselves: a welcome, and four reminders that each say it a
-// little differently (the fourth says it is the last). Every email has a plain
-// text version, the learner's first name, and a link to turn reminders off.
+// The emails themselves: a welcome note from the founder, and four reminders
+// that each say it a little differently (the fourth says it is the last).
+// Every email has a plain text version, the learner's first name, and a link
+// to turn reminders off. To change the words, edit them here.
 
 export const SITE = 'https://learn.hamropedia.com';
+/** Who the emails are from, by first name. */
+export const FOUNDER = 'Manoj';
+const REPO = 'https://github.com/iammanoj807/ai-engineer-path';
 const OFF = `${SITE}/?emails=off`;
 
 const escape = text => String(text).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
@@ -37,28 +41,34 @@ const footerText = `\n\n--\nYou're getting this because you signed in to learn.h
 export const welcomeEmail = ({ name }) => {
     const first = firstName(name);
     const html = page(
-        `<p style="margin:0 0 14px;font-size:20px;font-weight:800">Welcome, ${escape(first)}!</p>
-<p style="margin:0 0 14px">You're in. Your progress now saves to your account, so your phone and your laptop show the same path.</p>
-<p style="margin:0 0 8px">Here's how to get going:</p>
+        `<p style="margin:0 0 16px;font-size:20px;font-weight:800">Hi ${escape(first)},</p>
+<p style="margin:0 0 14px">I'm ${FOUNDER}, the founder of Hamropedia, and I built AI Engineer Path. Thank you for signing up. It really means a lot that you're here.</p>
+<p style="margin:0 0 14px">I made this site because learning AI shouldn't cost a fortune or feel like a maze. Every lesson is free, written in plain words, and set out in an order that makes sense: from your very first idea to the questions interviewers actually ask.</p>
+<p style="margin:0 0 8px">Here's how to get the most out of it:</p>
 <ol style="margin:0 0 18px;padding-left:22px">
-<li style="margin-bottom:6px"><b>Open the path</b> and press <b>Start</b> on the lesson marked Up next.</li>
-<li style="margin-bottom:6px"><b>Practise for five minutes</b> after each lesson. Pia and Hamish, your guides, ask quick questions and read them aloud.</li>
-<li><b>Keep a streak:</b> a few minutes a day adds up fast.</li>
+<li style="margin-bottom:8px"><b>One lesson at a time.</b> Open the path and press <b>Start</b> on the lesson marked Up next. Each one has an animation, the idea step by step, and a worked example.</li>
+<li style="margin-bottom:8px"><b>Five minutes of practice after each lesson.</b> Pia and Hamish, your guides, ask quick questions and read them aloud. Every right answer earns XP.</li>
+<li><b>Come back tomorrow.</b> A few minutes a day beats one long evening a week, and your streak keeps count.</li>
 </ol>
 <p style="margin:0 0 22px">${button(SITE, 'Start your first lesson')}</p>
 <p style="margin:0 0 6px">Three courses, all free:</p>
 <p style="margin:0 0 18px"><a href="${SITE}/foundations/">ML Foundations</a> · <a href="${SITE}/sql/">SQL</a> · <a href="${SITE}/system-design/">System Design</a></p>
-<p style="margin:0 0 4px">Happy learning,<br>Pia, Hamish and the AI Engineer Path team</p>`,
-        'Your path to becoming an AI engineer starts here.',
+<p style="margin:0 0 18px">One more thing: I'd love to hear from you. What do you want to learn, and what made you start? Just reply to this email. I read every message.</p>
+<p style="margin:0 0 18px">Happy learning,<br><b>${FOUNDER}</b><br><span style="color:#6b7280">Founder, Hamropedia · AI Engineer Path</span></p>
+<p style="margin:0 0 4px;font-size:14px;color:#4b5563">P.S. If the site helps you, a star on <a href="${REPO}">GitHub</a> helps other learners find it too.</p>`,
+        `A quick hello from ${FOUNDER}, and how to get the most from your path.`,
     );
-    const text = `Welcome, ${first}!
+    const text = `Hi ${first},
 
-You're in. Your progress now saves to your account, so your phone and your laptop show the same path.
+I'm ${FOUNDER}, the founder of Hamropedia, and I built AI Engineer Path. Thank you for signing up. It really means a lot that you're here.
 
-Here's how to get going:
-1. Open the path and press Start on the lesson marked Up next.
-2. Practise for five minutes after each lesson. Pia and Hamish, your guides, ask quick questions and read them aloud.
-3. Keep a streak: a few minutes a day adds up fast.
+I made this site because learning AI shouldn't cost a fortune or feel like a maze. Every lesson is free, written in plain words, and set out in an order that makes sense: from your very first idea to the questions interviewers actually ask.
+
+Here's how to get the most out of it:
+
+1. One lesson at a time. Open the path and press Start on the lesson marked Up next. Each one has an animation, the idea step by step, and a worked example.
+2. Five minutes of practice after each lesson. Pia and Hamish, your guides, ask quick questions and read them aloud. Every right answer earns XP.
+3. Come back tomorrow. A few minutes a day beats one long evening a week, and your streak keeps count.
 
 Start your first lesson: ${SITE}
 
@@ -67,9 +77,14 @@ ML Foundations: ${SITE}/foundations/
 SQL: ${SITE}/sql/
 System Design: ${SITE}/system-design/
 
+One more thing: I'd love to hear from you. What do you want to learn, and what made you start? Just reply to this email. I read every message.
+
 Happy learning,
-Pia, Hamish and the AI Engineer Path team${footerText}`;
-    return { subject: subjectLine(`Welcome to AI Engineer Path, ${first}!`), html, text };
+${FOUNDER}
+Founder, Hamropedia · AI Engineer Path
+
+P.S. If the site helps you, a star on GitHub helps other learners find it too: ${REPO}${footerText}`;
+    return { subject: subjectLine(`Welcome to AI Engineer Path, ${first}`), html, text };
 };
 
 const REMINDERS = [
@@ -78,6 +93,10 @@ const REMINDERS = [
     { subject: first => `Pia and Hamish miss you, ${first}`, line: 'Your guides have a few quick questions ready for you. Pick up where you left off, one small step at a time.' },
     { subject: first => `Still learning AI, ${first}? Here's your next step`, line: "This is our last reminder for now: we won't email again unless you come back. Your progress is saved whenever you're ready." },
 ];
+
+/** Every email once, addressed to the founder and marked as a test: to see them in a real inbox. */
+export const testEmails = () =>
+    [welcomeEmail({ name: FOUNDER }), ...[1, 2, 3, 4].map(number => reminderEmail({ name: FOUNDER, number }))].map(email => ({ ...email, subject: `[Test] ${email.subject}` }));
 
 /** Reminder number 1 to 4. */
 export const reminderEmail = ({ name, number }) => {
@@ -88,7 +107,7 @@ export const reminderEmail = ({ name, number }) => {
 <p style="margin:0 0 14px">${escape(reminder.line)}</p>
 <p style="margin:0 0 22px">Open the path and press <b>Start</b> on the lesson marked Up next.</p>
 <p style="margin:0 0 22px">${button(SITE, 'Continue learning')}</p>
-<p style="margin:0 0 4px">See you there,<br>Pia, Hamish and the AI Engineer Path team</p>`,
+<p style="margin:0 0 4px">See you there,<br><b>${FOUNDER}</b><br><span style="color:#6b7280">Founder, Hamropedia · AI Engineer Path</span></p>`,
         reminder.line,
     );
     const text = `Hi ${first},
@@ -98,6 +117,7 @@ ${reminder.line}
 Open the path and press Start on the lesson marked Up next: ${SITE}
 
 See you there,
-Pia, Hamish and the AI Engineer Path team${footerText}`;
+${FOUNDER}
+Founder, Hamropedia · AI Engineer Path${footerText}`;
     return { subject: subjectLine(reminder.subject(first)), html, text };
 };

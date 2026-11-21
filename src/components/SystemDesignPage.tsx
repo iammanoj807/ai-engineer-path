@@ -67,6 +67,9 @@ import {
     StepBar,
     ReferencePanel,
     Block,
+    Callout,
+    MUST_KNOW,
+    MISTAKE,
     Bullets,
     NumberedSteps,
     CodeBlock,
@@ -282,12 +285,12 @@ const ConceptLesson = ({ topic, accent, marked }: { topic: Extract<SDTopic, { ki
         <Block title="Example">
             <Typography variant="body1"><ProseText value={marked('example')[0]} /></Typography>
         </Block>
-        <Block title="Must-know points">
-            <Bullets items={marked('keyPoints')} marker={accent} />
-        </Block>
-        <Block title="Common mistakes">
-            <Bullets items={marked('mistakes')} marker={WARNING} />
-        </Block>
+        <Callout kind="mustKnow">
+            <Bullets items={marked('keyPoints')} marker={MUST_KNOW} />
+        </Callout>
+        <Callout kind="mistakes">
+            <Bullets items={marked('mistakes')} marker={MISTAKE} />
+        </Callout>
         {topic.tradeOffs && topic.tradeOffs.length > 0 && (
             <Block title="Trade-offs">
                 <Bullets items={marked('tradeOffs')} />
@@ -353,9 +356,9 @@ const DesignLesson = ({ topic, accent, marked }: { topic: SDDesign; accent: stri
         <Block title="Deep dives">
             <Bullets items={marked('deepDives')} marker={accent} />
         </Block>
-        <Block title="Common mistakes">
-            <Bullets items={marked('mistakes')} marker={WARNING} />
-        </Block>
+        <Callout kind="mistakes">
+            <Bullets items={marked('mistakes')} marker={MISTAKE} />
+        </Callout>
     </>
 );
 

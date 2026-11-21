@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { MAX_REMINDERS, planEmails } from '../plan.mjs';
 import { runEmails } from '../run.mjs';
-import { firstName, reminderEmail, welcomeEmail } from '../templates.mjs';
+import { FOUNDER, firstName, reminderEmail, testEmails, welcomeEmail } from '../templates.mjs';
 
 const DAY = 24 * 60 * 60 * 1000;
 const START = Date.parse('2026-11-22T00:00:00Z');
@@ -109,8 +109,8 @@ describe('a run of the job', () => {
         await runEmails({ store, mailer, pass: 'welcome', now, start: START, live: true, log: () => {} });
         await runEmails({ store, mailer, pass: 'welcome', now: now + 3600_000, start: START, live: true, log: () => {} });
         expect(sent.map(m => [m.to, m.subject])).toEqual([
-            ['ann@example.com', 'Welcome to AI Engineer Path, Ann!'],
-            ['bob@example.com', 'Welcome to AI Engineer Path, Bob!'],
+            ['ann@example.com', 'Welcome to AI Engineer Path, Ann'],
+            ['bob@example.com', 'Welcome to AI Engineer Path, Bob'],
         ]);
     });
 
@@ -140,6 +140,15 @@ describe('a run of the job', () => {
     });
 });
 
+describe('a test send', () => {
+    it('is every email once, greeting the founder, marked as a test', () => {
+        const emails = testEmails();
+        expect(emails).toHaveLength(5);
+        expect(emails.every(email => email.subject.startsWith('[Test] '))).toBe(true);
+        expect(emails[0].text).toMatch(new RegExp(`^Hi ${FOUNDER},`));
+    });
+});
+
 describe('the emails', () => {
     it('greet by first name, and fall back to "there"', () => {
         expect(firstName('Manoj Kumar Thapa')).toBe('Manoj');
@@ -159,6 +168,14 @@ describe('the emails', () => {
             expect(email.html).toContain('https://learn.hamropedia.com/?emails=off');
             expect(email.text).toContain('https://learn.hamropedia.com/?emails=off');
         }
+    });
+
+    it('the welcome is a personal note from the founder, who invites a reply', () => {
+        const email = welcomeEmail({ name: 'Ann Lee' });
+        expect(email.text).toMatch(/^Hi Ann,/);
+        expect(email.text).toContain(`I'm ${FOUNDER}, the founder of Hamropedia`);
+        expect(email.text).toContain('Just reply to this email');
+        expect(email.html).toContain('Founder, Hamropedia');
     });
 
     it('the four reminders differ, and the last says it is the last', () => {

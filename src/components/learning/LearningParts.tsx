@@ -16,6 +16,8 @@ import {
     type Theme,
 } from '@mui/material';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
+import LightbulbRoundedIcon from '@mui/icons-material/LightbulbRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import {
@@ -305,6 +307,41 @@ export const Block = ({ title, children }: { title: string; children: ReactNode 
         {children}
     </Box>
 );
+
+/** The colours of the two sections no one should skip. */
+export const MUST_KNOW = '#81c784';
+export const MISTAKE = '#ffa726';
+
+/**
+ * A section no one should skip, in a tinted box with an icon so it stands out
+ * from the rest of the lesson: the must-know points, and the common mistakes.
+ */
+export const Callout = ({ kind, children }: { kind: 'mustKnow' | 'mistakes'; children: ReactNode }) => {
+    const mustKnow = kind === 'mustKnow';
+    const colour = mustKnow ? MUST_KNOW : MISTAKE;
+    const title = mustKnow ? 'Must-know points' : 'Common mistakes';
+    const Icon = mustKnow ? LightbulbRoundedIcon : WarningAmberRoundedIcon;
+    return (
+        <Box
+            data-nav="part"
+            data-nav-label={title}
+            sx={{ p: { xs: 2, sm: 2.5 }, borderRadius: 2.5, border: `1px solid ${colour}40`, borderLeft: `4px solid ${colour}`, bgcolor: `${colour}12` }}
+        >
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.25 }}>
+                <Icon sx={{ color: colour, fontSize: 22 }} />
+                <Typography variant="body1" sx={{ fontWeight: 800, color: colour }}>
+                    {title}
+                </Typography>
+                {mustKnow && (
+                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+                        · remember these
+                    </Typography>
+                )}
+            </Stack>
+            {children}
+        </Box>
+    );
+};
 
 export const Bullets = ({
     items,

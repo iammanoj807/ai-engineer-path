@@ -33,12 +33,13 @@ import { useTracksProgress } from '../../services/account';
 import { GlossaryProvider, GlossaryTopic } from '../learning/GlossaryText';
 import { FLAME, XP_GOLD } from '../app/colours';
 import { PracticeContext } from './context';
+import { MOMENT_LINES, cardLine } from '../../practice/lines';
 import Mascot from './Mascot';
 import { GUIDE_NAMES, guideFor, type Guide } from './guides';
 import { Body, Footer } from './parts';
 import { PANEL, RIGHT, WRONG, bigButton } from './style';
 import { playComplete, playOut, setSoundOn, useSoundOn } from './sound';
-import { canSpeak, say, setVoiceOn, stopSpeaking, useVoiceOn } from './voice';
+import { canSpeak, prefetchLines, say, setVoiceOn, stopSpeaking, useVoiceOn } from './voice';
 import { IdeaCardView, WordsCardView } from './cards/TeachCards';
 import { MatchCardView, MistakeCardView, OrderCardView, RecallCardView } from './cards/ChoiceCards';
 import { BlankCardView } from './cards/BlankCard';
@@ -142,7 +143,7 @@ const Summary = ({
     useEffect(() => playComplete(), []);
     // After the tune, the guide says how it went.
     useEffect(() => {
-        const timer = window.setTimeout(() => say(perfect ? 'Perfect lesson!' : 'Lesson complete!', guideFor(topicId)), 1100);
+        const timer = window.setTimeout(() => say(perfect ? MOMENT_LINES.perfect : MOMENT_LINES.complete, guideFor(topicId)), 1100);
         return () => window.clearTimeout(timer);
     }, [perfect, topicId]);
     const proven = useMemo(
@@ -194,7 +195,7 @@ const Summary = ({
                 <Stack alignItems="center" textAlign="center" spacing={1.5} sx={{ pt: { xs: 1, sm: 3 } }}>
                     <Mascot mood="cheer" size={120} who={guideFor(topicId)} />
                     <Typography id="practice-question" component="h2" sx={{ fontWeight: 800, fontSize: { xs: '1.7rem', sm: '2.1rem' }, color: '#fff' }}>
-                        {perfect ? 'Perfect lesson!' : 'Lesson complete!'}
+                        {perfect ? MOMENT_LINES.perfect : MOMENT_LINES.complete}
                     </Typography>
                     <Typography color="text.secondary">{topicName}</Typography>
                 </Stack>
@@ -318,6 +319,11 @@ const PracticeSession = ({ course, topicId, onClose }: { course: Course; topicId
             if (!live) return;
             setSources(loaded);
             setCards(built);
+            // The guide's lines for this session, ready before each card appears.
+            prefetchLines(
+                [...built.flatMap(card => (card.kind === 'blank' ? [cardLine(card), cardLine(card, { choosing: true })] : [cardLine(card)])), ...Object.values(MOMENT_LINES)],
+                guideFor(topicId),
+            );
         })().catch(error => {
             console.error('Could not start practice:', error);
             if (live) setFailed(true);
@@ -384,7 +390,7 @@ const PracticeSession = ({ course, topicId, onClose }: { course: Course; topicId
             <Moment
                 guide={guide}
                 mood="sad"
-                title="Practice didn't load"
+                title={MOMENT_LINES.failed}
                 actions={
                     <Button variant="contained" onClick={() => { setFailed(false); setAttempt(n => n + 1); }} sx={bigButton}>
                         Try again
@@ -405,7 +411,7 @@ const PracticeSession = ({ course, topicId, onClose }: { course: Course; topicId
             <Moment
                 guide={guide}
                 mood="sad"
-                title="Leave this practice?"
+                title={MOMENT_LINES.leave}
                 actions={
                     <>
                         <Button onClick={onClose} sx={{ minHeight: 48, fontWeight: 700, color: 'text.secondary' }}>
@@ -425,7 +431,7 @@ const PracticeSession = ({ course, topicId, onClose }: { course: Course; topicId
             <Moment
                 guide={guide}
                 mood="sad"
-                title="Out of hearts"
+                title={MOMENT_LINES.out}
                 actions={
                     <>
                         <Button onClick={() => openLesson()} sx={{ minHeight: 48, fontWeight: 700 }}>
@@ -445,7 +451,7 @@ const PracticeSession = ({ course, topicId, onClose }: { course: Course; topicId
             <Moment
                 guide={guide}
                 mood="think"
-                title="Let's fix your mistakes"
+                title={MOMENT_LINES.mistakes}
                 actions={
                     <Button variant="contained" onClick={() => setPhase('retry')} sx={bigButton} autoFocus disableFocusRipple>
                         Continue

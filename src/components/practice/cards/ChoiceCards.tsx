@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { Box, Button, ButtonBase, Stack, Typography } from '@mui/material';
 import type { MatchCard, MistakeCard, OrderCard, RecallCard } from '../../../practice/cards';
+import { cardLine } from '../../../practice/lines';
 import { ProseText } from '../../learning/GlossaryText';
 import { usePractice } from '../context';
 import { Body, CardHeader, Footer } from '../parts';
@@ -50,7 +51,7 @@ export const MatchCardView = ({ card, accent, onDone }: CardProps<MatchCard>) =>
     return (
         <>
             <Body>
-                <CardHeader title="Match the pairs" accent={accent} mood={done ? moodFor(feedback) : 'think'}>
+                <CardHeader title="Match the pairs" accent={accent} mood={done ? moodFor(feedback) : 'think'} speak={cardLine(card)}>
                     Tap a word, then tap what it means.
                 </CardHeader>
                 <Stack direction="row" flexWrap="wrap" useFlexGap spacing={1} sx={{ mb: 2.5 }} role="group" aria-label="Words">
@@ -113,8 +114,8 @@ export const MistakeCardView = ({ card, accent, onDone }: CardProps<MistakeCard>
     return (
         <>
             <Body>
-                <CardHeader title="Spot the mistake" accent={accent} mood={moodFor(feedback)}>
-                    Three of these are true. Which one is a common mistake?
+                <CardHeader title="Spot the mistake" accent={accent} mood={moodFor(feedback)} speak={cardLine(card)}>
+                    {cardLine(card)}
                 </CardHeader>
                 <Stack spacing={1.25} role="radiogroup" aria-label="Statements">
                     {card.options.map((option, i) => {
@@ -161,7 +162,7 @@ export const OrderCardView = ({ card, accent, onDone }: CardProps<OrderCard>) =>
     return (
         <>
             <Body>
-                <CardHeader title="Put the steps in order" accent={accent} mood={moodFor(feedback)}>
+                <CardHeader title="Put the steps in order" accent={accent} mood={moodFor(feedback)} speak={cardLine(card)}>
                     Tap the steps in the order they happen. Tap a placed step to take it back.
                 </CardHeader>
                 <Stack spacing={1} sx={{ mb: 2.5, minHeight: 60 }} role="list" aria-label="Your order">
@@ -234,7 +235,7 @@ export const RecallCardView = ({ card, accent, onDone }: CardProps<RecallCard>) 
     return (
         <>
             <Body>
-                <CardHeader title="Remember it" accent={accent} mood={knew === null ? 'think' : knew ? 'happy' : 'idle'}>
+                <CardHeader title="Remember it" accent={accent} mood={knew === null ? 'think' : knew ? 'happy' : 'idle'} speak={cardLine(card)}>
                     <ProseText value={prose(card.question)} />
                 </CardHeader>
                 {!shown ? (

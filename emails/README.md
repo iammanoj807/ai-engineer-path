@@ -2,12 +2,12 @@
 
 Two kinds of email go to learners who sign in with Google:
 
-- **Welcome:** within an hour of signing in for the first time, by first name.
+- **Welcome:** a personal note from Manoj, the founder, within an hour of signing in for the first time, by first name. It invites a reply.
 - **Reminder:** when someone hasn't learned for 7 days. Then once a week, at most 4 in a row (the 4th says it's the last). Coming back resets the count. Anyone can turn reminders off from the account menu, or with the link at the bottom of every email.
 
 A scheduled GitHub Action sends them ([`.github/workflows/emails.yml`](../.github/workflows/emails.yml)): every hour for welcomes, every day at 09:45 UTC for reminders. It's free, and needs no server and no paid Firebase plan.
 
-**It is off until you set it up.** Nothing runs until `EMAILS_START` is set, and nothing is sent until `EMAILS_LIVE` is `true`. Until then it's a dry run that only counts.
+**It is off until you set it up.** Nothing runs on its schedule until `EMAILS_START` is set, and nothing goes to learners until `EMAILS_LIVE` is `true`. Until then it's a dry run that only counts. A test send (step 4) only ever goes to your own address.
 
 ## Set it up
 
@@ -24,7 +24,7 @@ Any email service with SMTP works. Two good free options:
 | `SMTP_PORT` | `465` | `465` |
 | `SMTP_USER` | your Gmail address | `resend` |
 | `SMTP_PASS` | an [app password](https://myaccount.google.com/apppasswords) (needs 2-Step Verification) | your Resend API key |
-| `MAIL_FROM` | `AI Engineer Path <you@gmail.com>` | `AI Engineer Path <hello@hamropedia.com>` |
+| `MAIL_FROM` | `Manoj from Hamropedia <you@gmail.com>` | `Manoj from Hamropedia <hello@hamropedia.com>` |
 
 Gmail is the quickest start. An address on your own domain looks more trustworthy and lands in spam less often.
 
@@ -38,20 +38,28 @@ Repository → **Settings** → **Secrets and variables** → **Actions**.
 
 **Secrets** (hidden):
 
-- `FIREBASE_SERVICE_ACCOUNT`: the whole JSON file's contents
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`: from step 1
+- `EMAILS_TEST_TO`: your own email address, for test sends
+- `FIREBASE_SERVICE_ACCOUNT`: the whole JSON file's contents (from step 2)
 
 **Variables:**
 
 - `MAIL_FROM`: from step 1
+- `MAIL_REPLY_TO` (optional): where replies go, if not to `MAIL_FROM`. The welcome says "Just reply to this email", so use an inbox you read.
 - `EMAILS_START`: when emails begin, as a UTC time, for example `2026-11-22T00:00:00Z`. Only people who sign up after this get a welcome, so existing members aren't all emailed at once. Reminders only go to people who have used the site since this time.
 - `EMAILS_LIVE`: leave this out for now.
 
-### 4. Try a dry run
+### 4. Send yourself a test
+
+**Actions** → **Learner emails** → **Run workflow** → `test`. The welcome and all four reminders arrive at `EMAILS_TEST_TO`, marked "[Test]". This needs only the mail settings (step 1), not Firebase, so it's the quickest way to see the emails in a real inbox.
+
+Your own account won't get a welcome from the real run: only people who sign up after `EMAILS_START` do, so existing members (you included) aren't all emailed at once.
+
+### 5. Try a dry run
 
 **Actions** → **Learner emails** → **Run workflow**, once with `welcome` and once with `reminders`. The log shows how many emails it would send. The repository is public, so the log never shows names or addresses: only counts and the first characters of each account id.
 
-### 5. Switch it on
+### 6. Switch it on
 
 Add the variable `EMAILS_LIVE` = `true`. To test, sign in to the site with a spare Google account: the welcome email arrives within the hour.
 

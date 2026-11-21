@@ -13,6 +13,7 @@ import { Box, Button, ButtonBase, Stack, Typography } from '@mui/material';
 import KeyboardRoundedIcon from '@mui/icons-material/KeyboardRounded';
 import TouchAppRoundedIcon from '@mui/icons-material/TouchAppRounded';
 import type { BlankCard } from '../../../practice/cards';
+import { cardLine } from '../../../practice/lines';
 import { nextSlot, sameLetter, slotsFor } from '../../../practice/typing';
 import { ProseText } from '../../learning/GlossaryText';
 import { Body, CardHeader, Footer } from '../parts';
@@ -134,8 +135,8 @@ export const BlankCardView = ({ card, accent, onDone }: CardProps<BlankCard>) =>
     return (
         <>
             <Body>
-                <CardHeader title="Fill the gap" accent={accent} mood={done ? moodFor(feedback) : miss ? 'sad' : 'think'}>
-                    {choosing ? 'Choose the missing word.' : 'Type the missing word, letter by letter.'}
+                <CardHeader title="Fill the gap" accent={accent} mood={done ? moodFor(feedback) : miss ? 'sad' : 'think'} speak={cardLine(card, { choosing })}>
+                    {cardLine(card, { choosing })}
                 </CardHeader>
                 <Box
                     onClick={() => !choosing && input.current?.focus()}
