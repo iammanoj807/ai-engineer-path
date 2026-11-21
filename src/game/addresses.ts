@@ -13,6 +13,9 @@ import lessonSlugs from './lessonSlugs.json';
 
 export const SITE_URL = 'https://learn.hamropedia.com';
 
+/** The project on GitHub: the code and every lesson. */
+export const REPO_URL = 'https://github.com/iammanoj807/ai-engineer-path';
+
 const SLUGS = lessonSlugs as Record<string, Record<string, string>>;
 const TOPIC_BY_SLUG: Record<string, Record<string, string>> = Object.fromEntries(
     Object.entries(SLUGS).map(([course, slugs]) => [course, Object.fromEntries(Object.entries(slugs).map(([id, slug]) => [slug, id]))]),

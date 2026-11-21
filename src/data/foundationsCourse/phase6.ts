@@ -20,7 +20,7 @@ export const foundationPhase6: FoundationPhase = {
         {
             id: 'f6-t1',
             name: 'How a GPU works: compute vs memory',
-            definition: 'A GPU runs thousands of simple cores in parallel, and how fast your code runs depends on whether it is limited by the maths (compute-bound) or by moving data to the cores (memory-bound).',
+            definition: 'A GPU runs thousands of simple cores in parallel. How fast your code runs depends on whether it is limited by the maths (compute-bound) or by moving data to the cores (memory-bound).',
             problem: 'Deep learning is only practical because GPUs do enormous amounts of arithmetic in parallel. But many operations barely use that power: they spend their time waiting for data. Knowing which kind of operation you have tells you which optimisation can help — mixed precision, fusion, batching, quantisation — and which will do nothing.',
             howItWorks: [
                 'A GPU has thousands of cores grouped into streaming multiprocessors. They all run the same instruction on different data at once.',
@@ -44,6 +44,10 @@ export const foundationPhase6: FoundationPhase = {
                 'Trying to speed up a memory-bound operation with more compute.',
                 'Launching thousands of tiny kernels in a Python loop.',
                 'Copying data between CPU and GPU inside the training loop.',
+            ],
+            myths: [
+                { claim: 'Your code runs at the GPU\'s advertised peak number of operations per second.', truth: 'The peak is reached only while the chip is kept busy with maths. Most real code spends its time moving data in and out of memory, so it runs far below the peak.' },
+                { claim: 'A memory-bound operation gets faster when the GPU has more compute.', truth: 'A memory-bound operation is limited by how fast data moves in and out of memory. Extra compute sits idle: only moving less data makes it faster.' },
             ],
             followUps: [
                 { q: 'What is arithmetic intensity?', a: 'The number of floating-point operations done per byte moved between memory and the cores.' },
@@ -77,7 +81,7 @@ export const foundationPhase6: FoundationPhase = {
             id: 'f6-t2',
             name: 'Mixed precision: fp16 and bf16',
             definition: 'Mixed precision trains with 16-bit numbers (bf16 or fp16) for most of the maths while keeping a few sensitive values in 32-bit, roughly halving memory traffic and greatly speeding up training.',
-            problem: '32-bit floats are more precise than neural networks need for most operations, and they cost twice the memory and bandwidth of 16-bit — plus GPUs\' tensor cores are far faster at 16-bit maths. Using 16-bit everywhere, though, can lose small updates or overflow. Mixed precision gets the speed while keeping training stable, and it is standard for every large model.',
+            problem: '32-bit floats are more precise than neural networks need for most operations, and they cost twice the memory and bandwidth of 16-bit. GPUs\' tensor cores are also far faster at 16-bit maths. Using 16-bit everywhere, though, can lose small updates or overflow. Mixed precision gets the speed while keeping training stable, and it is standard for every large model.',
             howItWorks: [
                 'A float has a sign bit, exponent bits (which set the range) and mantissa bits (which set the precision).',
                 'fp32: 8 exponent bits and 23 mantissa bits. fp16: 5 and 10. bf16: 8 and 7.',
@@ -92,13 +96,17 @@ export const foundationPhase6: FoundationPhase = {
                 'fp16 training needs loss scaling; bf16 usually doesn\'t.',
                 'Keep fp32 master weights and do the optimiser step in fp32.',
                 '16-bit halves weight memory: 2 bytes per parameter instead of 4.',
-                'In PyTorch: torch.autocast(device_type="cuda", dtype=torch.bfloat16).',
+                'In PyTorch, mixed precision is one line around the forward pass: torch.autocast(device_type="cuda", dtype=torch.bfloat16).',
             ],
             mistakes: [
-                'Training in fp16 without a gradient scaler.',
+                'Training in fp16 without a gradient scaler, so small gradients round down to zero.',
                 'Making the optimiser update in 16-bit, so small updates vanish.',
                 'Comparing losses across precisions without expecting small differences.',
                 'Assuming lower precision is always faster: older hardware may not support bf16 well.',
+            ],
+            myths: [
+                { claim: '16-bit numbers: faster on old GPUs as well as on new ones.', truth: 'Only on hardware built for it. Older GPUs may not support bf16 well, and then 16-bit is no faster, or even slower.' },
+                { claim: 'Optimiser step: done in 16-bit, to match the forward pass.', truth: 'A tiny update added to a 16-bit weight is rounded away. Keep a 32-bit master copy of the weights and do the optimiser step in fp32.' },
             ],
             followUps: [
                 { q: 'Why does bf16 rarely overflow while fp16 does?', a: 'bf16 has 8 exponent bits, the same range as fp32; fp16 has only 5, so its largest value is about 65,504.' },
@@ -133,7 +141,7 @@ export const foundationPhase6: FoundationPhase = {
         {
             id: 'f6-t3',
             name: 'Training memory: weights, gradients, optimiser states, activations',
-            definition: 'Training memory is the sum of the weights, the gradients, the optimiser states and the activations saved for backprop; with Adam and mixed precision it is about 16 bytes per parameter before activations.',
+            definition: 'Training memory is the sum of the weights, the gradients, the optimiser states and the activations saved for backprop. With Adam and mixed precision, it is about 16 bytes per parameter before activations.',
             problem: 'Running out of GPU memory is the most common reason a training run won\'t start. Knowing where the bytes go lets you estimate whether a model fits before trying, and pick the right fix — a smaller batch, checkpointing, an 8-bit optimiser, or sharding across GPUs.',
             howItWorks: [
                 'Weights in bf16: 2 bytes per parameter.',
@@ -150,12 +158,16 @@ export const foundationPhase6: FoundationPhase = {
                 'Activations scale with batch size and sequence length.',
                 'Checkpointing trades extra compute for much less activation memory.',
                 'Gradient accumulation gives a large effective batch with small memory.',
-                'Measure with torch.cuda.max_memory_allocated().',
+                'Measure the peak GPU memory of a training step with torch.cuda.max_memory_allocated(), instead of estimating it.',
             ],
             mistakes: [
                 'Estimating training memory from the weights alone.',
                 'Ignoring activations when increasing sequence length.',
                 'Lowering the batch size without accumulating gradients, which changes the training dynamics.',
+            ],
+            myths: [
+                { claim: 'Halving the batch size saves memory and has no other effect on training.', truth: 'A smaller batch gives noisier gradients, so training behaves differently. To keep the same effective batch, add up the gradients of several small batches before each update.' },
+                { claim: 'Training memory can be estimated from the size of the weights alone.', truth: 'Training also stores gradients, optimiser states and the activations saved for backprop. With Adam that is about 16 bytes per parameter, before activations.' },
             ],
             followUps: [
                 { q: 'Why does training need about 8 times the memory of inference for the same weights?', a: 'Besides the weights (2 bytes), it stores gradients (2), an fp32 master copy (4) and Adam\'s two states (8): about 16 bytes per parameter instead of 2.' },
@@ -189,7 +201,7 @@ export const foundationPhase6: FoundationPhase = {
             id: 'f6-t4',
             name: 'Parallelism: data, tensor and pipeline (the ideas)',
             definition: 'Parallelism spreads training across many GPUs: data parallelism splits the batch, tensor parallelism splits each layer\'s matrices, pipeline parallelism splits the layers, and FSDP/ZeRO shard the training state.',
-            problem: 'Large models don\'t fit on one GPU, and even when they do, one GPU would take years to train them. Splitting the work is the only way to train at scale, and choosing how to split it — given the model size and how fast the GPUs can talk to each other — decides how fast and how cheaply a model trains.',
+            problem: 'Large models don\'t fit on one GPU, and even when they do, one GPU would take years to train them. Splitting the work is the only way to train at scale. How to split it depends on the model\'s size and on how fast the GPUs can talk to each other, and that choice decides how fast and how cheaply a model trains.',
             howItWorks: [
                 'Data parallel (DDP): every GPU holds the whole model and processes a different slice of the batch.',
                 'After backward, an all-reduce averages the gradients across GPUs, so every copy takes the same step and stays identical.',
@@ -209,6 +221,10 @@ export const foundationPhase6: FoundationPhase = {
                 'Using tensor parallelism across slow network links.',
                 'Forgetting that the effective batch size grows with the number of data-parallel GPUs, so the learning rate may need adjusting.',
                 'Not checking that the multi-GPU run matches a single-GPU run on a small test.',
+            ],
+            myths: [
+                { claim: 'With eight data-parallel GPUs, the learning rate tuned for one GPU still fits unchanged.', truth: 'Eight GPUs process eight times as many examples per step, so the effective batch is eight times larger. The learning rate usually has to be adjusted for it.' },
+                { claim: 'Tensor parallelism works well even across slow network links.', truth: 'Tensor parallelism splits each layer across GPUs, so they exchange data inside every layer. It needs very fast links, such as GPUs in the same server.' },
             ],
             followUps: [
                 { q: 'In data parallelism, what keeps the model copies identical?', a: 'All-reduce averages the gradients across GPUs, so every copy applies the same update.' },
@@ -256,7 +272,7 @@ export const foundationPhase6: FoundationPhase = {
                 'Batching raises throughput; it can add a little latency per request.',
                 'int8 is usually near-lossless; 4-bit needs care; always evaluate quality.',
                 'Outliers are the main enemy of quantisation; finer-grained scales help.',
-                'FlashAttention is exact, not an approximation.',
+                'FlashAttention gives exactly the same result as ordinary attention: it changes how the work is laid out in memory, not the maths.',
                 'These combine with KV caching and speculative decoding.',
             ],
             mistakes: [
@@ -264,6 +280,10 @@ export const foundationPhase6: FoundationPhase = {
                 'Using one scale for a whole tensor that contains outliers.',
                 'Assuming FlashAttention changes the model\'s outputs.',
                 'Tuning latency without measuring throughput, or the other way round.',
+            ],
+            myths: [
+                { claim: 'FlashAttention: faster, at the price of slightly different outputs.', truth: 'It computes exactly the same result. It only changes how the work is arranged in memory, so that less data has to move.' },
+                { claim: 'Quantisation: one scale for a whole tensor works well even when it contains outliers.', truth: 'One huge value stretches the scale, so the many small values round to the same few numbers. Finer-grained scales, per channel or per group, fix that.' },
             ],
             followUps: [
                 { q: 'Why does batching help so much in generation?', a: 'Each step must read all the weights; batching shares that one read across many requests.' },
@@ -310,7 +330,7 @@ export const foundationPhase6: FoundationPhase = {
                 'Fix one thing, profile again, and compare steps per second.',
             ],
             keyPoints: [
-                'Measure first, optimise second.',
+                'Measure first, optimise second: the slow part is often not the one you would have guessed.',
                 'GPU work is asynchronous: call torch.cuda.synchronize() before reading a timer.',
                 'Warm up before measuring; the first steps include one-off setup costs.',
                 'Common bottlenecks: data loading, tiny operations, CPU–GPU copies, synchronisation points like .item().',
@@ -321,6 +341,10 @@ export const foundationPhase6: FoundationPhase = {
                 'Profiling the very first steps, which include compilation and caching.',
                 'Calling .item() or printing every step, which forces the CPU to wait for the GPU.',
                 'Optimising an operation that takes 2% of the time.',
+            ],
+            myths: [
+                { claim: 'Optimising an operation that takes 2% of the time: a noticeable speed-up for the whole program.', truth: 'An operation that takes 2% of the time can save at most 2%. Find the biggest share of the time first, and optimise that.' },
+                { claim: 'Timing GPU code: time.time() before and after the call gives how long the GPU took.', truth: 'GPU work is asynchronous: the call returns before the work is finished. Call torch.cuda.synchronize() before reading the timer.' },
             ],
             followUps: [
                 { q: 'Why can a Python timer give the wrong answer for GPU code?', a: 'GPU work runs asynchronously; without torch.cuda.synchronize() the timer may stop before the GPU has finished.' },
@@ -354,7 +378,7 @@ export const foundationPhase6: FoundationPhase = {
         {
             id: 'f6-t7',
             name: 'GPU kernels with Triton',
-            definition: 'A GPU kernel is a function that runs as many parallel instances on the GPU; Triton lets you write kernels in Python-like code, and the biggest win is usually fusion — doing several steps in one kernel so data leaves slow memory only once.',
+            definition: 'A GPU kernel is a function that runs as many parallel instances on the GPU, and Triton lets you write kernels in Python-like code. The biggest win is usually fusion: doing several steps in one kernel, so that the data leaves slow memory only once.',
             problem: 'Many deep-learning operations are memory-bound chains of small steps (normalise, activate, scale). Run as separate PyTorch operations, each one reads and writes the full tensor in slow memory. A fused kernel can be several times faster. Triton makes writing such kernels possible without learning CUDA C++, and it is what torch.compile uses under the hood.',
             howItWorks: [
                 'Split the work into blocks: each kernel instance (a "program") handles one block, for example one row of a matrix.',
@@ -375,9 +399,13 @@ export const foundationPhase6: FoundationPhase = {
             ],
             mistakes: [
                 'Forgetting the mask, so the last block reads or writes past the end of the tensor.',
-                'Benchmarking without warm-up and synchronisation.',
+                'Benchmarking without warm-up runs and torch.cuda.synchronize(), so the timing includes start-up costs or stops before the GPU has finished.',
                 'Hand-writing a kernel for something torch.compile already fuses well.',
                 'Not checking numerical stability (for softmax, subtract the max inside the kernel too).',
+            ],
+            myths: [
+                { claim: 'A kernel written by hand is faster than what torch.compile produces.', truth: 'torch.compile already fuses many common chains of operations well. Write a kernel by hand only where measurement shows the compiler falls short.' },
+                { claim: 'A kernel needs no mask when the tensor\'s size is not a multiple of the block size.', truth: 'The last block would then read or write past the end of the tensor. A mask switches off the positions that fall outside it.' },
             ],
             followUps: [
                 { q: 'What is kernel fusion?', a: 'Combining several operations into one kernel, so intermediate results stay in fast on-chip memory instead of making round trips to slow GPU memory.' },
@@ -427,7 +455,7 @@ export const foundationPhase6: FoundationPhase = {
                 'Soft labels carry "dark knowledge": which wrong answers are nearly right.',
                 'Temperature softens distributions; T = 1 is the normal softmax.',
                 'Structured pruning gives real speed-ups; unstructured mostly saves storage (unless hardware supports sparsity).',
-                'Prune gradually and retrain.',
+                'Prune gradually and retrain in between: removing a little at a time lets the remaining weights make up for what was cut.',
                 'Distillation, pruning and quantisation combine well.',
             ],
             mistakes: [
@@ -435,6 +463,10 @@ export const foundationPhase6: FoundationPhase = {
                 'Expecting scattered zeros to make inference faster on a normal GPU.',
                 'Distilling with T = 1 only, losing most of the soft-label information.',
                 'Evaluating the student only on the teacher\'s strengths.',
+            ],
+            myths: [
+                { claim: 'Pruning: remove most of the weights in one cut; no retraining is needed to keep the accuracy.', truth: 'One heavy cut usually wrecks the accuracy. Prune a little at a time and retrain in between, so that the remaining weights can adjust.' },
+                { claim: 'Unstructured pruning: scattered zeros that make inference faster on an ordinary GPU.', truth: 'A normal GPU still multiplies by the zeros. Scattered (unstructured) pruning mostly saves storage; removing whole neurons or channels gives real speed-ups.' },
             ],
             followUps: [
                 { q: 'Why train on soft labels instead of hard ones?', a: 'They tell the student how similar each wrong class is to the right one, which is extra information the one-hot label lacks.' },
@@ -469,7 +501,7 @@ export const foundationPhase6: FoundationPhase = {
         {
             id: 'f6-t9',
             name: 'Speculative decoding',
-            definition: 'Speculative decoding speeds up generation by letting a small draft model propose several tokens, which the large model then verifies in a single pass, keeping exactly the output the large model would have produced.',
+            definition: 'Speculative decoding speeds up generation: a small draft model proposes several tokens, and the large model verifies them in a single pass. The output is exactly what the large model would have produced on its own.',
             problem: 'Large models generate one token per forward pass, and each pass is slow because it is memory-bound: the GPU spends its time reading weights, not computing. Checking several proposed tokens costs about the same as generating one. Speculative decoding turns that spare capacity into speed, with no change in output quality.',
             howItWorks: [
                 'A small, fast draft model (or extra prediction heads) proposes the next k tokens, for example 4.',
@@ -491,6 +523,10 @@ export const foundationPhase6: FoundationPhase = {
                 'Assuming it changes or degrades the output (it doesn\'t, if done correctly).',
                 'Expecting big gains at very large batch sizes, where the GPU is already busy.',
             ],
+            myths: [
+                { claim: 'Speculative decoding gives its largest speed-up at very large batch sizes.', truth: 'At large batch sizes the GPU is already busy, so the spare capacity that speculative decoding uses is gone. The gains are largest for single requests and small batches.' },
+                { claim: 'Speculative decoding lowers the quality of the output a little.', truth: 'The large model checks every drafted token and keeps only what it would have produced itself. The output is exactly the same; only the speed changes.' },
+            ],
             followUps: [
                 { q: 'Why is checking 4 tokens about as cheap as generating 1?', a: 'Generation is memory-bound: the cost is reading the weights, which happens once whether you score one position or several.' },
                 { q: 'What happens at the first rejected draft token?', a: 'It and all later draft tokens are discarded, and the target model\'s own token is used at that position.' },
@@ -505,7 +541,7 @@ export const foundationPhase6: FoundationPhase = {
                 idea: 'A big model generates one token at a time, and each step is slow. In speculative decoding, a small, fast \'draft\' model guesses several tokens ahead. The big model then checks all the guesses in one pass, keeps the ones it agrees with, and replaces the first wrong one. The output is exactly what the big model alone would produce, only faster.',
                 analogy: 'A junior writer drafts the next sentence, and a senior editor checks it in one read, instead of the senior writing every word slowly.',
                 breaks: 'An editor can rewrite anything. Here, only the guesses up to the first rejected token are kept, so if the draft model guesses badly you gain almost nothing. The speed-up depends on the acceptance rate.',
-                example: 'If the draft model proposes 4 tokens and on average 3 are accepted, each expensive pass of the big model gives about 4 tokens (the 3 accepted plus 1 of its own) instead of 1.',
+                example: 'Say the draft model proposes 4 tokens and, on average, 3 are accepted. Then each expensive pass of the big model gives about 4 tokens (the 3 accepted plus 1 of its own) instead of 1.',
                 code: '# pseudo-code, greedy version\ndraft = small_model.generate(prefix, k=4)        # cheap guesses\nchecks = big_model.next_tokens(prefix + draft)   # one pass scores every position\nn = matching_prefix_length(draft, checks)        # keep the tokens both agree on\nprefix = prefix + draft[:n] + [checks[n]]       # plus the big model\'s own next token',
                 codeLanguage: 'python',
             },

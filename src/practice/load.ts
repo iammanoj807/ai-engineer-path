@@ -22,7 +22,7 @@ export interface PracticeSources {
 const practiceGlossary = <T extends AnyTopic>(glossary: GlossarySource<T>): PracticeGlossary => ({
     terms: glossary.terms,
     getTerm: id => glossary.getTerm(id),
-    segmentText: text => glossary.segmentText(text),
+    segmentText: (text, topicId) => glossary.segmentText(text, topicId),
     termsIn: topic => glossary.termsInTopic(topic as T),
     newWordsIn: topic => glossary.newWordsForTopic(topic as T),
 });

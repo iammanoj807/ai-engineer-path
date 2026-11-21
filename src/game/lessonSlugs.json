@@ -97,7 +97,10 @@
   "f7-t1": "autoencoders-and-vaes-the-elbo",
   "f7-t2": "diffusion-models",
   "f7-t3": "reinforcement-learning-basics-states-actions-rewards-values",
-  "f7-t4": "policy-gradients-and-ppo"
+  "f7-t4": "policy-gradients-and-ppo",
+  "f0-t7": "python-basics-variables-lists-loops-and-functions",
+  "f7-t5": "gans-a-generator-against-a-discriminator",
+  "f7-t6": "deep-q-networks-dqn-q-learning-with-a-neural-network"
  },
  "sql": {
   "sql0-t1": "what-a-database-a-table-and-sql-are",

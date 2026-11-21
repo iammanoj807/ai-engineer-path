@@ -127,6 +127,51 @@ const learningLoop = (): AnimationSpec => {
     };
 };
 
+// ============ f0-t7 · Python basics: a list, a loop and a function ============
+
+const pythonBasics = (): AnimationSpec => {
+    const sizes = [50, 80, 120];
+    const returned = ['150.0', '240.0', '360.0'];
+    const CELL = 46;
+    const x0 = 152;
+    const mid = (i: number) => cellAt(x0, 0, CELL, 0, i).cx;
+    const caption = (id: string, x: number, y: number, value: string) => text(id, x, y, value, { size: 11, fill: C.grey, weight: 700 });
+    /** `on`: the part to light up, or the loop's pass (0, 1, 2). `done`: how many results exist so far. */
+    const scene = (on: 'variable' | 'list' | 'function' | 'all' | number, done: number): Part[] => {
+        const pass = typeof on === 'number' ? on : -1;
+        const running = pass >= 0 || on === 'all';
+        const w = box('w', 16, 30, 92, 34, 'w = 3.0', C.amber, { mono: true });
+        const fn = box('fn', 118, 112, 206, 38, 'predict(size, w, b)', C.cyan, { mono: true, size: 12 });
+        return [
+            caption('wl', 62, 18, 'a variable'),
+            on === 'variable' || running ? lit(w, C.amber) : w,
+            caption('sl', x0 + 72, 18, 'a list: sizes'),
+            cells('sz', x0, 28, 1, 3, CELL, (_, c) => String(sizes[c]), (_, c) => tint(C.violet, on === 'list' || on === 'all' || c === pass ? 0.55 : 0.18), { textSize: 14 }),
+            sizes.map((_, i) => text(`ix${i}`, mid(i), 86, `[${i}]`, { size: 11, fill: C.dim, mono: true })),
+            caption('fl', 62, 132, 'a function'),
+            on === 'function' || running ? lit(fn, C.cyan) : fn,
+            cells('out', x0, 172, 1, 3, CELL, (_, c) => (c < done ? returned[c] : ''), (_, c) => (c < done ? tint(C.green, c === pass ? 0.55 : 0.3) : tint(C.grey, 0.08)), { textSize: 12 }),
+            caption('ol', x0 + 72, 229, 'what it returns'),
+            pass >= 0 && arrow('in', mid(pass), 96, 221, 110, { stroke: C.violet }),
+            pass >= 0 && arrow('wa', 62, 66, 128, 110, { stroke: C.amber }),
+            pass >= 0 && arrow('res', 221, 152, mid(pass), 170, { stroke: C.green }),
+        ];
+    };
+    const frames: Frame[] = [
+        frame('A variable is a name for a value. w = 3.0 stores the number 3.0 under the name w, ready to use later.', scene('variable', 0)),
+        frame('A list keeps several values in order: sizes = [50, 80, 120]. Positions count from 0, so sizes[0] is 50 and sizes[2] is 120.', scene('list', 0)),
+        frame('A function packages steps under a name. predict takes a size and the weights, and returns w × size + b.', scene('function', 0)),
+        frame('A for loop runs the same lines once for each item. First pass: predict(50, 3.0, 0.0) returns 150.0.', scene(0, 1)),
+        frame('Second pass, the same lines with the next item: predict(80, 3.0, 0.0) returns 240.0.', scene(1, 2)),
+        frame('Third and last pass: predict(120, 3.0, 0.0) returns 360.0. The loop ends when the list runs out.', scene(2, 3)),
+        frame('A variable, a list, a loop and a function: every program in this course is built from these four.', scene('all', 3)),
+    ];
+    return {
+        title: 'Python basics: a loop sends each item of a list through a function',
+        variants: [{ label: 'Variable, list, loop, function', frames }],
+    };
+};
+
 // ============ f0-t1 · NumPy arrays, shapes and indexing ============
 
 const arrays = (): AnimationSpec => {
@@ -457,6 +502,7 @@ const testing = (): AnimationSpec => {
 
 export const phase0Animations: Record<string, () => AnimationSpec> = {
     'f0-t6': learningLoop,
+    'f0-t7': pythonBasics,
     'f0-t1': arrays,
     'f0-t2': broadcasting,
     'f0-t3': lossCurves,

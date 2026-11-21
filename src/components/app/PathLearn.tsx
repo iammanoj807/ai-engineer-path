@@ -64,7 +64,7 @@ const PathLearn = ({
                     </Button>
                     {topicUnit && (
                         <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'right' }}>
-                            Unit {topicUnit.number} · topic {topicUnit.topics.findIndex(t => t.id === topic.id) + 1} of {topicUnit.topics.length}
+                            Unit {topicUnit.number} · lesson {topicUnit.topics.findIndex(t => t.id === topic.id) + 1} of {topicUnit.topics.length}
                         </Typography>
                     )}
                 </Stack>
@@ -109,10 +109,10 @@ const PathLearn = ({
                 type="search"
                 value={query}
                 onChange={event => setQuery(event.target.value)}
-                placeholder="Search topics"
+                placeholder="Search lessons"
                 sx={{ width: { xs: '100%', sm: 320 }, mb: 3, '& .MuiInputBase-root': { minHeight: 48 } }}
                 slotProps={{
-                    htmlInput: { 'aria-label': 'Search topics by name or definition' },
+                    htmlInput: { 'aria-label': 'Search lessons by name or definition' },
                     input: {
                         startAdornment: (
                             <InputAdornment position="start">
@@ -125,7 +125,7 @@ const PathLearn = ({
             {searching ? (
                 <Stack spacing={1.25} sx={{ pb: 6 }}>
                     <Typography variant="body2" color="text.secondary">
-                        {found.length === 0 ? `No topics match "${query.trim()}".` : `${found.length} ${found.length === 1 ? 'topic matches' : 'topics match'}.`}
+                        {found.length === 0 ? `No lessons match "${query.trim()}".` : `${found.length} ${found.length === 1 ? 'lesson matches' : 'lessons match'}.`}
                     </Typography>
                     {found.map(topic => (
                         <ButtonBase

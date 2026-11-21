@@ -18,7 +18,7 @@ export const sqlPhase2: SqlPhase = {
             priority: 'must',
             definition: 'An aggregate function turns many rows into one value — COUNT counts, SUM adds, AVG averages, MIN and MAX find the smallest and largest — and every one except `COUNT(*)` skips NULLs.',
             problem: 'Nobody wants to read 10 million orders. They want "how many?", "how much in total?", "what is the average?". Aggregates answer those in one line — but the NULL rules quietly change the answers if you don\'t know them.',
-            idea: 'Without GROUP BY, an aggregate squashes the whole table (after WHERE) into one row. `COUNT(*)` counts rows. `COUNT(column)` counts rows where that column is not NULL. `COUNT(DISTINCT column)` counts the different non-NULL values. SUM and AVG add and average the non-NULL values. MIN and MAX work on numbers, text (alphabetical) and dates. Because AVG skips NULLs, the average of order amounts is the total divided by 9 orders, not 10.',
+            idea: 'Without GROUP BY, an aggregate squashes the whole table (after WHERE) into one row.\n`COUNT(*)` counts rows.\n`COUNT(column)` counts rows where that column is not NULL.\n`COUNT(DISTINCT column)` counts the different non-NULL values.\nSUM and AVG add and average the non-NULL values.\nMIN and MAX work on numbers, text (alphabetical) and dates.\n\nBecause AVG skips NULLs, the average of order amounts is the total divided by 9 orders, not 10.',
             analogy: 'A cashier at the end of the day. They don\'t list every sale; they count the receipts (COUNT), add up the takings (SUM), and note the biggest and smallest sale (MAX, MIN). A receipt with the amount torn off still counts as a receipt, but it adds nothing to the takings.',
             breaks: 'A cashier would notice the torn receipt and ask about it. SQL doesn\'t: it silently leaves NULLs out of SUM and AVG, so you have to decide yourself whether a missing value should count as zero.',
             syntax: code`
@@ -96,10 +96,13 @@ export const sqlPhase2: SqlPhase = {
                 'Mixing a plain column with an aggregate without GROUP BY: `SELECT name, MAX(salary) FROM employees` is an error in most databases (SQLite allows it but the name is unreliable).',
                 'Putting an aggregate in WHERE: `WHERE SUM(amount) > 100` is an error. That is HAVING\'s job.',
             ],
+            myths: [
+                { claim: 'An aggregate such as SUM can be used in WHERE to filter on a total.', truth: 'WHERE works on single rows, before any total exists. Filtering on an aggregate is the job of HAVING.' },
+            ],
             dialects: [
                 'AVG of whole numbers: PostgreSQL and SQLite return a decimal; SQL Server returns a whole number (AVG of 1 and 2 is 1). Use `AVG(x * 1.0)` there.',
             ],
-            interviewAnswer: 'Aggregate functions collapse a set of rows into one value: COUNT, SUM, AVG, MIN and MAX. The detail interviewers probe is NULL handling — COUNT star counts rows, COUNT of a column skips NULLs, and SUM and AVG ignore NULLs, so an average is over the known values only. I also remember that SUM over no rows is NULL, so I COALESCE it to zero when the result feeds a report.',
+            interviewAnswer: 'Aggregate functions collapse a set of rows into one value: COUNT, SUM, AVG, MIN and MAX. The detail interviewers probe is NULL handling. COUNT star counts rows, and COUNT of a column skips NULLs. SUM and AVG ignore NULLs, so an average is over the known values only. I also remember that SUM over no rows is NULL, so I COALESCE it to zero when the result feeds a report.',
             followUps: [
                 { q: 'What is the difference between `COUNT(*)`, `COUNT(1)` and `COUNT(column)`?', a: '`COUNT(*)` and `COUNT(1)` both count rows, at the same speed. `COUNT(column)` counts only rows where that column is not NULL.' },
                 { q: 'What does SUM return when there are no rows?', a: 'NULL. COUNT returns 0. Use `COALESCE(SUM(x), 0)` when you need 0.' },
@@ -124,7 +127,7 @@ export const sqlPhase2: SqlPhase = {
             priority: 'must',
             definition: 'GROUP BY splits the rows into groups that share the same value in the listed columns, and the aggregates then return one row per group.',
             problem: 'One total is rarely enough. Managers ask for "revenue per month", "headcount per department", "orders per customer". GROUP BY gives you a total for every group in one query, instead of one query per group.',
-            idea: 'GROUP BY dept_id puts all rows with the same dept_id into one pile. Each pile becomes one result row, and every aggregate in SELECT is worked out separately for each pile. The golden rule: every column in SELECT must either be in GROUP BY or be inside an aggregate — because a group of 4 employees has 4 names, and the database can\'t pick one for you. All NULLs fall into one group of their own.',
+            idea: 'GROUP BY dept_id puts all rows with the same dept_id into one pile. Each pile becomes one result row, and every aggregate in SELECT is worked out separately for each pile.\n\nThe golden rule: every column in SELECT must either be in GROUP BY or be inside an aggregate. Why? A group of 4 employees has 4 names, and the database can\'t pick one for you. All NULLs fall into one group of their own.',
             analogy: 'Sorting a bag of coins into piles by type — all the 10p together, all the £1 together — and then counting each pile. GROUP BY makes the piles; COUNT and SUM count them.',
             breaks: 'With coins you can still see each coin in its pile. After GROUP BY, the separate rows are gone from the result: you only see one row per pile, so you can\'t ask for "the name" of a group unless you aggregate it.',
             syntax: code`
@@ -201,11 +204,14 @@ export const sqlPhase2: SqlPhase = {
                 'Expecting groups with zero rows to appear with a count of 0.',
                 'Grouping by too many columns (such as the id), so every group has one row and nothing is summarised.',
             ],
+            myths: [
+                { claim: 'GROUP BY also returns the groups that have no rows, with a count of 0.', truth: 'A group exists only if at least one row falls into it. To show a zero, start from the full list (such as all departments) and LEFT JOIN onto it (Unit 3).' },
+            ],
             dialects: [
                 'SQLite and older MySQL let you select a column that isn\'t grouped and silently pick a value. PostgreSQL, SQL Server and modern MySQL reject it. Write it the strict way.',
                 'GROUP BY an alias (`GROUP BY month`) works in PostgreSQL, MySQL and SQLite, but not in SQL Server — repeat the expression there.',
             ],
-            interviewAnswer: 'GROUP BY partitions the filtered rows into groups by the grouping columns, and aggregates are computed once per group, giving one output row per group. The rule is that every selected column must be grouped or aggregated. Two details I mention: NULLs form a single group, and groups with no rows simply don\'t appear — so to report zeros I drive the query from the complete dimension table with a LEFT JOIN.',
+            interviewAnswer: 'GROUP BY partitions the filtered rows into groups by the grouping columns, and aggregates are computed once per group, giving one output row per group. The rule is that every selected column must be grouped or aggregated. Two details I mention. NULLs form a single group. And groups with no rows simply don\'t appear, so to report zeros I drive the query from the complete dimension table with a LEFT JOIN.',
             followUps: [
                 { q: 'Why must non-aggregated columns be in GROUP BY?', a: 'Each group becomes one row. A column that isn\'t grouped could have many values in the group, and SQL won\'t guess which one to show.' },
                 { q: 'How do you show departments with zero employees?', a: '`SELECT d.dept_name, COUNT(e.emp_id) FROM departments d LEFT JOIN employees e ON e.dept_id = d.dept_id GROUP BY d.dept_name` — COUNT of a column gives 0 when nothing matched.' },
@@ -229,7 +235,7 @@ export const sqlPhase2: SqlPhase = {
             priority: 'must',
             definition: 'HAVING filters groups after GROUP BY, using aggregates such as `COUNT(*) > 1`, while WHERE filters single rows before any grouping happens.',
             problem: '"Customers with more than one order", "departments whose average salary is over 55000". You can\'t test those in WHERE, because the counts and averages don\'t exist until the rows are grouped. HAVING is the filter that runs after grouping.',
-            idea: 'Think of two sieves. WHERE is the first sieve: it removes rows before they are put into groups. HAVING is the second: it removes whole groups after they are counted. A query can use both: WHERE keeps only delivered orders, GROUP BY makes a group per customer, then HAVING keeps customers whose delivered total is at least £100. If a condition is about one row (status, date), put it in WHERE — it is cheaper, because fewer rows get grouped.',
+            idea: 'Think of two sieves. WHERE is the first sieve: it removes rows before they are put into groups. HAVING is the second: it removes whole groups after they are counted.\n\nA query can use both: WHERE keeps only delivered orders, GROUP BY makes a group per customer, then HAVING keeps customers whose delivered total is at least £100.\n\nIf a condition is about one row (status, date), put it in WHERE — it is cheaper, because fewer rows get grouped.',
             analogy: 'Picking a football team. WHERE is the trial: players under 16 are sent home before teams are formed. HAVING comes after the teams are formed: any team with fewer than 11 players is dropped from the tournament.',
             breaks: 'In football you could also drop a team for one bad player. HAVING can\'t look at individual rows any more — only at things that describe the whole group, such as counts, sums and the grouping columns.',
             syntax: code`
@@ -287,6 +293,9 @@ export const sqlPhase2: SqlPhase = {
                 'Putting a plain row condition in HAVING (`HAVING status = \'delivered\'`): it either fails or does something unexpected.',
                 'Using a SELECT alias in HAVING (`HAVING headcount > 1`). Some databases allow it; standard SQL and SQL Server don\'t. Repeat the aggregate.',
             ],
+            myths: [
+                { claim: 'An alias from SELECT can be used in HAVING in every database.', truth: 'Some databases allow it, but standard SQL and SQL Server do not. Repeat the aggregate in HAVING to be safe.' },
+            ],
             interviewAnswer: 'WHERE and HAVING are both filters but run at different stages. WHERE filters individual rows before grouping, so it can\'t use aggregates. HAVING filters groups after GROUP BY, so it can. If a condition doesn\'t need an aggregate I put it in WHERE, because filtering early means less data to group.',
             followUps: [
                 { q: 'Can you use HAVING without GROUP BY?', a: 'Yes. The whole result is treated as one group: `SELECT COUNT(*) FROM orders HAVING COUNT(*) > 5` returns one row or none.' },
@@ -309,9 +318,9 @@ export const sqlPhase2: SqlPhase = {
             kind: 'lesson',
             name: 'Conditional aggregation: counting several things at once',
             priority: 'must',
-            definition: 'Putting CASE inside an aggregate — `SUM(CASE WHEN status = \'delivered\' THEN 1 ELSE 0 END)` — counts or sums only the rows that match, so one query can produce several different totals, or turn rows into columns (a pivot).',
+            definition: 'Conditional aggregation puts CASE inside an aggregate, such as `SUM(CASE WHEN status = \'delivered\' THEN 1 ELSE 0 END)`, so that it counts or sums only the rows that match. One query can then produce several different totals, or turn rows into columns (a pivot).',
             problem: '"For each customer, how many orders were delivered and how many weren\'t?" Running two queries and gluing them together is slow and messy. Interviewers love this pattern because it shows you understand that aggregates work on whatever values you give them.',
-            idea: 'An aggregate adds up whatever expression you hand it. Hand SUM a CASE that gives 1 for the rows you care about and 0 for the rest, and it counts just those rows. Hand it `CASE WHEN … THEN amount END` and it sums just those amounts. Do this several times in one SELECT, with different conditions, and you get several columns from one pass over the data. Use it with months as the conditions and the rows become columns — that is a pivot. For a percentage, divide one conditional count by `COUNT(*)`, using 100.0 to avoid integer division.',
+            idea: 'An aggregate adds up whatever expression you hand it. Hand SUM a CASE that gives 1 for the rows you care about and 0 for the rest, and it counts just those rows. Hand it `CASE WHEN … THEN amount END` and it sums just those amounts.\n\nDo this several times in one SELECT, with different conditions, and you get several columns from one pass over the data. Use it with months as the conditions and the rows become columns — that is a pivot. For a percentage, divide one conditional count by `COUNT(*)`, using 100.0 to avoid integer division.',
             analogy: 'Counting a class with tally marks on a sheet with several columns: as each pupil walks past, you add a mark under "walked", "cycled" or "came by bus". One walk-past fills in every column at once.',
             breaks: 'With tally marks a pupil can only go in one column. Conditional aggregation has no such rule: one row can count towards several columns if several conditions are true, so make your conditions not overlap when they should add up to the total.',
             syntax: code`
@@ -389,11 +398,14 @@ export const sqlPhase2: SqlPhase = {
                 'Computing a percentage with whole numbers: `100 * 7 / 10` is fine but `7 / 10 * 100` is 0.',
                 'Conditions that overlap when the columns should add up to the total.',
             ],
+            myths: [
+                { claim: '`COUNT(CASE WHEN cond THEN 1 ELSE 0 END)` counts only the rows that match the condition.', truth: 'COUNT counts every value that is not NULL, and 0 is not NULL, so it counts every row. Use SUM instead, or leave out the ELSE.' },
+            ],
             dialects: [
                 'PostgreSQL and SQLite support a FILTER clause: `COUNT(*) FILTER (WHERE status = \'delivered\')`. It is the same idea with neater syntax.',
                 'SQL Server and Oracle have a PIVOT operator, but CASE works everywhere and interviewers accept it.',
             ],
-            interviewAnswer: 'Conditional aggregation puts a CASE expression inside an aggregate, like SUM of CASE WHEN status is delivered THEN 1 ELSE 0, so I can compute several metrics per group in a single pass — counts by status, revenue by month as columns, or a ratio. For ratios I multiply by 100.0 first to avoid integer division, and I make sure SUM rather than COUNT wraps a CASE that returns zero.',
+            interviewAnswer: 'Conditional aggregation puts a CASE expression inside an aggregate, like SUM of CASE WHEN status is delivered THEN 1 ELSE 0. That lets me compute several metrics per group in a single pass: counts by status, revenue by month as columns, or a ratio. For ratios I multiply by 100.0 first to avoid integer division, and I make sure SUM rather than COUNT wraps a CASE that returns zero.',
             followUps: [
                 { q: 'Why is `COUNT(CASE WHEN x THEN 1 ELSE 0 END)` wrong?', a: 'COUNT counts every non-NULL value, and 0 is not NULL, so it counts all rows. Use SUM, or remove the ELSE so non-matches become NULL.' },
                 { q: 'How do you pivot rows into columns in SQL?', a: 'GROUP BY the row label and write one `SUM(CASE WHEN column = value THEN amount END)` per output column.' },
@@ -415,11 +427,11 @@ export const sqlPhase2: SqlPhase = {
             kind: 'lesson',
             name: 'The order a query really runs in',
             priority: 'must',
-            definition: 'A query is written SELECT, FROM, WHERE, GROUP BY, HAVING, ORDER BY, LIMIT, but the database works it out in a different order — FROM, WHERE, GROUP BY, HAVING, SELECT, DISTINCT, ORDER BY, LIMIT — and that order explains most "why doesn\'t this work?" errors.',
+            definition: 'You write a query as SELECT, FROM, WHERE, GROUP BY, HAVING, ORDER BY, LIMIT. The database works it out in a different order: FROM, WHERE, GROUP BY, HAVING, SELECT, DISTINCT, ORDER BY, LIMIT. That order explains most "why doesn\'t this work?" errors.',
             problem: 'Why can\'t WHERE use the alias you made in SELECT? Why can ORDER BY use it? Why can\'t WHERE use COUNT? Without the run order these look like random rules. With it, they are obvious — and interviewers ask about it directly.',
-            idea: 'Each step works on the output of the step before. FROM (and JOIN) builds the rows. WHERE removes rows. GROUP BY makes groups. HAVING removes groups. SELECT works out the output columns and their aliases (window functions run here too). DISTINCT removes duplicate rows. ORDER BY sorts. LIMIT cuts. So: WHERE runs before SELECT, and can\'t see its aliases. ORDER BY runs after SELECT, so it can. WHERE runs before GROUP BY, so it can\'t use aggregates — HAVING runs after, so it can.',
+            idea: 'Each step works on the output of the step before. FROM (and JOIN) builds the rows. WHERE removes rows. GROUP BY makes groups. HAVING removes groups. SELECT works out the output columns and their aliases (window functions run here too). DISTINCT removes duplicate rows. ORDER BY sorts. LIMIT cuts.\n\nSo: WHERE runs before SELECT, and can\'t see its aliases. ORDER BY runs after SELECT, so it can. WHERE runs before GROUP BY, so it can\'t use aggregates — HAVING runs after, so it can.',
             analogy: 'Making a sandwich. You write the order as "sandwich: cheese and tomato, on brown bread, cut in half". But you actually get the bread first (FROM), pick the fillings (WHERE), assemble it (GROUP BY and SELECT), and cut it last (ORDER BY, LIMIT). You can\'t cut what you haven\'t made yet.',
-            breaks: 'A cook really does work in that order. A database only has to behave as if it does: the optimiser may reorder the real work — for example, use an index to sort early — as long as the answer is the same.',
+            breaks: 'A cook really does work in that order. A database only has to behave as if it does. The optimiser may reorder the real work (for example, use an index to sort early), as long as the answer is the same.',
             syntax: code`
                 -- written order        -- run order
                 SELECT    ...           -- 5
@@ -481,6 +493,9 @@ export const sqlPhase2: SqlPhase = {
                 'Using a SELECT alias in WHERE and getting "no such column".',
                 'Expecting LIMIT to run before ORDER BY ("take 3 rows, then sort them").',
                 'Filtering on `ROW_NUMBER()` in WHERE — it doesn\'t exist yet at that step.',
+            ],
+            myths: [
+                { claim: 'LIMIT runs before ORDER BY: the database takes a few rows and then sorts them.', truth: 'ORDER BY runs first and LIMIT last: the database sorts all the rows, then keeps the first few. That is what makes "top 3" queries work.' },
             ],
             dialects: [
                 'MySQL and SQLite are lenient and let HAVING (and sometimes WHERE) use SELECT aliases. PostgreSQL and SQL Server follow the strict order. Write it the strict way and it runs everywhere.',

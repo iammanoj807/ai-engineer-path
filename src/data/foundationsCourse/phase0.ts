@@ -9,6 +9,8 @@ export const foundationPhase0: FoundationPhase = {
     goal: 'Get fast with the tools you will use every day. This unit is short: do it alongside the start of Unit 1.',
     bigPicture: 'Tools are like a carpenter\'s workshop. You cannot learn furniture design while fighting with the saw. NumPy is your saw: practise until it feels natural.',
     main: [
+        { title: 'Google Colab', url: 'https://colab.research.google.com/', kind: 'Tool', free: true, why: 'A free Python notebook that runs in your browser, with NumPy, Matplotlib and PyTorch already installed. Run every code example there until you set Python up on your own computer.' },
+        { title: 'The Python Tutorial (official)', url: 'https://docs.python.org/3/tutorial/', kind: 'Guide', free: true, why: 'New to Python? Read chapters 3 to 5 first. Numbers, lists, loops and functions are all the Python this course needs.' },
         { title: 'NumPy: the absolute basics for beginners', url: 'https://numpy.org/doc/stable/user/absolute_beginners.html', kind: 'Guide', free: true, why: 'The official guide. Short and clear. Type every example yourself.' },
         { title: 'From Python to NumPy (Nicolas Rougier)', url: 'https://www.labri.fr/perso/nrougier/from-python-to-numpy/', kind: 'Book', free: true, why: 'Teaches you to think in whole arrays instead of loops. This is the key NumPy skill.' },
     ],
@@ -27,7 +29,7 @@ export const foundationPhase0: FoundationPhase = {
                 caption: 'The loop in the middle is training: predict, measure the loss, adjust the weights, repeat. Only when it\'s good on new data does the model go live.',
             },
             note: {
-                idea: 'Machine learning means learning a pattern from examples instead of writing the rules by hand. You give a model inputs (features) and the right answers (labels). The model makes a guess, a loss function measures how wrong it is, and an optimiser nudges the model\'s numbers (its weights) to make the loss smaller. Repeat that many times and the model learns. Then you test it on data it has never seen, and if it\'s good, you deploy it.',
+                idea: 'Machine learning means learning a pattern from examples instead of writing the rules by hand.\n\nYou give a model inputs (features) and the right answers (labels). The model makes a guess, a loss function measures how wrong it is, and an optimiser nudges the model\'s numbers (its weights) to make the loss smaller. Repeat that many times and the model learns.\n\nThen you test it on data it has never seen, and if it\'s good, you deploy it.',
                 analogy: 'Learning to throw darts. You throw (a prediction), see how far you landed from the bullseye (the loss), adjust your arm a little (an optimiser update), and throw again. After hundreds of throws, you\'re accurate.',
                 breaks: 'A person can feel why a throw missed. A model only gets one number, the loss; the gradient then tells it which way to adjust every weight at once — sometimes millions of them.',
                 example: 'Predicting house prices. The feature is the size, the label is the price, the model is ŷ = w·size + b, the loss is the squared error, and gradient descent adjusts w and b. The code below learns that each square metre adds about £3,000.',
@@ -59,6 +61,10 @@ export const foundationPhase0: FoundationPhase = {
                 'Believing that more training always helps. After a point the model starts fitting noise; Unit 2 calls this overfitting.',
                 'Mixing up the model and training. The model is the formula with weights; training is the loop that sets the weights.',
             ],
+            myths: [
+                { claim: 'A model that gets every training example right is certain to do well on new examples too.', truth: 'A model can memorise its training examples and still fail on new ones. Only data it has never seen shows how good it is.' },
+                { claim: 'The longer a model trains, the better it gets on new data.', truth: 'After a point, more training makes the model fit the noise in its examples, and it gets worse on new data. Unit 2 calls this overfitting.' },
+            ],
             followUps: [
                 { q: 'What is the difference between a feature and a label?', a: 'A feature is an input the model sees, such as house size. The label is the right answer it should predict, such as the price. When the model is used for real, you only have the features.' },
                 { q: 'What does the loss tell you, and what does training do with it?', a: 'The loss is one number for how wrong the model is on the examples. Training changes the weights again and again to make that number smaller.' },
@@ -75,15 +81,77 @@ export const foundationPhase0: FoundationPhase = {
             practice: {
                 explain: 'Explain the learning loop — predict, measure the loss, adjust, repeat — with the dart-throwing picture.',
                 derive: 'For the model ŷ = w·x + b and the loss (ŷ − y)², write the gradients with respect to w and b on paper.',
-                build: 'Run the training loop above. Print the loss every 100 steps and plot it with Matplotlib.',
+                build: 'Run the training loop above and print the loss every 100 steps. Then plot the loss with Matplotlib. The answer shows a free way to run it with nothing installed, and the plotting code; the next lessons teach the Python and the plotting.',
                 break: 'Make the learning rate 10 times bigger and run it again. What happens to the loss, and why?',
+            },
+        },
+        {
+            id: 'f0-t7',
+            name: 'Python basics: variables, lists, loops and functions',
+            definition: 'Python is the programming language of machine learning. You store values in variables, keep many values in a list, repeat work with a loop, and package steps into a function you can reuse.',
+            problem: 'Every lesson after this one asks you to run code and change it. You don\'t need to be a programmer first, but you do need four ideas: variables, lists, loops and functions. With those you can read every example in this course. NumPy and PyTorch are then just faster tools built on the same four ideas.',
+            howItWorks: [
+                'Open a notebook: go to colab.research.google.com and choose New notebook. Type print(2 + 3) in the first cell and press Shift+Enter. Python runs it and shows 5. There is nothing to install.',
+                'A variable is a name for a value: w = 3.0 stores the number 3.0 under the name w. Use the name later and Python fills in the value: w * 50 gives 150.0.',
+                'A list keeps several values in order: sizes = [50, 80, 120]. Positions count from 0, so sizes[0] is 50 and sizes[2] is 120, and len(sizes) is 3.',
+                'A for loop runs the indented lines once for each item. "for s in sizes:" followed by an indented "print(w * s)" prints 150.0, then 240.0, then 360.0. The 4 spaces of indentation are how Python knows which lines are inside the loop.',
+                'An if runs its indented lines only when a test is true: "if s > 100:" lets through only the 120. A test such as s > 100 or s == 80 gives True or False.',
+                'A function packages steps under a name. "def predict(size, w, b):" followed by an indented "return w * size + b" defines it; predict(80, 3.0, 0.0) calls it and gets back 240.0.',
+                'Put them together: loop over the houses, call predict for each one, and add up the squared errors. That is the loss from the first lesson, written in plain Python.',
+            ],
+            keyPoints: [
+                'A variable is a name pointing at a value. A single = stores a value; a double == compares two values.',
+                'Lists are ordered and count from 0: the last item of a list of 3 is at position 2.',
+                'Indentation is part of the language: the lines inside a loop, an if or a function are indented by 4 spaces.',
+                'A function takes inputs (its arguments) and hands back a result with return. With no return line, it hands back None.',
+                'range(n) counts 0, 1, …, n − 1, so "for i in range(3):" runs three times.',
+                'Read an error message from the bottom up: the last line names the error, and the lines above it say where it happened.',
+            ],
+            mistakes: [
+                'Writing = where == is needed. "if x = 3:" is an error; "if x == 3:" is a test.',
+                'Asking for sizes[3] in a list of 3 items. Counting starts at 0, so the last position is 2.',
+                'Printing a result inside a function instead of returning it, then getting None where a number was expected.',
+                'Indenting lines unevenly, or mixing tabs with spaces, which gives an IndentationError.',
+            ],
+            myths: [
+                { claim: 'A function that prints its result also hands that result back to the code that called it.', truth: 'Printing only shows a value on the screen. To hand it back, the function needs return; without it the caller gets None.' },
+                { claim: 'A list of 3 items: the last item is at position 3.', truth: 'Counting starts at 0, so the three positions are 0, 1 and 2. Asking for position 3 is an error.' },
+            ],
+            followUps: [
+                { q: 'What does sizes[1] give for sizes = [50, 80, 120]?', a: '80. Counting starts at 0, so position 1 is the second item.' },
+                { q: 'What is the difference between = and ==?', a: 'A single = stores a value under a name, as in w = 3. A double == asks whether two values are equal, and gives True or False.' },
+                { q: 'What does a function hand back if it has no return line?', a: 'None, Python\'s value for "nothing". If you see None where you expected a number, look for a missing return.' },
+                { q: 'How many times do the lines inside "for i in range(4):" run, and with which values of i?', a: 'Four times, with i = 0, 1, 2 and 3. range(4) stops before 4.' },
+            ],
+            diagram: {
+                code: 'flowchart LR\n  L["a list<br/>sizes = [50, 80, 120]"] --> LP["a for loop<br/>one item at a time"]\n  V["a variable<br/>w = 3.0"] --> F["a function<br/>predict(size, w, b)"]\n  LP --> F\n  F --> R["what it returns<br/>150.0, 240.0, 360.0"]',
+                caption: 'A list holds the data, a loop walks through it, and a function does the same calculation for each item.',
+            },
+            note: {
+                idea: 'Four ideas run through all the code in this course. A variable names a value. A list holds many values in order. A loop repeats work for each item. A function packages steps so you can use them again.',
+                analogy: 'A kitchen. Variables are labelled jars. A list is a shelf of jars in a fixed order. A loop is "do this for every jar on the shelf". A function is a recipe card: hand it ingredients and it hands back a dish.',
+                breaks: 'A jar keeps what you put in it. A variable can be given a new value at any time. Two names can also point at the same list: change the list through one name, and the other name sees the change too.',
+                example: 'Three houses have sizes [50, 80, 120] m² and prices [150, 240, 360], in £1,000s. With w = 3.0 and b = 0.0, predict gives exactly the prices, so the loss is 0.0. With w = 2.0 the predictions are 100, 160 and 240, and the loss, the average squared error, is 7,766.67.',
+                code: 'sizes = [50, 80, 120]                 # a list: the size of each house in m²\nprices = [150, 240, 360]              # the price of each house in £1,000s\n\ndef predict(size, w, b):              # a function: the model from the first lesson\n    return w * size + b\n\ndef loss(w, b):\n    total = 0.0\n    for size, price in zip(sizes, prices):    # a loop over both lists, side by side\n        error = predict(size, w, b) - price\n        total = total + error ** 2            # ** means "to the power of"\n    return total / len(sizes)\n\nprint(loss(3.0, 0.0))                 # 0.0\nprint(round(loss(2.0, 0.0), 2))       # 7766.67',
+                codeLanguage: 'python',
+            },
+            resources: [
+                { kind: 'play', title: 'Google Colab: a free Python notebook in your browser', source: 'Google', url: 'https://colab.research.google.com/', recommended: 'Nothing to install: open it, type code and press Shift+Enter. Use it for every example in this course until you set Python up on your own computer.' },
+                { kind: 'read', title: 'The Python Tutorial, chapters 3 to 5', source: 'python.org · official', url: 'https://docs.python.org/3/tutorial/' },
+                { kind: 'watch', title: 'Python for Everybody', source: 'Charles Severance · free', url: 'https://www.py4e.com/' },
+            ],
+            practice: {
+                explain: 'Explain a variable, a list, a loop and a function with the kitchen picture.',
+                derive: 'On paper, follow this code line by line: total = 0, then "for x in [2, 5, 3]:" with the indented line "total = total + x * x". Write the value of total after each pass of the loop.',
+                build: 'Write mean(values) with a loop, using no sum() and no NumPy, and print the mean of [150, 240, 360]. Then write largest(values), which returns the biggest value in a list.',
+                break: 'Cause three errors on purpose and read each message: ask for sizes[3], write "if x = 3:", and add 1 to the result of a function that prints instead of returning. What does each message say, and what does it mean?',
             },
         },
         {
             id: 'f0-t1',
             name: 'NumPy arrays, shapes and indexing',
             definition: 'A NumPy array is a grid of numbers, all of the same type, with a shape that says how long it is in each direction.',
-            problem: 'ML is arithmetic on huge piles of numbers: a dataset is a table, an image is a grid of pixels, and a batch of images is a stack of grids. Python lists are slow for this and have no idea of rows and columns. NumPy arrays keep the numbers packed together in memory, run maths on all of them at once in fast compiled code, and let you pick out any row, column or block with one short expression.',
+            problem: 'ML is arithmetic on huge piles of numbers: a dataset is a table, an image is a grid of pixels, and a batch of images is a stack of grids. Python lists are slow for this and have no idea of rows and columns.\n\nNumPy arrays keep the numbers packed together in memory, and run maths on all of them at once in fast compiled code. They also let you pick out any row, column or block with one short expression.',
             diagram: {
                 code: 'block-beta\n  columns 4\n  a0["0"] a1["1"] a2["2"] a3["3"]\n  b0["4"] b1["5"] b2["6 = A[1, 2]"] b3["7"]\n  c0["8"] c1["9"] c2["10"] c3["11"]\n  style b2 fill:#2a6f97,color:#fff',
                 caption: 'A = np.arange(12).reshape(3, 4): 3 rows and 4 columns. A[1, 2] means row 1, column 2 (counting from 0).',
@@ -92,7 +160,7 @@ export const foundationPhase0: FoundationPhase = {
                 idea: 'An array is a grid of numbers of the same type. Its shape tells you how many numbers there are along each direction. Shape (3, 4) means 3 rows and 4 columns.',
                 analogy: 'A spreadsheet. The shape is the number of rows and columns. Indexing means picking one cell, a whole row or a whole column.',
                 breaks: 'A spreadsheet has only two directions. An array can have three or more, like a stack of spreadsheets. A batch of colour images has shape (batch, height, width, 3).',
-                example: 'With A = np.arange(12).reshape(3, 4): A[1, 2] is 6, A[:, 0] is the first column [0, 4, 8], A[1] is the row [4, 5, 6, 7], A[A > 6] is [7, 8, 9, 10, 11], and A.sum(axis=0) adds down each column to give [12, 15, 18, 21].',
+                example: 'Take A = np.arange(12).reshape(3, 4). A[1, 2] is 6. A[:, 0] is the first column, [0, 4, 8]. A[1] is the row [4, 5, 6, 7]. A[A > 6] is [7, 8, 9, 10, 11]. A.sum(axis=0) adds down each column to give [12, 15, 18, 21].',
                 code: 'A = np.arange(12).reshape(3, 4)\nA.shape      # (3, 4)\nA[1, 2]      # 6   (row 1, column 2)\nA[:, 0]      # array([0, 4, 8])   the first column',
                 codeLanguage: 'python',
             },
@@ -118,6 +186,10 @@ export const foundationPhase0: FoundationPhase = {
                 'Off-by-one slices: A[0:2] gives two rows, not three.',
                 'Changing a slice and being surprised that the original changed too. Slices are views.',
                 'Looping over array elements in Python. One array operation is often 10 to 100 times faster.',
+            ],
+            myths: [
+                { claim: 'Changing a slice of a NumPy array leaves the original array untouched.', truth: 'A slice is a view: it shares memory with the original, so changing it changes the original too. Call .copy() when you need a separate array.' },
+                { claim: 'A[0:2] selects three rows: rows 0, 1 and 2.', truth: 'The end of a slice is left out, so A[0:2] gives two rows: row 0 and row 1.' },
             ],
             followUps: [
                 { q: 'A has shape (3, 4). What are A.ndim and A.size?', a: '2 and 12: two axes (rows and columns), and 3 × 4 = 12 numbers in total.' },
@@ -177,6 +249,10 @@ export const foundationPhase0: FoundationPhase = {
                 'Copying data with np.tile or np.repeat just to make shapes match. Broadcasting does this without using the memory.',
                 'Writing a Python loop over rows for something one array expression can do.',
             ],
+            myths: [
+                { claim: 'Shapes (n,) + (n, 1): NumPy raises an error.', truth: 'It raises no error: broadcasting quietly produces an (n, n) grid. That is why you should assert the shapes you expect.' },
+                { claim: 'Adding a row to every row of a matrix: copy the row first with np.tile.', truth: 'Broadcasting adds the row to every row without copying anything. np.tile would only use up memory.' },
+            ],
             followUps: [
                 { q: 'What shape is (4, 1) + (3,)? Use the rule.', a: '(3,) is padded to (1, 3). From the right: 1 fits 3, and 4 fits 1. The result is (4, 3).' },
                 { q: 'Does (4, 3) + (4,) work?', a: 'No. (4,) becomes (1, 4). From the right, 3 and 4 are unequal and neither is 1, so NumPy raises an error. Make it a column first: b[:, None] has shape (4, 1), which fits.' },
@@ -208,7 +284,7 @@ export const foundationPhase0: FoundationPhase = {
                 idea: 'A plot turns numbers into a picture, so you can see patterns and bugs. In ML, the most important plot is the loss curve.',
                 analogy: 'A car dashboard. You don\'t read engine data line by line. You glance at the gauges.',
                 breaks: 'A dashboard shows only the present. A loss curve shows the whole history of training, and that history is where the clues are.',
-                example: 'Four shapes to recognise: healthy (a fast fall, then a slow level), overfitting (training loss keeps falling while validation loss turns up), a learning rate that is too high (spiky, then NaN), and flat from the start (nothing is being learned).',
+                example: 'There are four shapes to recognise. Healthy: a fast fall, then a slow level. Overfitting: training loss keeps falling while validation loss turns up. A learning rate that is too high: spiky, then NaN. Flat from the start: nothing is being learned.',
                 code: 'import matplotlib.pyplot as plt\nplt.plot(losses)\nplt.xlabel("step"); plt.ylabel("loss")\nplt.yscale("log")   # makes small changes visible\nplt.show()',
                 codeLanguage: 'python',
             },
@@ -235,6 +311,10 @@ export const foundationPhase0: FoundationPhase = {
                 'A normal y-axis that hides late improvement. Try a log scale.',
                 'Passing a PyTorch tensor straight to Matplotlib. Convert it first with loss.item() or tensor.detach().cpu().numpy().',
             ],
+            myths: [
+                { claim: 'A normal, evenly spaced y-axis is the clearest way to see late improvements in a loss.', truth: 'On a normal axis, a loss that falls from 1,000 to 0.01 looks flat at the end. A log scale makes the late progress visible.' },
+                { claim: 'Two runs can be compared fairly even when their plots use different y-axis ranges.', truth: 'Different ranges make the same curve look steeper or flatter. Fix the range with plt.ylim, or draw both runs on the same axes.' },
+            ],
             followUps: [
                 { q: 'Your loss curve is flat from the very first step. What might be wrong?', a: 'Nothing is being learned. The learning rate may be far too small, the gradients may be zero (for example, a missing loss.backward()), or the weights are never updated.' },
                 { q: 'Training loss keeps falling, but validation loss started rising at epoch 20. What is happening, and what do you do?', a: 'Overfitting: the model is memorising the training data. Keep the model from epoch 20 (early stopping), or add regularisation or more data.' },
@@ -248,7 +328,7 @@ export const foundationPhase0: FoundationPhase = {
             practice: {
                 explain: 'Explain in two sentences why loss curves are often drawn on a log scale.',
                 derive: 'Before plotting anything, sketch by hand: a healthy loss curve, an overfitting pair of train and validation curves, and a learning rate that is too high.',
-                build: 'Plot y = x², its derivative 2x, and 50 noisy samples of y on one figure, with a legend and axis titles. Save it as a PNG.',
+                build: 'Plot y = x², the line 2x (its slope, which Unit 1 calls the derivative), and 50 noisy samples of y on one figure, with a legend and axis titles. Save it as a PNG.',
                 break: 'Plot a loss that falls from 1,000 to 0.01, first on a normal y-axis, then on a log y-axis. Which one hides the late progress, and why?',
             },
         },
@@ -292,6 +372,10 @@ export const foundationPhase0: FoundationPhase = {
                 'Messages like "update" or "fix". Say what changed and why.',
                 'Doing every experiment directly on main, so one broken idea breaks everything.',
             ],
+            myths: [
+                { claim: 'A leaked secret key: deleting it in a later commit removes it from the history.', truth: 'The earlier commit still contains it, and anyone with the repository can read it. A leaked key must be changed, not just deleted.' },
+                { claim: 'Experiments: do each one directly on main; branches are for finished work.', truth: 'One broken idea then breaks everything. Try each idea on its own branch, and merge it into main only when it works.' },
+            ],
             followUps: [
                 { q: 'What is the difference between git add and git commit?', a: 'git add stages a change: it chooses it for the next snapshot. git commit saves everything staged as a snapshot in your local repo.' },
                 { q: 'You committed, but your friend can\'t see it on GitHub. Why?', a: 'Commits stay on your computer until you git push them to GitHub.' },
@@ -313,7 +397,7 @@ export const foundationPhase0: FoundationPhase = {
         {
             id: 'f0-t5',
             name: 'Testing numerical code (np.allclose, pytest)',
-            definition: 'A test is a small program that runs your code on a case where you already know the answer, and fails loudly if the result is wrong; for decimals, it compares with a small tolerance.',
+            definition: 'A test is a small program that runs your code on a case where you already know the answer, and fails loudly when the result is wrong. Decimals are compared with a small tolerance.',
             problem: 'ML code fails quietly. A wrong axis, a sign error or a broadcasting slip still runs and still prints a loss. It just learns worse, and you may never notice. Tests catch these bugs the moment you make them, when they are cheap to fix. And because computers round decimals, the tests have to allow tiny differences.',
             diagram: {
                 code: 'flowchart LR\n  C["Your function<br/>softmax(x)"] --> T["Test with a case<br/>you already know"]\n  T --> Q{"np.allclose(result, expected)?"}\n  Q -->|"yes"| P["Test passes ✓"]\n  Q -->|"no"| F["Test fails ✗<br/>bug found early"]',
@@ -348,6 +432,10 @@ export const foundationPhase0: FoundationPhase = {
                 'A tolerance so loose that wrong answers pass.',
                 'Writing tests after the code "works", and so only testing what you already know works.',
                 'Working out the expected value with the same code you are testing, so the test repeats the bug.',
+            ],
+            myths: [
+                { claim: 'A good way to get a test\'s expected value is to compute it with the function you are testing.', truth: 'Then the test repeats any bug the function has, and still passes. Work the expected value out by hand, or in a different way.' },
+                { claim: 'What to test: the typical case; edge cases such as zeros or empty input can be left out.', truth: 'Bugs live in the edge cases: zeros, huge values, a single sample, empty input. Test those too.' },
             ],
             followUps: [
                 { q: 'Why does 0.1 + 0.2 == 0.3 return False?', a: '0.1 and 0.2 can\'t be stored exactly in binary, so their sum comes out as 0.30000000000000004. == demands exact equality.' },

@@ -41,6 +41,57 @@ describe('finding ML words', () => {
         expect(ids('add a metadata filter')).not.toContain('convolution');
     });
 
+    it('leaves the everyday words of a sentence alone', () => {
+        expect(ids('Shape (3, 4) means 3 rows and 4 columns.')).not.toContain('expectation');
+        expect(ids('Always judge a model on data it was not trained on.')).not.toContain('llm-as-judge');
+        expect(ids('Classification: majority vote among those k labels.')).not.toContain('chain-of-thought');
+        expect(ids('Multiply by a learned γ and add a learned β.')).not.toContain('discount');
+        expect(ids('Masks always make a copy.')).not.toContain('causal-mask');
+        expect(ids('a duplicated or derived feature')).not.toContain('de-duplication');
+    });
+
+    it('keeps a word plain in the lessons that use it in its everyday sense', () => {
+        const weather = "Is predicting tomorrow's temperature regression or classification?";
+        const marked = (text: string, topicId?: string) => g.segmentText(text, topicId).map(s => s.termId).filter(Boolean);
+        expect(marked(weather, 'f0-t6')).not.toContain('temperature');
+        expect(marked(weather)).toContain('temperature');
+        expect(marked('Temperature divides the logits by T.', 'f4-t7')).toContain('temperature');
+        expect(marked('git init turns a folder into a repository.', 'f0-t4')).not.toContain('initialisation');
+        expect(marked('What does that mean?', 'f1-t5')).not.toContain('mean');
+        expect(marked("subtract each feature's mean", 'f0-t2')).toContain('mean');
+        // The lesson's own lists follow: its words, and the new words it introduces.
+        expect(g.termsInTopic(topic('f0-t6'))).not.toContain('temperature');
+        for (const id of g.terms.flatMap(term => term.plainIn ?? [])) expect(g.findTopic(id), id).toBeDefined();
+    });
+
+    it('never teaches a word in a lesson that only uses its spelling for something else', () => {
+        const newWords = (id: string) => g.newWordsForTopic(topic(id)).map(t => t.id);
+        // The first lesson, the one every learner sees.
+        expect(newWords('f0-t6')).toEqual(expect.not.arrayContaining(['expectation', 'llm-as-judge', 'temperature']));
+        expect(newWords('f0-t1')).not.toContain('causal-mask');
+        expect(g.termsInTopic(topic('f2-t9'))).not.toContain('chain-of-thought');
+        expect(g.termsInTopic(topic('f3-t8'))).not.toContain('discount');
+    });
+
+    it('says every meaning of a word that has several', () => {
+        expect(g.getTerm('kernel')?.definition).toMatch(/SVM/);
+        expect(g.getTerm('kernel')?.definition).toMatch(/GPU/);
+        expect(g.getTerm('query')?.definition).toMatch(/search/);
+        expect(g.getTerm('query')?.definition).toMatch(/attention/);
+    });
+
+    it('explains maths notation, even inside a formula', () => {
+        expect(ids('∂L/∂w = xᵀ·(∂L/∂y)')).toEqual(expect.arrayContaining(['partial-sign', 'transpose']));
+        expect(ids('a·b = Σ aᵢbᵢ')).toContain('sum-sign');
+        expect(ids('w ← w − η·∇f(w)')).toEqual(expect.arrayContaining(['becomes-arrow', 'eta', 'nabla']));
+        expect(ids('the loss is −log p')).toContain('logarithm');
+        expect(ids('the logits before softmax')).not.toContain('logarithm');
+        const marked = (text: string, topicId: string) => g.segmentText(text, topicId).map(s => s.termId).filter(Boolean);
+        expect(marked('Add a /health endpoint and log the latency of every request.', 'f5-t7')).not.toContain('logarithm');
+        // A symbol is never asked for in "type the missing word": it can't be typed.
+        for (const id of ['sum-sign', 'nabla', 'sigma', 'eta']) expect(g.getTerm(id)?.term.length).toBe(1);
+    });
+
     it('matches acronyms only in capitals', () => {
         expect(ids('ML from scratch')).toContain('ml');
         expect(ids('the html file')).not.toContain('ml');

@@ -1,5 +1,6 @@
 import { glossaryTerms } from '../data/systemDesignGlossary';
 import { allSystemDesignTopics, SD_CHECK_KEYS, type SDTopic } from '../data/systemDesign';
+import { mythTexts } from '../data/lessonMyth';
 import { createGlossary } from './glossaryEngine';
 
 // The System Design glossary. The named exports below are kept so existing
@@ -11,6 +12,7 @@ export type { TextSegment } from './glossaryEngine';
 const topicProse = (topic: SDTopic): string[] => {
     const tail = [
         ...topic.mistakes,
+        ...mythTexts(topic.myths),
         topic.interviewAnswer,
         ...topic.followUps.flatMap(followUp => [followUp.q, followUp.a]),
         ...SD_CHECK_KEYS.map(key => topic.practice[key]),

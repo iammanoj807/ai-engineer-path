@@ -80,7 +80,7 @@ export const spokenForm = (text: string): string => {
 const adapt = <T extends AnyTopic>(glossary: GlossarySource<T>): PracticeGlossary => ({
     terms: glossary.terms,
     getTerm: id => glossary.getTerm(id),
-    segmentText: text => glossary.segmentText(text),
+    segmentText: (text, topicId) => glossary.segmentText(text, topicId),
     termsIn: topic => glossary.termsInTopic(topic as T),
     newWordsIn: topic => glossary.newWordsForTopic(topic as T),
 });
@@ -102,7 +102,7 @@ const add = (guide: Guide, text: string) => {
 
 for (const { course, topics, glossary, questions } of courses) {
     for (const topic of topics as AnyTopic[]) {
-        // The step-by-step lesson has every line of the quick practice, and the guess and each part's
+        // The step-by-step lesson has every line of the quick practice, and each part's
         // introduction too; then the interview question of later reviews.
         let cards = buildLearnSession(course, topic, { glossary, sqlAnswers });
         if (course === 'sql') cards = withFixCard(cards, sql => runOnPracticeDb(SQL, sql));

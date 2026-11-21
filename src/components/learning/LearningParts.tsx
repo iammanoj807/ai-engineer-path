@@ -15,8 +15,11 @@ import {
     ThemeProvider,
     type Theme,
 } from '@mui/material';
+import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import LightbulbRoundedIcon from '@mui/icons-material/LightbulbRounded';
+import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -92,6 +95,46 @@ export const TextSizeControl = ({
 );
 
 /** A step heading. One with an id is a section in the rail down the left (SectionRail). */
+/**
+ * The slim top of a lesson on a phone: the text size and the glossary on one
+ * row, in place of the course header, so the lesson itself starts near the top
+ * of the screen. Wider screens keep the full header.
+ */
+export const LessonToolbar = ({
+    textSize,
+    onTextSize,
+    onGlossary,
+}: {
+    textSize: TextSize;
+    onTextSize: (size: TextSize | null) => void;
+    onGlossary: () => void;
+}) => (
+    <Stack direction="row" spacing={1.5} alignItems="center" sx={{ display: { xs: 'flex', sm: 'none' }, mb: 2 }}>
+        <ToggleButtonGroup exclusive size="small" value={textSize} onChange={(_, size: TextSize | null) => onTextSize(size)} aria-label="Text size">
+            {(Object.keys(TEXT_SIZE_LABELS) as TextSize[]).map((size, index) => (
+                <ToggleButton
+                    key={size}
+                    value={size}
+                    aria-label={`Text size: ${TEXT_SIZE_LABELS[size]}`}
+                    // The same letter in three sizes: the usual sign for a text-size control.
+                    sx={{ minHeight: TAP, minWidth: TAP, px: 1, textTransform: 'none', fontWeight: 800, lineHeight: 1, fontSize: [14, 18, 22][index], '&:focus': { outline: 'none' } }}
+                >
+                    A
+                </ToggleButton>
+            ))}
+        </ToggleButtonGroup>
+        <Button
+            variant="outlined"
+            startIcon={<MenuBookRoundedIcon />}
+            onClick={onGlossary}
+            aria-haspopup="dialog"
+            sx={{ minHeight: TAP, px: 2, textTransform: 'none', fontWeight: 700, color: 'text.primary', borderColor: 'rgba(255,255,255,0.2)' }}
+        >
+            Glossary
+        </Button>
+    </Stack>
+);
+
 export const SectionLabel = ({ children, color = 'text.secondary', id }: { children: string; color?: string; id?: string }) => (
     <Typography
         id={id}
@@ -211,7 +254,7 @@ export const StepBar = ({ topicId, accent, steps }: { topicId: string; accent: s
     return (
         <Box
             component="nav"
-            aria-label="Steps for this topic"
+            aria-label="Steps for this lesson"
             sx={{
                 display: 'grid',
                 // Four steps fit in one row; more wrap onto as many rows as the width needs.
@@ -340,6 +383,36 @@ export const Callout = ({ kind, children }: { kind: 'mustKnow' | 'mistakes'; chi
             </Stack>
             {children}
         </Box>
+    );
+};
+
+/**
+ * A statement that sounds right and is wrong, with what is true straight under
+ * it. It closes "Common mistakes". `myths` comes in pairs: the false statement,
+ * then the truth. Practice later hides the same statement among true ones.
+ */
+export const MythCheck = ({ myths }: { myths: Prose[] }) => {
+    const t = useTextSize();
+    if (myths.length < 2) return null;
+    const line = (Icon: typeof CancelRoundedIcon, colour: string, label: string, value: Prose, muted: boolean) => (
+        <Stack direction="row" spacing={1} alignItems="flex-start">
+            {/* Sits on the first line of text, whatever the text size. */}
+            <Icon sx={{ color: colour, fontSize: `calc(${px(t.body1)} * 1.25)`, flexShrink: 0, mt: `calc(${px(t.body1)} * 0.22)` }} />
+            <Typography variant="body1" sx={{ minWidth: 0, overflowWrap: 'anywhere', color: muted ? 'text.secondary' : 'text.primary' }}>
+                <Box component="span" sx={{ fontWeight: 800, color: colour }}>{label}</Box>{' '}
+                <ProseText value={value} />
+            </Typography>
+        </Stack>
+    );
+    return (
+        <Stack spacing={1.5} sx={{ mt: 1.75, pt: 1.5, borderTop: `1px dashed ${MISTAKE}66` }}>
+            {Array.from({ length: Math.floor(myths.length / 2) }, (_, index) => (
+                <Stack key={index} spacing={0.75}>
+                    {line(CancelRoundedIcon, MISTAKE, 'Not true:', myths[2 * index], true)}
+                    {line(CheckCircleRoundedIcon, MUST_KNOW, 'In fact:', myths[2 * index + 1], false)}
+                </Stack>
+            ))}
+        </Stack>
     );
 };
 
@@ -479,6 +552,47 @@ export const FollowUps = ({
  * tried first. Anything passed as children (code, a query and its rows) goes
  * under the words.
  */
+/**
+ * The maths behind a lesson, closed until asked for: a derivation in numbered
+ * steps, then its result. Optional reading, so it says so.
+ */
+export const GoDeeper = ({ id, title, steps, result, accent }: { id: string; title: string; steps: Prose[]; result: Prose; accent: string }) => {
+    const [open, setOpen] = useState(false);
+    return (
+        <Box sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2, border: '1px dashed rgba(255,255,255,0.22)', bgcolor: 'rgba(255,255,255,0.02)' }}>
+            <Typography variant="caption" sx={{ display: 'block', color: accent, fontWeight: 800, letterSpacing: 0.8 }}>
+                GO DEEPER · OPTIONAL
+            </Typography>
+            <Typography sx={{ fontWeight: 700, color: 'text.primary', mt: 0.25 }}>{title}</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                The derivation behind this lesson, one small step at a time. You can skip it and come back later: nothing else depends on it.
+            </Typography>
+            <Button
+                size="small"
+                onClick={() => setOpen(current => !current)}
+                aria-expanded={open}
+                aria-controls={id}
+                sx={{ minHeight: TAP, mt: 0.5, ml: -1, px: 1, textTransform: 'none', fontWeight: 700, color: accent }}
+            >
+                {open ? 'Hide the derivation' : 'Show the derivation'}
+            </Button>
+            {open && (
+                <Box id={id} sx={{ mt: 1 }}>
+                    <NumberedSteps items={steps} accent={accent} variant="body2" />
+                    <Box sx={{ mt: 1.5, p: 1.5, borderRadius: 2, bgcolor: 'rgba(255,255,255,0.03)', borderLeft: '3px solid', borderLeftColor: accent }}>
+                        <Typography variant="caption" sx={{ display: 'block', color: accent, fontWeight: 800, letterSpacing: 0.8, mb: 0.5 }}>
+                            THE RESULT
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'text.primary', overflowWrap: 'anywhere' }}>
+                            <ProseText value={result} />
+                        </Typography>
+                    </Box>
+                </Box>
+            )}
+        </Box>
+    );
+};
+
 export const AnswerReveal = ({
     id,
     text,

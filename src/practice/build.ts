@@ -7,11 +7,12 @@
 // card, that card is left out.
 
 import type { FoundationTopic } from '../data/foundations';
+import type { LessonMyth } from '../data/lessonMyth';
 import type { SqlResultTable, SqlTopic, SqlTopicAnswers } from '../data/sql';
 import type { SDTopic } from '../data/systemDesign';
 import type { Course } from '../services/progress';
 import type { GlossaryTerm, TextSegment } from '../utils/glossaryEngine';
-import { isTeaching, type BlankCard, type GuessCard, type IdeaCard, type MatchCard, type MistakeCard, type OrderCard, type PracticeCard, type ReadCard, type RecallCard, type WordsCard } from './cards';
+import { isTeaching, type BlankCard, type IdeaCard, type MatchCard, type MistakeCard, type OrderCard, type PracticeCard, type ReadCard, type RecallCard, type WordsCard } from './cards';
 import { lessonOutline, type LessonSlot } from './lesson';
 import { seedOf, sqlFixCard, sqlPracticeCards, type WriteCard } from './sql';
 import { isTypable } from './typing';
@@ -22,7 +23,8 @@ export type AnyTopic = FoundationTopic | SqlTopic | SDTopic;
 export interface PracticeGlossary {
     terms: GlossaryTerm[];
     getTerm(id: string): GlossaryTerm | undefined;
-    segmentText(text: string): TextSegment[];
+    /** `topicId`: the lesson the text is from, so words that are plain there stay plain. */
+    segmentText(text: string, topicId?: string): TextSegment[];
     /** Every glossary word the lesson uses, in reading order. */
     termsIn(topic: AnyTopic): string[];
     /** The words this lesson is the first to use (not the one it teaches). */
@@ -46,21 +48,25 @@ export interface LessonText {
     /** True statements: key points, edge cases, trade-offs, deep dives. */
     facts: string[];
     mistakes: string[];
+    /** Statements that sound right and are wrong, with what is true instead. */
+    myths: LessonMyth[];
+    /** True when the definition is a task to do ("List every customer who…"), not a statement of fact. */
+    task?: boolean;
     followUps: { q: string; a: string }[];
 }
 
 export const lessonText = (topic: AnyTopic): LessonText => {
-    const base = { id: topic.id, name: topic.name, definition: topic.definition, mistakes: topic.mistakes, followUps: topic.followUps };
+    const base = { id: topic.id, name: topic.name, definition: topic.definition, mistakes: topic.mistakes, myths: topic.myths ?? [], followUps: topic.followUps };
     if ('note' in topic) return { ...base, analogy: topic.note.analogy, steps: topic.howItWorks, facts: topic.keyPoints };
     switch (topic.kind) {
         case 'lesson':
             return { ...base, analogy: topic.analogy, steps: topic.howItWorks, facts: topic.keyPoints };
         case 'problem':
-            return { ...base, steps: topic.approach, facts: topic.edgeCases };
+            return { ...base, steps: topic.approach, facts: topic.edgeCases, task: true };
         case 'concept':
             return { ...base, analogy: topic.analogy, steps: topic.howItWorks, facts: [...topic.keyPoints, ...(topic.tradeOffs ?? [])] };
         case 'design':
-            return { ...base, steps: topic.design.length >= 3 ? topic.design : topic.evolution, facts: topic.deepDives };
+            return { ...base, steps: topic.design.length >= 3 ? topic.design : topic.evolution, facts: topic.deepDives, task: true };
     }
 };
 
@@ -87,9 +93,16 @@ export const shuffle = <T>(items: T[], seed: string): T[] => {
     return out;
 };
 
-/** Sentences of a text. "e.g." and "i.e." don't end a sentence. */
+/** Where a sentence ends: its closing mark (and any bracket or quote after it), then a space or the end of the text. */
+const SENTENCE_END = String.raw`[.!?]+[)\]"'’”]*(?=\s|$)`;
+const SENTENCE = new RegExp(String.raw`(?:(?!${SENTENCE_END})[\s\S])+(?:${SENTENCE_END}|$)`, 'g');
+
+/**
+ * Sentences of a text. "e.g." and "i.e." don't end a sentence, and neither does
+ * a dot inside a number or a name: "A[A > 0.5]" and "model.eval()" stay whole.
+ */
 export const sentencesOf = (text: string): string[] =>
-    (text.replace(/\s+/g, ' ').replace(/\b(e\.g|i\.e|etc|vs)\./g, '$1\uE000').match(/[^.!?]+(?:[.!?]+|$)/g) ?? [])
+    (text.replace(/\s+/g, ' ').replace(/\b(e\.g|i\.e|etc|vs)\./g, '$1\uE000').match(SENTENCE) ?? [])
         .map(sentence => sentence.replace(/\uE000/g, '.').trim())
         .filter(Boolean);
 
@@ -193,7 +206,7 @@ const blankCards = (topic: AnyTopic, lesson: LessonText, glossary: PracticeGloss
     [lesson.definition, ...lesson.facts, ...lesson.steps].forEach((text, textIndex) => {
         for (const sentence of sentencesOf(text)) {
             if (sentence.length < 30 || sentence.length > 220 || hasLink(sentence)) continue;
-            const segments = glossary.segmentText(sentence);
+            const segments = glossary.segmentText(sentence, topic.id);
             let at = 0;
             for (const segment of segments) {
                 const start = at;
@@ -266,28 +279,69 @@ const orderCard = (lesson: LessonText): OrderCard[] => {
     return [];
 };
 
-/** One of the lesson's common mistakes among up to three of its true key points. */
-const mistakeCard = (lesson: LessonText): MistakeCard[] => {
-    const id = `${lesson.id}-mistake`;
-    const fits = (text: string) => text.length >= 20 && text.length <= 170 && !hasLink(text);
-    const mistake = lesson.mistakes.find(fits);
-    const facts = lesson.facts.filter(fits).slice(0, 3);
-    if (!mistake || facts.length < 2) return [];
-    return [{ kind: 'mistake', id, options: shuffle([{ text: mistake, mistake: true }, ...facts.map(text => ({ text, mistake: false }))], id) }];
-};
+/** A statement that can stand as one choice of a card: not too short to mean something, not too long to read at a glance. */
+const fitsCard = (text: string) => text.length >= 20 && text.length <= 170 && !hasLink(text);
+
+// How a statement looks, apart from what it says. Key points are often notes
+// ("Cache: fast memory holding copies…", a formula, a list with semicolons),
+// and some statements are sweeping ("always", "never", "every"). On a card, the
+// false statement must not be the only one of its look, or it can be found
+// without knowing the lesson.
+const NOTE_SIGNS = /[:;=→≈×∇←√Σ`]/;
+const SWEEPING_WORDS = /\b(always|never|every|everything|any|anything|all|only|enough|nothing|whatever|just as|safe|safely|impossible|guarantees?|certain|must|cannot|can't|unchanged|harmless|best|simplest|fairest|quickest|safest)\b/i;
+/** Written as a note (a label with a colon, a formula, a list), not as a plain sentence. */
+export const isNote = (text: string) => NOTE_SIGNS.test(text);
+/** Uses a sweeping word, the kind that test-wise readers distrust. */
+export const isSweeping = (text: string) => SWEEPING_WORDS.test(text);
+const alike = (a: string, b: string) => (isNote(a) === isNote(b) ? 2 : 0) + (isSweeping(a) === isSweeping(b) ? 1 : 0);
+
+/** A sentence that leans on the one before it ("It holds no data…") can't stand alone on a card. */
+const LEANS_BACK = /^(It|Its|This|That|These|Those|They|Their|He|She|So|But|And|Then|Here|There|Such|Both|Together|In short|Why)\b/;
 
 /**
- * The warm-up before learning: the lesson's second common mistake (false) and
- * a key point (true), never the statements the "spot the mistake" card shows.
+ * "Spot the mistake": one false statement among up to three true ones. A
+ * lesson has up to two of these, and they never share a statement.
+ *
+ * The false statement is one of the lesson's myths (src/data/lessonMyth.ts):
+ * written to sound like a key point, and the card says what is true once it is
+ * answered. A listed common mistake ("Forgetting to…") is never used here: its
+ * wording gives it away.
+ *
+ * The true statements are the lesson's key points and the sentences of its
+ * one-line definition. Each card takes the ones that look most like its false
+ * statement (a note among notes, a plain sentence among plain sentences), and
+ * the two cards take turns, so a lesson's few plain sentences are shared
+ * instead of all going to the first card.
+ *
+ * Both are asked after the lesson has taught them. Nothing is asked before:
+ * a statement like "Output size = (W − K + 2P)/S + 1" means nothing to someone
+ * who has not met the lesson yet.
  */
-export const guessCard = (lesson: LessonText): GuessCard[] => {
-    const id = `${lesson.id}-guess`;
-    const fits = (text: string) => text.length >= 20 && text.length <= 170 && !hasLink(text);
-    // mistakeCard uses the first mistake that fits and the first three facts.
-    const mistake = lesson.mistakes.filter(fits)[1];
-    const fact = lesson.facts.filter(fits)[3];
-    const statements = [...(mistake ? [{ text: mistake, isTrue: false }] : []), ...(fact ? [{ text: fact, isTrue: true }] : [])];
-    return statements.length ? [{ kind: 'guess', id, statements: shuffle(statements, id) }] : [];
+export const mistakeCards = (lesson: LessonText): MistakeCard[] => {
+    const facts = lesson.facts.filter(fitsCard);
+    const myths = lesson.myths.filter(myth => fitsCard(myth.claim)).slice(0, 2);
+    // Three true statements on the first card, then up to three on the second. A card needs at least two.
+    const first = Math.min(3, facts.length);
+    const sizes = [first, Math.min(3, facts.length - first)].map((size, n) => (myths[n] && size >= 2 ? size : 0));
+    // An interview problem's or a design question's "definition" is the task itself, which is not a statement to judge.
+    const definition = lesson.task ? [] : sentencesOf(lesson.definition).filter(sentence => fitsCard(sentence) && !sentence.endsWith('?') && !LEANS_BACK.test(sentence) && !facts.includes(sentence));
+    const pool = [...facts, ...definition].map((text, at) => ({ text, at }));
+    const truths: typeof pool[] = [[], []];
+    for (let round = 0; round < 3; round++) {
+        for (const n of [0, 1]) {
+            if (truths[n].length >= sizes[n] || pool.length === 0) continue;
+            // The most alike; of equals, the earliest in the lesson.
+            const best = pool.reduce((a, b) => (alike(myths[n].claim, b.text) > alike(myths[n].claim, a.text) ? b : a));
+            truths[n].push(best);
+            pool.splice(pool.indexOf(best), 1);
+        }
+    }
+    return sizes.flatMap((size, n): MistakeCard[] => {
+        if (!size) return [];
+        const id = `${lesson.id}-mistake${n === 0 ? '' : `-${n + 1}`}`;
+        const inOrder = [...truths[n]].sort((a, b) => a.at - b.at).map(({ text }) => ({ text, mistake: false }));
+        return [{ kind: 'mistake', id, options: shuffle([{ text: myths[n].claim, mistake: true }, ...inOrder], id), why: myths[n].truth }];
+    });
 };
 
 /** A question an interviewer would ask about the lesson, with its model answer. */
@@ -329,7 +383,8 @@ export const MAX_EXERCISES = 8;
  */
 /**
  * A lesson's quick practice: the idea and its new words, then the questions.
- * (The guess before learning is part of "Learn it step by step", below.)
+ * The second "spot the mistake" comes last, so it is the first to go when a
+ * session is already full.
  */
 export const buildSession = (course: Course, topic: AnyTopic, sources: SessionSources): PracticeCard[] => {
     const lesson = lessonText(topic);
@@ -339,11 +394,13 @@ export const buildSession = (course: Course, topic: AnyTopic, sources: SessionSo
     const order = orderCard(lesson);
     if (course === 'sql') {
         const sql = sqlPracticeCards(topic as SqlTopic, sources.sqlAnswers?.[topic.id]);
-        const exercises = [...match, ...blankCards(topic, lesson, sources.glossary, 1, matched), ...sql, ...order];
+        // SQL practice is mostly writing and reading queries: one "spot the mistake" at the end, if there is room.
+        const exercises = [...match, ...blankCards(topic, lesson, sources.glossary, 1, matched), ...sql, ...order, ...mistakeCards(lesson).slice(0, 1)];
         return [...teach, ...exercises.slice(0, MAX_EXERCISES)];
     }
     const blanks = blankCards(topic, lesson, sources.glossary, 2, matched);
-    const exercises = [...match, ...mistakeCard(lesson), ...order, ...blanks.slice(0, 1), ...recallCard(lesson), ...blanks.slice(1)];
+    const [spot, spotAgain] = mistakeCards(lesson);
+    const exercises = [...match, ...(spot ? [spot] : []), ...order, ...blanks.slice(0, 1), ...recallCard(lesson), ...blanks.slice(1), ...(spotAgain ? [spotAgain] : [])];
     return [...teach, ...exercises.slice(0, MAX_EXERCISES)];
 };
 
@@ -364,12 +421,13 @@ export const withFixCard = (cards: PracticeCard[], run: (sql: string) => SqlResu
 };
 
 /**
- * "Learn it step by step": the whole lesson inside practice. A guess first,
- * then each part of the lesson (why it matters, the idea, how it works, a
- * comparison, a worked example, what to remember, the common mistakes), each
- * followed by the question that checks it. Learning in small parts with a
- * question after each works better than reading it all, then testing
- * (interpolated testing). The questions are the same as the quick practice's.
+ * "Learn it step by step": the whole lesson inside practice. It teaches first:
+ * each part of the lesson (why it matters, the idea, how it works, a
+ * comparison, a worked example, what to remember, the common mistakes) is
+ * followed by the question that checks it, so nothing is ever asked before it
+ * has been taught. Learning in small parts with a question after each works
+ * better than reading it all, then testing (interpolated testing). The
+ * questions are the same as the quick practice's.
  */
 export const buildLearnSession = (course: Course, topic: AnyTopic, sources: SessionSources): PracticeCard[] => {
     const lesson = lessonText(topic);
@@ -388,7 +446,6 @@ export const buildLearnSession = (course: Course, topic: AnyTopic, sources: Sess
     // The comparison has its own part here, so the idea card shows just the idea and its picture.
     const idea: IdeaCard = { ...ideaCard(lesson), analogy: undefined };
     return [
-        ...guessCard(lesson),
         ...read('why'),
         idea,
         ...read('idea'),
@@ -402,8 +459,8 @@ export const buildLearnSession = (course: Course, topic: AnyTopic, sources: Sess
         ...take(['predict', 'write']),
         ...read('facts'),
         ...read('mistakes'),
-        ...take(['mistake']),
-        // What is left: the recall question, a second gap to fill.
+        ...take(['mistake'], false),
+        // What is left: the recall question, a second gap to fill, a second mistake to spot.
         ...exercises,
     ];
 };

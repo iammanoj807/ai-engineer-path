@@ -16,9 +16,9 @@ export const sqlPhase7: SqlPhase = {
             kind: 'lesson',
             name: 'Indexes: how a B-tree makes lookups fast',
             priority: 'must',
-            definition: 'An index is a separate, sorted copy of one or more columns — usually a B-tree — with pointers back to the rows, so the database can jump to matching rows instead of scanning the whole table.',
+            definition: 'An index is a separate, sorted copy of one or more columns, usually a B-tree, with pointers back to the rows. The database can then jump to the matching rows instead of scanning the whole table.',
             problem: 'Without an index, `WHERE order_date = \'2024-02-12\'` must read every row and check it: a full table scan. On 100 million rows that is slow, and it gets slower as the table grows. An index turns it into a few quick steps.',
-            idea: 'A B-tree index keeps the column\'s values in sorted order, in a shallow tree: a root page points to branch pages, which point to leaf pages holding each value and the row it belongs to. To find a value, the database walks from the root down — about 3 or 4 steps even for millions of rows — instead of reading everything. The primary key is indexed automatically. Indexes speed up WHERE, JOIN … ON, ORDER BY and MIN/MAX on the indexed column. The cost: every INSERT, UPDATE and DELETE must also update every index, and indexes take space.',
+            idea: 'A B-tree index keeps the column\'s values in sorted order, in a shallow tree. A root page points to branch pages, which point to leaf pages. The leaf pages hold each value and the row it belongs to. To find a value, the database walks from the root down — about 3 or 4 steps even for millions of rows — instead of reading everything.\n\nThe primary key is indexed automatically. Indexes speed up WHERE, JOIN … ON, ORDER BY and MIN/MAX on the indexed column.\n\nThe cost: every INSERT, UPDATE and DELETE must also update every index, and indexes take space.',
             analogy: 'The index at the back of a textbook. To find "photosynthesis" you don\'t read every page; you look it up alphabetically and jump to page 214. A full table scan is reading the book cover to cover.',
             breaks: 'A book index never changes once printed. A database index must be updated on every write — so a table with ten indexes is slow to write to. Index what you search by, not everything.',
             syntax: code`
@@ -79,10 +79,13 @@ export const sqlPhase7: SqlPhase = {
                 'Forgetting to index foreign keys, so joins and deletes on the parent table are slow.',
                 'Indexing a column with only a few values (like status) and expecting it to help a query that matches half the table.',
             ],
+            myths: [
+                { claim: 'Adding an index to every column makes the whole database faster.', truth: 'Every index has to be updated on each INSERT, UPDATE and DELETE, so extra indexes slow writes down. Index only the columns your queries filter, join or sort on.' },
+            ],
             dialects: [
                 'PostgreSQL also has hash, GIN (for arrays, JSON and full-text) and BRIN (for huge, naturally ordered tables) indexes. MySQL InnoDB stores the table itself in primary-key order (a clustered index).',
             ],
-            interviewAnswer: 'An index is a separate sorted structure, typically a B-tree, mapping column values to row locations, so the database can find matching rows in logarithmic time instead of scanning the table. I index columns used in selective WHERE filters, join keys — especially foreign keys — and ORDER BY, and I keep in mind the trade-off: every index adds work to inserts, updates and deletes, and uses storage.',
+            interviewAnswer: 'An index is a separate sorted structure, typically a B-tree, mapping column values to row locations, so the database can find matching rows in logarithmic time instead of scanning the table. I index columns used in selective WHERE filters, in join keys (especially foreign keys) and in ORDER BY. I keep the trade-off in mind: every index adds work to inserts, updates and deletes, and uses storage.',
             followUps: [
                 { q: 'What is the difference between a clustered and a non-clustered index?', a: 'A clustered index stores the table\'s rows themselves in index order (one per table, often the primary key, as in SQL Server and MySQL InnoDB). A non-clustered index is a separate structure that points to the rows.' },
                 { q: 'Why not index every column?', a: 'Each index must be updated on every write and takes space, and the optimiser can only use a few per query anyway.' },
@@ -107,7 +110,7 @@ export const sqlPhase7: SqlPhase = {
             priority: 'should',
             definition: 'EXPLAIN shows the plan the database chose for a query — which tables it scans, which indexes it searches, how it joins and sorts — without (or, with ANALYZE, while) running it.',
             problem: '"This query is slow — what do you do?" The first answer is always: look at the plan. Guessing wastes time; the plan tells you whether the database is scanning a huge table, missing an index, or sorting millions of rows.',
-            idea: 'Put EXPLAIN in front of a query (in SQLite, EXPLAIN QUERY PLAN). Read each line as one step. The words to look for: SCAN (reading a whole table — fine if small, a red flag if big), SEARCH … USING INDEX (jumping to rows — good), and TEMP B-TREE or Sort (building a sort or grouping — costly on big data). For a join, each line is one table, in the order the database reads them: it scans one and searches the other for each row. PostgreSQL\'s EXPLAIN ANALYZE also runs the query and shows real times and row counts — compare estimated rows with actual rows to spot bad estimates.',
+            idea: 'Put EXPLAIN in front of a query (in SQLite, EXPLAIN QUERY PLAN). Read each line as one step.\n\nThere are three words to look for.\nSCAN means reading a whole table: fine if it is small, a red flag if it is big.\nSEARCH … USING INDEX means jumping straight to rows: good.\nTEMP B-TREE or Sort means building a sort or a grouping: costly on big data.\n\nFor a join, each line is one table, in the order the database reads them: it scans one and searches the other for each row.\n\nPostgreSQL\'s EXPLAIN ANALYZE also runs the query and shows real times and row counts — compare estimated rows with actual rows to spot bad estimates.',
             analogy: 'A satnav showing the route before you drive. You can see it plans to go through the city centre (a full scan) instead of the bypass (an index), and fix it before you set off.',
             breaks: 'A satnav\'s route is the same every time. A query plan can change as the data grows or statistics update — a plan that is fine on 10 rows may be terrible on 10 million. Always check plans on realistic data.',
             syntax: code`
@@ -177,6 +180,9 @@ export const sqlPhase7: SqlPhase = {
                 'Judging a plan on a tiny test table — the optimiser may choose differently on real data.',
                 'Running EXPLAIN ANALYZE on a DELETE or UPDATE in production. It really runs the statement.',
             ],
+            myths: [
+                { claim: 'The plan chosen on a tiny test table is the plan the database will use on the real data.', truth: 'The optimiser decides from table sizes and statistics. On a tiny table it may read everything, where on millions of rows it would use an index, so test on realistic data.' },
+            ],
             dialects: [
                 'PostgreSQL plan words: Seq Scan (full scan), Index Scan, Index Only Scan, Bitmap Heap Scan, Nested Loop, Hash Join, Merge Join, Sort.',
                 'MySQL: `EXPLAIN` gives a table with a `type` column — ALL is a full scan, ref/range/const use an index. `EXPLAIN ANALYZE` exists from 8.0.18.',
@@ -203,9 +209,9 @@ export const sqlPhase7: SqlPhase = {
             kind: 'lesson',
             name: 'Index-friendly queries: sargable filters and composite indexes',
             priority: 'should',
-            definition: 'A filter is sargable when the database can use an index for it — the indexed column stands alone on one side of the comparison — and a composite index on (a, b) helps queries that filter on a, or on a and b, but not on b alone.',
+            definition: 'A filter is sargable when the database can use an index for it: the indexed column stands alone on one side of the comparison. A composite index on (a, b) helps queries that filter on a, or on a and b, but not on b alone.',
             problem: 'An index can exist and still not be used. `WHERE strftime(\'%Y-%m\', order_date) = \'2024-02\'` reads every row even with an index on order_date. Knowing the rules lets you write the same filter in a way that uses the index.',
-            idea: 'The index stores the raw column values in order. If you wrap the column in a function (`UPPER(name)`, `strftime(…)`), do maths on it (`salary + 0 > 60000`), or start a LIKE with % (\'%son\'), the database can\'t search the sorted values, so it scans. Rewrite the condition so the bare column is compared with a value: a date range instead of a function. A composite index on (customer_id, order_date) is sorted by customer, then by date within each customer — like a phone book sorted by surname, then first name. It helps `customer_id = 1`, and `customer_id = 1 AND order_date >= …`, but not `order_date >= …` alone: the leftmost-prefix rule. If the index contains every column the query needs, it is a covering index, and the table itself isn\'t touched.',
+            idea: 'The index stores the raw column values in order. If you wrap the column in a function (`UPPER(name)`, `strftime(…)`), do maths on it (`salary + 0 > 60000`), or start a LIKE with % (\'%son\'), the database can\'t search the sorted values, so it scans. Rewrite the condition so the bare column is compared with a value: a date range instead of a function.\n\nA composite index on (customer_id, order_date) is sorted by customer, then by date within each customer — like a phone book sorted by surname, then first name. It helps `customer_id = 1`, and `customer_id = 1 AND order_date >= …`, but not `order_date >= …` alone: the leftmost-prefix rule.\n\nIf the index contains every column the query needs, it is a covering index, and the table itself isn\'t touched.',
             analogy: 'A phone book sorted by surname, then first name. Finding "Smith, John" is quick; finding all the Smiths is quick; finding everyone called John is not — you would have to read the whole book.',
             breaks: 'A person might notice that the Johns are easy to find if there are only five surnames. Some databases can do a "skip scan" too, but don\'t count on it — design the column order for the queries you really run.',
             syntax: code`
@@ -278,15 +284,18 @@ export const sqlPhase7: SqlPhase = {
                 'A covering index holds every column a query needs, so the table isn\'t read at all.',
             ],
             mistakes: [
-                '`WHERE YEAR(order_date) = 2024` on an indexed date column.',
+                'Writing `WHERE YEAR(order_date) = 2024` on an indexed date column: the function hides the column, so the index can\'t be used.',
                 'Creating (order_date, customer_id) when the queries filter by customer first.',
                 'Comparing a column with a value of another type (a number column with \'42\'), which can force a conversion on every row.',
+            ],
+            myths: [
+                { claim: '`WHERE YEAR(order_date) = 2024` can still use an index on order_date.', truth: 'The function hides the column, so the index cannot be used and every row is checked. Write a range instead: `order_date >= \'2024-01-01\' AND order_date < \'2025-01-01\'`.' },
             ],
             dialects: [
                 'PostgreSQL and Oracle support expression indexes, such as `CREATE INDEX ON customers (LOWER(email))`, which make that exact function sargable. MySQL 8 has functional indexes too.',
                 'PostgreSQL and SQL Server let you add extra non-key columns to make an index covering: `INCLUDE (amount)`.',
             ],
-            interviewAnswer: 'An index can only be used when the predicate is sargable — the indexed column appears bare, compared with a constant or range — so I avoid functions or arithmetic on indexed columns and rewrite things like `YEAR(date) = 2024` as a date range. For composite indexes the leftmost-prefix rule applies: an index on customer_id then order_date serves filters on customer, or customer and date, but not date alone, so I put equality columns first and range columns last, and make the index covering when a hot query only needs a few columns.',
+            interviewAnswer: 'An index can only be used when the predicate is sargable: the indexed column appears bare, compared with a constant or a range. So I avoid functions or arithmetic on indexed columns, and rewrite things like `YEAR(date) = 2024` as a date range. For composite indexes the leftmost-prefix rule applies: an index on customer_id then order_date serves filters on customer, or on customer and date, but not on date alone. So I put equality columns first and range columns last. When a hot query needs only a few columns, I make the index covering.',
             followUps: [
                 { q: 'What does sargable mean?', a: 'Search-ARGument-ABLE: written so the database can use an index to evaluate it.' },
                 { q: 'Index (a, b) or (b, a)?', a: 'Match the queries: the column filtered with = in most queries goes first; a column used for ranges or sorting goes after it.' },
@@ -309,9 +318,9 @@ export const sqlPhase7: SqlPhase = {
             kind: 'lesson',
             name: 'How a database runs a join: nested loop, hash join, merge join',
             priority: 'bonus',
-            definition: 'Databases use three main join methods — a nested loop (for each row of one table, look up matches in the other), a hash join (build a hash table of one side, probe it with the other), and a merge join (walk two sorted inputs together) — and the optimiser picks one per join.',
+            definition: 'A database has three main ways to run a join. A nested loop looks up matches in the other table for each row of one. A hash join builds a hash table from one side and probes it with the other. A merge join walks two sorted inputs together. The optimiser picks one for each join.',
             problem: 'In senior interviews you may be asked why a join is slow or what a plan line like "Hash Join" means. Knowing the three methods tells you which index or memory setting will help.',
-            idea: 'Nested loop: for each row of the outer table, find matching rows in the inner table — fast when the outer side is small and the inner side has an index on the join key (that is what SQLite did in the last lesson). Hash join: read the smaller table into a hash table keyed on the join column, then stream the bigger table past it, checking each row — great for big, unindexed equality joins, but it needs memory. Merge join: if both sides are sorted on the key (by an index, or by sorting first), walk them side by side like zipping a zip — good for big inputs already in order.',
+            idea: 'Nested loop: for each row of the outer table, find the matching rows in the inner table. It is fast when the outer side is small and the inner side has an index on the join key (that is what SQLite did in the last lesson).\n\nHash join: read the smaller table into a hash table keyed on the join column, then stream the bigger table past it, checking each row. It is great for big equality joins with no index, but it needs memory.\n\nMerge join: if both sides are sorted on the key (by an index, or by sorting first), walk them side by side, like closing a zip. It is good for big inputs that are already in order.',
             analogy: 'Matching wedding guests to tables. Nested loop: take each guest and look their name up in the seating plan. Hash join: first make a quick lookup card per surname, then let every guest find their card. Merge join: line up the guests alphabetically and the seating list alphabetically, then walk down both together.',
             breaks: 'At a wedding you would pick the method by eye. A database picks it from estimates of how many rows each side has — wrong estimates are the main reason it picks badly.',
             howItWorks: [
@@ -350,6 +359,9 @@ export const sqlPhase7: SqlPhase = {
                 'Thinking an index always makes a join faster: for a hash join over whole tables it may not be used at all.',
                 'Ignoring a nested loop over two large tables without an index — it grows as N × M.',
                 'Forcing a join method with hints instead of fixing the statistics or indexes.',
+            ],
+            myths: [
+                { claim: 'An index on the join column speeds up a hash join over whole tables.', truth: 'A hash join that reads whole tables may not use the index at all. An index helps most when only a few rows are looked up, as in a nested loop.' },
             ],
             dialects: [
                 'PostgreSQL, SQL Server and Oracle use all three methods. SQLite uses nested loops (with automatic temporary indexes). MySQL added hash joins in 8.0.18.',

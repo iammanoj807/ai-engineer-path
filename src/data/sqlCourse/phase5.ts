@@ -16,9 +16,9 @@ export const sqlPhase5: SqlPhase = {
             kind: 'lesson',
             name: 'What a window function is: OVER and PARTITION BY',
             priority: 'must',
-            definition: 'A window function calculates a value for each row from a set of related rows (its "window"), defined by OVER (PARTITION BY … ORDER BY …), and — unlike GROUP BY — keeps every row in the result.',
+            definition: 'A window function calculates a value for each row from a set of related rows, its "window", which is defined by OVER (PARTITION BY … ORDER BY …). Unlike GROUP BY, it keeps every row in the result.',
             problem: '"Show each employee with their department\'s average salary next to them." GROUP BY gives you the averages but throws away the employees; joining the averages back is clumsy. A window function puts the group\'s number on every row in one step.',
-            idea: 'Add OVER (…) after a function and it becomes a window function. OVER () with nothing inside means "the window is every row". PARTITION BY dept_id splits the rows into windows, one per department, like GROUP BY — but the rows stay separate, and each row gets its own window\'s answer. ORDER BY inside OVER sets an order within each window, which ranking and running totals need. Any aggregate (SUM, AVG, COUNT, MIN, MAX) can be used this way, plus special window-only functions such as ROW_NUMBER and LAG.',
+            idea: 'Add OVER (…) after a function and it becomes a window function. OVER () with nothing inside means "the window is every row". PARTITION BY dept_id splits the rows into windows, one per department, like GROUP BY — but the rows stay separate, and each row gets its own window\'s answer.\n\nORDER BY inside OVER sets an order within each window, which ranking and running totals need. Any aggregate (SUM, AVG, COUNT, MIN, MAX) can be used this way, plus special window-only functions such as ROW_NUMBER and LAG.',
             analogy: 'A class photo where each pupil holds a card. GROUP BY would replace each form group with one person holding the group\'s average. A window function keeps every pupil in the photo, and each one\'s card shows their own form group\'s average.',
             breaks: 'In the photo the card is written once. A window function is worked out in the SELECT step, after WHERE and GROUP BY — so WHERE can\'t filter on it. To filter on a window result, wrap the query in a CTE.',
             syntax: code`
@@ -96,10 +96,13 @@ export const sqlPhase5: SqlPhase = {
                 'Adding GROUP BY when you wanted every row kept.',
                 'Confusing the ORDER BY inside OVER (order within the window) with the query\'s ORDER BY (order of the output).',
             ],
+            myths: [
+                { claim: 'A window function can be used directly in WHERE to filter rows.', truth: 'Window functions are worked out after WHERE has run. Compute the value in a subquery or a CTE, then filter in the outer query.' },
+            ],
             dialects: [
                 'Window functions work in PostgreSQL, SQL Server, Oracle, MySQL 8+ and SQLite 3.25+. Older MySQL (5.7) has none.',
             ],
-            interviewAnswer: 'A window function computes a value over a set of rows related to the current row, defined by the OVER clause — PARTITION BY says which rows share the window and ORDER BY orders them — but unlike GROUP BY it doesn\'t collapse rows, so each row keeps its detail and gains the computed value. Because they are evaluated in the SELECT phase, I filter on them from an outer query or CTE.',
+            interviewAnswer: 'A window function computes a value over a set of rows related to the current row. The OVER clause defines that set: PARTITION BY says which rows share the window, and ORDER BY orders them. Unlike GROUP BY, it doesn\'t collapse rows, so each row keeps its detail and gains the computed value. Because window functions are evaluated in the SELECT phase, I filter on them from an outer query or CTE.',
             followUps: [
                 { q: 'GROUP BY or a window function — how do you choose?', a: 'If you want one row per group, GROUP BY. If you want every row plus a group value next to it (an average, a rank, a running total), a window function.' },
                 { q: 'Why can\'t you use a window function in WHERE?', a: 'WHERE runs before the SELECT step where window functions are computed. Put the window function in a CTE and filter outside.' },
@@ -121,9 +124,9 @@ export const sqlPhase5: SqlPhase = {
             kind: 'lesson',
             name: 'Ranking: ROW_NUMBER, RANK and DENSE_RANK',
             priority: 'must',
-            definition: 'ROW_NUMBER numbers rows 1, 2, 3, 4 with no ties; RANK gives ties the same number and then skips (1, 2, 2, 4); DENSE_RANK gives ties the same number without skipping (1, 2, 2, 3).',
+            definition: 'ROW_NUMBER numbers the rows 1, 2, 3, 4 with no ties. RANK gives ties the same number and then skips (1, 2, 2, 4). DENSE_RANK gives ties the same number without skipping (1, 2, 2, 3).',
             problem: '"Top 3 per department", "the second-highest salary", "each customer\'s first order" — ranking questions are the most common window-function questions in interviews. The only hard part is ties, and the three functions differ exactly there.',
-            idea: 'All three need ORDER BY inside OVER, which decides who comes first. ROW_NUMBER always gives different numbers, so if two rows tie, which one gets 3 and which gets 4 is arbitrary unless you add a tiebreaker column. RANK is like a sports ranking: two people sharing 3rd place means nobody is 4th. DENSE_RANK doesn\'t leave gaps, so "the 2nd highest salary" is simply DENSE_RANK = 2. Add PARTITION BY to restart the numbering in each group.',
+            idea: 'All three need ORDER BY inside OVER, which decides who comes first.\nROW_NUMBER always gives different numbers, so if two rows tie, which one gets 3 and which gets 4 is arbitrary unless you add a tiebreaker column.\nRANK is like a sports ranking: two people sharing 3rd place means nobody is 4th.\nDENSE_RANK doesn\'t leave gaps, so "the 2nd highest salary" is simply DENSE_RANK = 2.\n\nAdd PARTITION BY to restart the numbering in each group.',
             analogy: 'A race with two runners crossing the line together in third. ROW_NUMBER is the finish-line camera that must put one of them first. RANK is the medal table: both get third, and the next runner is fifth. DENSE_RANK is "positions": both third, the next runner fourth.',
             breaks: 'A photo finish has a real answer. ROW_NUMBER\'s choice between tied rows doesn\'t — it can differ between runs — so always add a tiebreaker (like name or id) when you use ROW_NUMBER.',
             syntax: code`
@@ -209,6 +212,9 @@ export const sqlPhase5: SqlPhase = {
                 'Using RANK for "the 2nd highest salary" — after a tie at 1st, there is no rank 2.',
                 'Forgetting the tiebreaker in ROW_NUMBER, so results change from run to run.',
             ],
+            myths: [
+                { claim: 'RANK is the function to use for finding the second highest salary.', truth: 'After a tie for first place, RANK jumps from 1 to 3, so there is no rank 2. DENSE_RANK leaves no gaps: use it for "Nth highest".' },
+            ],
             dialects: [
                 'Naming a column `rank` fails in MySQL 8, where RANK is a reserved word. Use rank_num or rnk.',
             ],
@@ -235,9 +241,9 @@ export const sqlPhase5: SqlPhase = {
             kind: 'lesson',
             name: 'LAG and LEAD: comparing with the previous or next row',
             priority: 'must',
-            definition: '`LAG(column)` returns the value from the previous row and `LEAD(column)` the value from the next row, in the order set by OVER (… ORDER BY …), so a row can be compared with its neighbour.',
+            definition: '`LAG(column)` returns the value from the previous row and `LEAD(column)` the value from the next row, in the order set by OVER (… ORDER BY …). That lets a row be compared with its neighbour.',
             problem: '"How much did revenue change since last month?", "how many days between a customer\'s orders?", "did the price go up?" — each compares a row with the one before it. Without LAG, that means a tricky self join on "the previous date". With LAG it is one line.',
-            idea: '`LAG(revenue) OVER (ORDER BY month)` looks one row back in month order. The first row has no previous row, so it gets NULL (or a default you give as the third argument: `LAG(revenue, 1, 0)`). LEAD looks forward instead. The second argument says how far: `LAG(revenue, 12)` is the same month last year in monthly data. Add PARTITION BY customer_id and the looking-back stops at each customer\'s boundary, so one customer\'s first order never looks back into another customer\'s orders.',
+            idea: '`LAG(revenue) OVER (ORDER BY month)` looks one row back in month order. The first row has no previous row, so it gets NULL (or a default you give as the third argument: `LAG(revenue, 1, 0)`). LEAD looks forward instead. The second argument says how far: `LAG(revenue, 12)` is the same month last year in monthly data.\n\nAdd PARTITION BY customer_id and the looking-back stops at each customer\'s boundary, so one customer\'s first order never looks back into another customer\'s orders.',
             analogy: 'Reading a bank statement line by line with your finger on the line above. LAG is that line above; the difference between them is the change.',
             breaks: 'On a statement the line above is always the day before. LAG gives the previous row, not the previous day: if a month has no orders, it has no row, and LAG silently compares March with January. Fill the gaps first when it matters.',
             syntax: code`
@@ -322,6 +328,9 @@ export const sqlPhase5: SqlPhase = {
                 'Assuming the previous row is the previous day or month when there are gaps.',
                 'Dividing by LAG without guarding against NULL or zero.',
             ],
+            myths: [
+                { claim: 'In daily data, the previous row in a window is the previous day, even when days are missing.', truth: 'LAG looks one row back, not one day back. If a day has no row, the previous row is an older day, so check for gaps before calling a change day-on-day.' },
+            ],
             dialects: [
                 'Date differences: PostgreSQL `order_date - LAG(order_date) OVER (…)` gives days directly for DATE columns; MySQL uses DATEDIFF; SQL Server uses `DATEDIFF(day, …)`.',
             ],
@@ -349,7 +358,7 @@ export const sqlPhase5: SqlPhase = {
             priority: 'must',
             definition: 'With ORDER BY inside OVER, SUM and AVG become running totals; a frame such as `ROWS BETWEEN 2 PRECEDING AND CURRENT ROW` limits the window to nearby rows, giving a moving average.',
             problem: '"Cumulative revenue by day", "7-day moving average of sign-ups" — growth charts are built on these. They also hide a classic trap: the default frame treats tied rows as one, which surprises almost everyone.',
-            idea: '`SUM(amount) OVER (ORDER BY order_date)` adds up everything from the first row to the current row: a running total. The frame says which rows count: `ROWS BETWEEN 2 PRECEDING AND CURRENT ROW` means this row and the two before it — so AVG over it is a 3-row moving average. The trap: when you write ORDER BY without a frame, the default is RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW, and RANGE includes every row tied with the current one. So two orders on the same day both show the total after both. Write ROWS explicitly when you want one row at a time.',
+            idea: '`SUM(amount) OVER (ORDER BY order_date)` adds up everything from the first row to the current row: a running total. The frame says which rows count: `ROWS BETWEEN 2 PRECEDING AND CURRENT ROW` means this row and the two before it — so AVG over it is a 3-row moving average.\n\nThe trap: when you write ORDER BY without a frame, the default is RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW, and RANGE includes every row tied with the current one. So two orders on the same day both show the total after both. Write ROWS explicitly when you want one row at a time.',
             analogy: 'A running total is a savings jar you never empty: each week you add the new amount and read the total. A moving average is a "last three weeks" window you slide along: the oldest week drops out as a new one comes in.',
             breaks: 'Weeks never tie. Rows can: with the default RANGE frame, two rows with the same ORDER BY value are treated as arriving at the same moment, so both see the total including each other.',
             syntax: code`
@@ -441,7 +450,7 @@ export const sqlPhase5: SqlPhase = {
                 'Aggregate + OVER (ORDER BY …) = a running total (or running count, max…).',
                 'The default frame with ORDER BY is RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW — tied rows are included together.',
                 'Write ROWS explicitly for row-by-row running totals and for moving averages.',
-                '`ROWS BETWEEN n PRECEDING AND CURRENT ROW` = the last n + 1 rows.',
+                '`ROWS BETWEEN n PRECEDING AND CURRENT ROW` is a frame of the last n + 1 rows: the current row and the n before it.',
                 'Without ORDER BY in OVER, the frame is the whole partition, so you get the total, not a running total.',
             ],
             mistakes: [
@@ -449,11 +458,14 @@ export const sqlPhase5: SqlPhase = {
                 'A "7-day" moving average with ROWS 6 PRECEDING when some days are missing — that is 7 rows, not 7 days.',
                 'Forgetting PARTITION BY, so one customer\'s running total continues into the next customer\'s.',
             ],
+            myths: [
+                { claim: '`ROWS 6 PRECEDING` covers the last 7 days, even when some days have no row.', truth: 'It covers the last 7 rows. If some days have no row, those 7 rows reach further back than 7 days, so check for missing days first.' },
+            ],
             dialects: [
                 'PostgreSQL, SQLite and Oracle also allow RANGE with an offset for real time windows: `RANGE BETWEEN INTERVAL \'6 days\' PRECEDING AND CURRENT ROW` (PostgreSQL).',
                 'SQL Server supports ROWS and RANGE frames, but RANGE only with UNBOUNDED or CURRENT ROW.',
             ],
-            interviewAnswer: 'Adding ORDER BY to an aggregate\'s OVER clause makes it cumulative, which gives running totals; a frame clause like ROWS BETWEEN 2 PRECEDING AND CURRENT ROW narrows it to a sliding window for moving averages. The subtle point is the default frame, RANGE up to the current row, which lumps tied ORDER BY values together — so I specify ROWS explicitly, with a unique tiebreaker, whenever ties are possible.',
+            interviewAnswer: 'Adding ORDER BY to an aggregate\'s OVER clause makes it cumulative, which gives running totals. A frame clause like ROWS BETWEEN 2 PRECEDING AND CURRENT ROW narrows it to a sliding window, for moving averages. The subtle point is the default frame, RANGE up to the current row, which lumps tied ORDER BY values together. So I specify ROWS explicitly, with a unique tiebreaker, whenever ties are possible.',
             followUps: [
                 { q: 'What is the default window frame?', a: 'With ORDER BY: RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW. Without ORDER BY: the whole partition.' },
                 { q: 'ROWS or RANGE — what is the difference?', a: 'ROWS counts physical rows. RANGE works on values, so all rows with the same ORDER BY value are in or out together.' },
@@ -476,9 +488,9 @@ export const sqlPhase5: SqlPhase = {
             kind: 'lesson',
             name: 'Share of total, NTILE and FIRST_VALUE',
             priority: 'should',
-            definition: '`x / SUM(x) OVER ()` gives each row\'s share of the total; `NTILE(n)` splits ordered rows into n roughly equal buckets; FIRST_VALUE and LAST_VALUE pull a value from the first or last row of the window.',
-            problem: '"What percentage of revenue does each category bring?", "put customers into spending quartiles", "show the top earner\'s name next to everyone in their department" — all common analytics asks that window functions answer in one line.',
-            idea: '`SUM(revenue) OVER ()` is the grand total, written on every row, so `100.0 * revenue / SUM(revenue) OVER ()` is the percentage of the total. With PARTITION BY you get the share within each group instead. `NTILE(4) OVER (ORDER BY salary DESC)` deals the sorted rows into 4 buckets, like dealing cards: 1 is the top quarter. `FIRST_VALUE(name) OVER (PARTITION BY dept_id ORDER BY salary DESC)` is the name on the first row of each department\'s window — the top earner.',
+            definition: '`x / SUM(x) OVER ()` gives each row\'s share of the total. `NTILE(n)` splits the ordered rows into n roughly equal buckets. FIRST_VALUE and LAST_VALUE pull a value from the first or last row of the window.',
+            problem: '"What percentage of revenue does each category bring?", "put customers into spending quartiles", "show the top earner\'s name next to everyone in their department". These are all common analytics requests, and window functions answer each one in a single line.',
+            idea: '`SUM(revenue) OVER ()` is the grand total, written on every row, so `100.0 * revenue / SUM(revenue) OVER ()` is the percentage of the total. With PARTITION BY you get the share within each group instead.\n\n`NTILE(4) OVER (ORDER BY salary DESC)` deals the sorted rows into 4 buckets, like dealing cards: 1 is the top quarter.\n\n`FIRST_VALUE(name) OVER (PARTITION BY dept_id ORDER BY salary DESC)` is the name on the first row of each department\'s window — the top earner.',
             analogy: 'A pie chart, a league split into divisions, and a team captain. Share of total is each slice of the pie; NTILE puts teams into divisions by points; FIRST_VALUE is the captain\'s name printed on every player\'s shirt.',
             breaks: 'Divisions in a league can be unequal by design. NTILE always makes buckets as equal as possible, so tied values can land in different buckets — fine for "roughly top 25%", wrong if ties must stay together.',
             syntax: code`
@@ -557,7 +569,10 @@ export const sqlPhase5: SqlPhase = {
                 'Using LAST_VALUE with the default frame and getting the current row\'s value.',
                 'Expecting NTILE to keep tied values in the same bucket.',
             ],
-            interviewAnswer: 'For share-of-total I divide each row by SUM over an empty or partitioned window, multiplying by 100.0 to avoid integer division. NTILE buckets ordered rows into n near-equal groups for quartiles or deciles, and FIRST_VALUE picks the first row\'s value in each window — for LAST_VALUE I widen the frame to unbounded following, because the default frame stops at the current row.',
+            myths: [
+                { claim: '`NTILE(4)`: rows with the same value land in the same bucket.', truth: 'NTILE only makes the buckets as equal in size as possible, so tied values can be split between two buckets. Use a rank when ties must stay together.' },
+            ],
+            interviewAnswer: 'For share-of-total I divide each row by SUM over an empty or partitioned window, multiplying by 100.0 to avoid integer division. NTILE buckets ordered rows into n near-equal groups, for quartiles or deciles. FIRST_VALUE picks the first row\'s value in each window. For LAST_VALUE I widen the frame to unbounded following, because the default frame stops at the current row.',
             followUps: [
                 { q: 'How would you show each product\'s share of revenue within its category?', a: 'Use `SUM(revenue) OVER (PARTITION BY category)` as the divisor.' },
                 { q: '`NTILE(4)` on 10 rows — how big are the buckets?', a: '3, 3, 2, 2. The leftover rows go to the first buckets.' },

@@ -45,6 +45,11 @@ const bigPictures = new Map<string, string>(
     [...foundationPhases, ...sqlPhases, ...systemDesignPhases].map(phase => [phase.id, phase.bigPicture]),
 );
 
+/** The lesson's listed mistakes, then its false statement with what is true straight under it. */
+const mistakes = (topic: AnyTopic) =>
+    list(topic.mistakes) +
+    (topic.myths ?? []).map(myth => `<p><strong>Not true:</strong> ${prose(myth.claim)}<br><strong>In fact:</strong> ${prose(myth.truth)}</p>`).join('');
+
 /** The lesson's teaching text, in the order the lesson shows it. */
 const lessonText = (topic: AnyTopic): string => {
     if ('note' in topic) {
@@ -53,7 +58,8 @@ const lessonText = (topic: AnyTopic): string => {
             section('The idea', para(topic.note.idea) + para(topic.note.analogy) + (topic.note.breaks ? para(topic.note.breaks) : '')),
             section('How it works', list(topic.howItWorks, true)),
             section('Key points', list(topic.keyPoints)),
-            section('Common mistakes', list(topic.mistakes)),
+            section('Common mistakes', mistakes(topic)),
+            topic.deeper ? section(`Go deeper: ${topic.deeper.title}`, list(topic.deeper.steps, true) + para(topic.deeper.result)) : '',
         ].join('');
     }
     if ('pattern' in topic) {
@@ -62,7 +68,7 @@ const lessonText = (topic: AnyTopic): string => {
             section('The pattern', para(`${topic.pattern}. ${topic.spot}`)),
             section('How to approach it', list(topic.approach, true)),
             section('Edge cases to mention', list(topic.edgeCases)),
-            section('Common mistakes', list(topic.mistakes)),
+            section('Common mistakes', mistakes(topic)),
         ].join('');
     }
     if ('designType' in topic) {
@@ -73,7 +79,7 @@ const lessonText = (topic: AnyTopic): string => {
             section('From version 1 to the final design', list(topic.evolution, true)),
             section('The design, step by step', list(topic.design, true)),
             section('Deep dives', list(topic.deepDives)),
-            section('Common mistakes', list(topic.mistakes)),
+            section('Common mistakes', mistakes(topic)),
             section('In the interview', para(topic.interviewAnswer)),
         ].join('');
     }
@@ -85,7 +91,7 @@ const lessonText = (topic: AnyTopic): string => {
         'example' in topic && topic.example ? section('Example', para(topic.example)) : '',
         section('Key points', list(topic.keyPoints)),
         'tradeOffs' in topic ? section('Trade-offs', list(topic.tradeOffs)) : '',
-        section('Common mistakes', list(topic.mistakes)),
+        section('Common mistakes', mistakes(topic)),
         section('In the interview', para(topic.interviewAnswer)),
     ].join('');
 };
@@ -128,7 +134,7 @@ const body = (meta: PageMeta, course?: CourseInfo, unit?: PathUnit, topic?: Path
         return `<article class="seo-page">${trail(meta)}<h1>Unit ${unit.number}: ${esc(unit.title)}</h1><p class="seo-lead">${esc(unit.goal)}</p>${section('The big picture', para(bigPictures.get(unit.id) ?? ''))}${section('Lessons in this unit', lessonLinks(course, unit.topics))}</article>`;
     }
     if (course) {
-        return `<article class="seo-page">${trail(meta)}<h1>${esc(course.title)}</h1><p class="seo-lead">${esc(course.tagline)} Free, step by step: every topic is a full lesson with an animation, a worked example and exercises with answers.</p>${course.units
+        return `<article class="seo-page">${trail(meta)}<h1>${esc(course.title)}</h1><p class="seo-lead">${esc(course.tagline)} Free, step by step: every lesson is complete, with an animation, a worked example and exercises with answers.</p>${course.units
             .map(u => `<h2>${link(unitPath(course, u.id), `Unit ${u.number}: ${u.title}`)}</h2><p>${esc(u.goal)}</p>${lessonLinks(course, u.topics)}`)
             .join('')}</article>`;
     }

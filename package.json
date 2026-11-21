@@ -2,16 +2,18 @@
   "name": "ai-engineer-path",
   "private": true,
   "version": "0.0.0",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run path-index && npm run site-pages && tsc -b && vite build",
+    "build": "npm run path-index && npm run site-pages && npm run lessons && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "path-index": "UPDATE_PATH_INDEX=1 vitest run src/game/__tests__/pathIndex.test.ts",
-    "site-pages": "WRITE_SITE_PAGES=1 vitest run src/game/__tests__/sitePages.test.ts"
+    "site-pages": "WRITE_SITE_PAGES=1 vitest run src/game/__tests__/sitePages.test.ts",
+    "lessons": "WRITE_LESSON_BOOK=1 vitest run src/game/__tests__/lessonBook.test.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

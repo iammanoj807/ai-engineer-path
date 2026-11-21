@@ -476,8 +476,8 @@ export const LessonAnatomy = () => (
 /** The heading and course switch above the path; the path itself comes in as children. */
 export const PathSection = ({ selected, onSelect, children }: { selected: Course; onSelect: (id: Course) => void; children: ReactNode }) => (
     <Box component="section" id="path" aria-labelledby="path-title" sx={{ scrollMarginTop: 84 }}>
-        <SectionHeading id="path-title" eyebrow="THE PATH" title="Walk it one topic at a time" centred>
-            Pick a course, then tap a topic to open its lesson. The next one is always marked START.
+        <SectionHeading id="path-title" eyebrow="THE PATH" title="Walk it one lesson at a time" centred>
+            Pick a course, then tap a lesson to open it. The next one is always marked START.
         </SectionHeading>
         <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" justifyContent="center" sx={{ mb: 4 }}>
             {COURSES.map(course => {

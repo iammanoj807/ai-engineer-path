@@ -240,7 +240,7 @@ const UnitBanner = ({
                 <Stack direction="row" alignItems="center" spacing={1.5}>
                     <Box sx={{ minWidth: 0, flex: 1 }}>
                         <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: 1.2, color: unit.accent }}>
-                            UNIT {unit.number} · {unit.topics.length} TOPICS
+                            UNIT {unit.number} · {unit.topics.length} LESSONS
                         </Typography>
                         <Typography sx={{ fontWeight: 800, lineHeight: 1.25, fontSize: '1.05rem' }}>
                             {unit.title}

@@ -18,7 +18,7 @@ export const sqlPhase3: SqlPhase = {
             priority: 'must',
             definition: 'A JOIN combines rows from two tables wherever a condition (usually matching keys) is true, and INNER JOIN keeps only the rows that found a match on both sides.',
             problem: 'The employees table knows Ben is in department 1, but not that department 1 is called Engineering. That lives in departments. To show "Ben — Engineering" you need columns from both tables in one row. That is a join.',
-            idea: 'You name two tables and a join condition after ON: `employees e JOIN departments d ON d.dept_id = e.dept_id`. The database pairs every employee with every department whose dept_id matches, and each pair becomes one result row holding the columns of both. INNER JOIN (plain JOIN means the same thing) keeps only pairs that matched. So Gus, whose dept_id is NULL, matches nothing and disappears — and HR, which no employee points to, disappears too. The short names e and d are table aliases; they save typing and say which table each column comes from.',
+            idea: 'You name two tables and a join condition after ON: `employees e JOIN departments d ON d.dept_id = e.dept_id`. The database pairs every employee with every department whose dept_id matches, and each pair becomes one result row holding the columns of both.\n\nINNER JOIN (plain JOIN means the same thing) keeps only pairs that matched. So Gus, whose dept_id is NULL, matches nothing and disappears — and HR, which no employee points to, disappears too.\n\nThe short names e and d are table aliases; they save typing and say which table each column comes from.',
             analogy: 'Matching odd socks from two baskets by colour. A red sock from basket A is paired with a red sock from basket B. INNER JOIN only keeps the pairs; any sock without a partner stays in its basket.',
             breaks: 'Socks pair one-to-one. Joins don\'t have to: if one department matches four employees, the department\'s row is repeated four times — once per partner. That repetition is normal, but it is also where double-counting comes from (see Join traps).',
             syntax: code`
@@ -96,6 +96,9 @@ export const sqlPhase3: SqlPhase = {
                 'Leaving out the prefix on a column both tables have (dept_id), which gives an "ambiguous column" error.',
                 'Using INNER JOIN when the question says "all customers" or "every department" — the ones with no match disappear.',
             ],
+            myths: [
+                { claim: 'Leaving out the ON condition makes a join return no rows.', truth: 'Without ON, every row is paired with every row (a cross join): 8 employees and 4 departments give 32 rows.' },
+            ],
             dialects: [
                 'Old-style joins list tables with commas and put the condition in WHERE: `FROM employees e, departments d WHERE d.dept_id = e.dept_id`. It works everywhere, but explicit JOIN … ON is clearer and is what interviewers expect.',
             ],
@@ -124,7 +127,7 @@ export const sqlPhase3: SqlPhase = {
             priority: 'must',
             definition: 'A LEFT JOIN keeps every row from the left (first) table, joins matching rows from the right table, and fills the right-hand columns with NULL where there is no match.',
             problem: '"Show every department with its headcount" must include HR with 0. "Every customer and what they spent" must include Omar, who spent nothing. An INNER JOIN silently drops them. LEFT JOIN keeps them.',
-            idea: 'In `departments d LEFT JOIN employees e`, departments is the left table and every department is kept. Where employees match, you get one row per match, as with INNER JOIN. Where none match — HR — you still get one row, with NULL in every employees column. Count with `COUNT(e.emp_id)`, not `COUNT(*)`, so HR\'s NULL row counts as 0. RIGHT JOIN is the mirror image (keep every row of the right table); people almost always swap the tables and write a LEFT JOIN instead.',
+            idea: 'In `departments d LEFT JOIN employees e`, departments is the left table and every department is kept. Where employees match, you get one row per match, as with INNER JOIN. Where none match — HR — you still get one row, with NULL in every employees column.\n\nCount with `COUNT(e.emp_id)`, not `COUNT(*)`, so HR\'s NULL row counts as 0.\n\nRIGHT JOIN is the mirror image (keep every row of the right table); people almost always swap the tables and write a LEFT JOIN instead.',
             analogy: 'A class register. Every pupil\'s name is on it (the left table). Next to each name you write the homework they handed in (the right table). A pupil who handed nothing in stays on the register with a blank next to their name.',
             breaks: 'A blank on a register is just empty. In SQL the blank is NULL, and NULL behaves strangely: `COUNT(*)` still counts that row as 1, and a WHERE on a right-hand column can throw the row away again.',
             syntax: code`
@@ -203,6 +206,9 @@ export const sqlPhase3: SqlPhase = {
                 'Adding `WHERE right_table.column = …`, which throws the NULL rows away and turns the LEFT JOIN back into an INNER JOIN (see Join traps).',
                 'Putting the tables the wrong way round, so the side you wanted to keep is on the right.',
             ],
+            myths: [
+                { claim: '`LEFT JOIN … WHERE right.col = x` still keeps the left rows that had no match.', truth: 'Those rows have NULL on the right, so the WHERE condition is not true for them and they are dropped. Put the condition in ON to keep them.' },
+            ],
             dialects: [
                 'LEFT JOIN and LEFT OUTER JOIN are the same thing everywhere. RIGHT JOIN only arrived in SQLite in version 3.39 (2022); it has always worked in the other databases.',
             ],
@@ -230,9 +236,9 @@ export const sqlPhase3: SqlPhase = {
             priority: 'must',
             definition: 'An anti-join returns rows from one table that have no match in another — written as `LEFT JOIN … WHERE right.key IS NULL`, or as `WHERE NOT EXISTS (…)`.',
             problem: '"Customers who never ordered", "products that never sold", "employees with no manager on file" — finding what is absent is one of the most common interview questions and real tasks. You can\'t find it with WHERE alone, because the missing rows aren\'t there to filter.',
-            idea: 'Do a LEFT JOIN, so every left row is kept and unmatched ones get NULL on the right. Then keep only the unmatched ones: `WHERE o.order_id IS NULL`. Test a column that can never be NULL in a real match — the right table\'s primary key is perfect. NOT EXISTS says the same thing more directly: "keep the customer if no order exists for them". Its opposite, the semi-join, keeps rows that do have a match, each only once: `WHERE EXISTS (…)` or `WHERE id IN (…)`.',
+            idea: 'Do a LEFT JOIN, so every left row is kept and unmatched ones get NULL on the right. Then keep only the unmatched ones: `WHERE o.order_id IS NULL`. Test a column that can never be NULL in a real match — the right table\'s primary key is perfect.\n\nNOT EXISTS says the same thing more directly: "keep the customer if no order exists for them". Its opposite, the semi-join, keeps rows that do have a match, each only once: `WHERE EXISTS (…)` or `WHERE id IN (…)`.',
             analogy: 'Checking a guest list against the sign-in sheet. Hold the list (left table) next to the sheet (right table); the names with an empty space next to them on the sheet are the people who didn\'t come.',
-            breaks: 'With a list you just look for blanks. In SQL you must test the right column for the blank: test a column that might legitimately be NULL (like amount) and you will wrongly report customers whose real order just has no amount.',
+            breaks: 'With a list you just look for blanks. In SQL you must test the right column for the blank. If you test a column that might legitimately be NULL (like amount), you will wrongly report customers whose real order just has no amount.',
             syntax: code`
                 SELECT a.*
                 FROM table_a a
@@ -301,10 +307,13 @@ export const sqlPhase3: SqlPhase = {
                 'Using INNER JOIN and wondering why the missing rows never appear.',
                 'Using `NOT IN (SELECT dept_id FROM employees)`: Gus\'s NULL dept_id makes it return no rows at all.',
             ],
+            myths: [
+                { claim: '`NOT IN (subquery)` is safe even when the subquery returns a NULL.', truth: 'A single NULL in the list makes NOT IN unknown for every row, so nothing comes back. Use NOT EXISTS, which is safe with NULLs.' },
+            ],
             dialects: [
                 'Every database supports both forms. Some (SQL Server, Oracle) also have EXCEPT / MINUS for "ids in A but not in B".',
             ],
-            interviewAnswer: 'To find rows with no match I use an anti-join: either a LEFT JOIN with WHERE the right table\'s key IS NULL, or NOT EXISTS with a correlated subquery. I prefer NOT EXISTS because it states the intent directly and is NULL-safe, and I avoid NOT IN against a subquery, since a single NULL in that list makes the whole condition unknown and returns nothing.',
+            interviewAnswer: 'To find rows with no match I use an anti-join: either a LEFT JOIN with WHERE the right table\'s key IS NULL, or NOT EXISTS with a correlated subquery. I prefer NOT EXISTS, because it states the intent directly and is NULL-safe. I avoid NOT IN against a subquery, since a single NULL in that list makes the whole condition unknown and returns nothing.',
             followUps: [
                 { q: 'Why not use NOT IN to find customers without orders?', a: 'If the subquery returns any NULL, `x NOT IN (…)` is never true, so you get no rows. NOT EXISTS has no such problem.' },
                 { q: 'Which column should you test for IS NULL after the LEFT JOIN?', a: 'One that is never NULL in a real matched row — the right table\'s primary key or the join column.' },
@@ -326,9 +335,9 @@ export const sqlPhase3: SqlPhase = {
             kind: 'lesson',
             name: 'Self joins: a table joined to itself',
             priority: 'must',
-            definition: 'A self join joins a table to itself under two different aliases, so a row can be compared with another row of the same table — such as an employee with their manager.',
+            definition: 'A self join joins a table to itself, under two different aliases. That lets a row be compared with another row of the same table, such as an employee with their manager.',
             problem: 'manager_id points into the same employees table. To show "Hana reports to Ben", you need Hana\'s row and Ben\'s row side by side. There is only one table, so you use it twice.',
-            idea: 'Give the table two aliases and treat them as two copies: e for the employee, m for the manager. Join on `m.emp_id = e.manager_id`, meaning "the manager copy\'s id equals the employee copy\'s manager_id". Now each result row has the employee\'s columns and their manager\'s columns. Use a LEFT JOIN if you want to keep Asha, who has no manager. Self joins also compare rows with each other — pairs in the same department, or rows on consecutive days.',
+            idea: 'Give the table two aliases and treat them as two copies: e for the employee, m for the manager. Join on `m.emp_id = e.manager_id`, meaning "the manager copy\'s id equals the employee copy\'s manager_id". Now each result row has the employee\'s columns and their manager\'s columns.\n\nUse a LEFT JOIN if you want to keep Asha, who has no manager. Self joins also compare rows with each other — pairs in the same department, or rows on consecutive days.',
             analogy: 'Two photocopies of the staff list on your desk. On the left copy you find Hana and read "manager: 2". On the right copy you find person 2 — Ben — and write his name next to hers.',
             breaks: 'The photocopies are real copies. SQL doesn\'t copy anything: the aliases are just two names for the same table, which is why you must prefix every column (e.name, m.name) — otherwise "name" is ambiguous.',
             syntax: code`
@@ -402,10 +411,13 @@ export const sqlPhase3: SqlPhase = {
             ],
             mistakes: [
                 'Swapping the condition (`e.emp_id = m.manager_id`), which lists each person\'s reports instead of their manager.',
-                'Forgetting prefixes, so `name` is ambiguous.',
+                'Forgetting the table prefixes in a self join, so the database can\'t tell which copy\'s `name` you mean.',
                 'Using INNER JOIN and losing the CEO.',
             ],
-            interviewAnswer: 'A self join joins a table to itself with two aliases so I can compare rows within it — the classic case is employees and managers through a self-referencing manager_id. I join the manager alias\'s primary key to the employee alias\'s manager_id, use a LEFT JOIN if the top of the hierarchy must appear, and for pair comparisons I add id less-than id to avoid self-pairs and mirrored duplicates.',
+            myths: [
+                { claim: 'An INNER self join from employees to their managers also returns the person at the top.', truth: 'The person at the top has no manager, so an INNER JOIN drops them. Use LEFT JOIN to keep every employee.' },
+            ],
+            interviewAnswer: 'A self join joins a table to itself with two aliases so I can compare rows within it — the classic case is employees and managers through a self-referencing manager_id. I join the manager alias\'s primary key to the employee alias\'s manager_id, and use a LEFT JOIN if the top of the hierarchy must appear. For pair comparisons I add id less-than id, to avoid self-pairs and mirrored duplicates.',
             followUps: [
                 { q: 'How would you find employees who earn more than their manager?', a: 'Self join e to m on `m.emp_id = e.manager_id`, then `WHERE e.salary > m.salary`. Here it returns Hana.' },
                 { q: 'How do you get the whole chain of managers, not just one level?', a: 'A recursive CTE that starts from the employee and repeatedly joins to the manager until manager_id is NULL.' },
@@ -427,9 +439,9 @@ export const sqlPhase3: SqlPhase = {
             kind: 'lesson',
             name: 'Joining three or more tables',
             priority: 'must',
-            definition: 'You join more than two tables by adding one JOIN … ON per table, walking along the keys — orders to customers, orders to order_items, order_items to products — so each row can hold columns from all of them.',
+            definition: 'You join more than two tables by adding one JOIN … ON for each table, following the keys: orders to customers, orders to order_items, order_items to products. Each result row can then hold columns from all of them.',
             problem: '"What did each customer buy?" needs the customer\'s name (customers), the order (orders), the line items (order_items) and the product names (products). That is four tables. Many-to-many relationships always need at least three.',
-            idea: 'Each JOIN adds one table to the rows you have so far, so a chain of joins follows the arrows in the database diagram. Start from the table whose grain you want in the result — here, one row per item bought, so order_items — or from the table you must keep in full. Each new JOIN needs its own ON condition linking it to a table already in the query. GROUP BY afterwards sums across all of them, for example revenue per category = `SUM(quantity × price)`.',
+            idea: 'Each JOIN adds one table to the rows you have so far, so a chain of joins follows the arrows in the database diagram. Start from the table whose grain you want in the result — here, one row per item bought, so order_items — or from the table you must keep in full.\n\nEach new JOIN needs its own ON condition linking it to a table already in the query. GROUP BY afterwards sums across all of them, for example revenue per category = `SUM(quantity × price)`.',
             analogy: 'Following a paper trail. A receipt line says "product 6, quantity 3, order 101". You look up order 101 to find the customer, then customer 1 to find the name, then product 6 to find "Headphones". Each lookup is one join.',
             breaks: 'On paper you choose which lookups to do. SQL does every join for every row, and an INNER JOIN anywhere in the chain drops rows that fail to match at that step — like order 106, which has no items.',
             syntax: code`
@@ -510,7 +522,10 @@ export const sqlPhase3: SqlPhase = {
                 'Mixing LEFT and INNER joins so that a later INNER JOIN removes the rows the LEFT JOIN kept.',
                 'Summing an order-level column (o.amount) after joining item rows, which counts it once per item (see Join traps).',
             ],
-            interviewAnswer: 'For multi-table queries I follow the foreign keys one hop at a time, adding a JOIN with its own ON condition per table, and I keep track of the grain after each join — joining a child table like order_items turns one row per order into one row per item. For many-to-many I go through the junction table, and I use LEFT JOINs wherever rows without a match must survive.',
+            myths: [
+                { claim: 'A join on the wrong pair of columns always stops with an error.', truth: 'If the types fit, it runs and returns nonsense: `oi.product_id = o.order_id` happily pairs unrelated rows. Check each ON against the keys in the diagram.' },
+            ],
+            interviewAnswer: 'For multi-table queries I follow the foreign keys one hop at a time, adding a JOIN with its own ON condition for each table. I keep track of the grain after each join: joining a child table like order_items turns one row per order into one row per item. For many-to-many I go through the junction table, and I use LEFT JOINs wherever rows without a match must survive.',
             followUps: [
                 { q: 'Does the order of INNER JOINs matter?', a: 'Not for the result — inner joins can be reordered freely, and the optimiser picks its own order. With LEFT JOINs, order does matter.' },
                 { q: 'How do you get from customers to products?', a: 'customers → orders (customer_id) → order_items (order_id) → products (product_id).' },
@@ -532,11 +547,11 @@ export const sqlPhase3: SqlPhase = {
             kind: 'lesson',
             name: 'FULL OUTER JOIN and CROSS JOIN',
             priority: 'should',
-            definition: 'A FULL OUTER JOIN keeps every row from both tables, with NULLs wherever either side has no match; a CROSS JOIN pairs every row of one table with every row of the other.',
+            definition: 'A FULL OUTER JOIN keeps every row from both tables, with NULLs wherever either side has no match. A CROSS JOIN pairs every row of one table with every row of the other.',
             problem: 'Comparing two lists — "which employees have no department, and which departments have no employees?" — needs the unmatched rows from both sides at once. Building a report grid — every customer × every month, zeros included — needs every combination. These two joins do those jobs.',
-            idea: 'FULL OUTER JOIN = a LEFT JOIN and a RIGHT JOIN together: matches as usual, plus the unmatched left rows (right columns NULL) and the unmatched right rows (left columns NULL). It is mainly for reconciling two sources. CROSS JOIN has no ON at all: 6 customers × 3 months = 18 rows. On its own that is rarely what you want, but it is the standard way to build a complete grid, which you then LEFT JOIN the real data onto so gaps show as zero.',
+            idea: 'FULL OUTER JOIN = a LEFT JOIN and a RIGHT JOIN together: matches as usual, plus the unmatched left rows (right columns NULL) and the unmatched right rows (left columns NULL). It is mainly for reconciling two sources.\n\nCROSS JOIN has no ON at all: 6 customers × 3 months = 18 rows. On its own that is rarely what you want. But it is the standard way to build a complete grid. You then LEFT JOIN the real data onto the grid, so gaps show as zero.',
             analogy: 'FULL OUTER JOIN is comparing two class registers after a merger: you list everyone who is on both, plus the names that are only on one register. CROSS JOIN is a timetable grid: every class against every period, whether or not anything is scheduled there.',
-            breaks: 'A timetable grid is small. A cross join of two big tables is enormous — a million rows × a million rows is a trillion — so it is only safe when at least one side is tiny.',
+            breaks: 'A timetable grid is small. A cross join of two big tables is enormous: a million rows × a million rows is a trillion. So it is only safe when at least one side is tiny.',
             syntax: code`
                 SELECT ...
                 FROM a FULL OUTER JOIN b ON b.key = a.key;
@@ -616,11 +631,14 @@ export const sqlPhase3: SqlPhase = {
                 'Forgetting an ON condition and getting a cross join by accident — the row count explodes.',
                 'Using WHERE on one side after a FULL OUTER JOIN, which removes the other side\'s unmatched rows.',
             ],
+            myths: [
+                { claim: 'A CROSS JOIN between two tables of 1,000 rows each returns 2,000 rows.', truth: 'It pairs every row with every row: 1,000 × 1,000 = 1,000,000 rows. That is why a cross join between large tables is dangerous.' },
+            ],
             dialects: [
                 'MySQL has no FULL OUTER JOIN: write a LEFT JOIN, then UNION it with the unmatched rows of a RIGHT JOIN. SQLite added FULL OUTER JOIN in 3.39.',
                 'PostgreSQL can build date grids directly with `generate_series(\'2024-01-01\', \'2024-03-01\', interval \'1 month\')`.',
             ],
-            interviewAnswer: 'A FULL OUTER JOIN returns matched rows plus the unmatched rows from both sides, with NULLs filling the gaps — useful for reconciling two sources. A CROSS JOIN is the Cartesian product, every row paired with every row; I mostly use it to build a complete grid such as every customer by every month, then LEFT JOIN the facts onto it so missing combinations show as zero instead of disappearing.',
+            interviewAnswer: 'A FULL OUTER JOIN returns matched rows plus the unmatched rows from both sides, with NULLs filling the gaps — useful for reconciling two sources. A CROSS JOIN is the Cartesian product: every row paired with every row. I mostly use it to build a complete grid, such as every customer by every month. Then I LEFT JOIN the facts onto the grid, so missing combinations show as zero instead of disappearing.',
             followUps: [
                 { q: 'How many rows does a CROSS JOIN of 6 and 4 rows return?', a: '24 — every row of one with every row of the other.' },
                 { q: 'How do you do a FULL OUTER JOIN in MySQL?', a: 'LEFT JOIN UNION the RIGHT JOIN rows where the left side is NULL (UNION ALL with that filter avoids duplicates).' },
@@ -642,9 +660,9 @@ export const sqlPhase3: SqlPhase = {
             kind: 'lesson',
             name: 'Join traps: double counting, and ON versus WHERE',
             priority: 'must',
-            definition: 'The two classic join bugs are fan-out — joining a "many" table repeats the "one" side, so its numbers get summed several times — and putting a right-table filter in WHERE, which silently turns a LEFT JOIN into an INNER JOIN.',
+            definition: 'There are two classic join bugs. Fan-out: joining a "many" table repeats the "one" side, so its numbers get summed several times. And a right-table filter in WHERE, which silently turns a LEFT JOIN into an INNER JOIN.',
             problem: 'Both bugs return a result with no error, and the numbers look believable. The total revenue comes out as 1131 instead of 793; customers with no delivered orders quietly vanish from an "all customers" report. Interviewers test for exactly these.',
-            idea: 'Fan-out: after orders JOIN order_items, an order with 2 items appears on 2 rows, each carrying the full order amount. `SUM(o.amount)` now counts it twice. The fix is to sum at the right grain: aggregate the many side first (in a subquery or CTE), then join one row per order. ON versus WHERE with a LEFT JOIN: a condition in ON decides which right rows match, and left rows are kept regardless. A condition in WHERE runs after the join, on the finished rows — and for unmatched rows the right columns are NULL, so `WHERE o.status = \'delivered\'` is unknown and the row is thrown away.',
+            idea: 'Fan-out: after orders JOIN order_items, an order with 2 items appears on 2 rows, each carrying the full order amount. `SUM(o.amount)` now counts it twice. The fix is to sum at the right grain: aggregate the many side first (in a subquery or CTE), then join one row per order.\n\nON versus WHERE with a LEFT JOIN: a condition in ON decides which right rows match, and left rows are kept regardless. A condition in WHERE runs after the join, on the finished rows. For unmatched rows the right columns are NULL, so `WHERE o.status = \'delivered\'` is unknown and the row is thrown away.',
             analogy: 'Fan-out is like counting a family\'s income once for each child in the family: join families to children and sum family income, and a family with three children is counted three times. ON versus WHERE is the difference between "invite every pupil, and note which ones brought a permission slip" and "invite only the pupils who brought one".',
             breaks: 'With a family you would notice the triple count. SQL can\'t: it has no idea which column belongs to which grain. Checking the row count after each join is the habit that catches it.',
             syntax: code`
@@ -735,9 +753,12 @@ export const sqlPhase3: SqlPhase = {
                 'With an INNER JOIN, ON and WHERE give the same result.',
             ],
             mistakes: [
-                '`SUM(order.amount)` after joining order_items.',
+                'Writing `SUM(order.amount)` after joining order_items: each order\'s amount is then added once for every item it has.',
                 '`COUNT(*)` after a fan-out join, counting items instead of orders. Use `COUNT(DISTINCT o.order_id)`.',
-                '`LEFT JOIN … WHERE right.col = x` in an "all customers" report.',
+                'Writing `LEFT JOIN … WHERE right.col = x` in an "all customers" report: the WHERE throws away the customers that had no match.',
+            ],
+            myths: [
+                { claim: '`COUNT(*)` after joining orders to their items still counts orders.', truth: 'Each order now appears once for every item, so `COUNT(*)` counts items. Use `COUNT(DISTINCT o.order_id)` to count orders.' },
             ],
             interviewAnswer: 'The two join bugs I always check for are fan-out and misplaced filters. Fan-out happens when a one-to-many join repeats the parent row, so summing a parent column double-counts — I fix it by aggregating the child table to the parent\'s grain before joining. And with a LEFT JOIN, a filter on the right table belongs in the ON clause; in WHERE it discards the NULL-extended rows and silently becomes an inner join.',
             followUps: [

@@ -24,8 +24,6 @@ const counted = (n: number) => NUMBER_WORDS[n] ?? String(n);
 /** A card's line. Fill the gap has two: typing, or choosing the word. */
 export const cardLine = (card: PracticeCard, options: { choosing?: boolean } = {}): string => {
     switch (card.kind) {
-        case 'guess':
-            return 'Before we learn, take a guess. True or false?';
         case 'read':
             return READ_LINES[card.part.slot];
         case 'idea':
@@ -41,7 +39,7 @@ export const cardLine = (card: PracticeCard, options: { choosing?: boolean } = {
         case 'order':
             return 'Tap the steps in the order they happen. Tap a placed step to take it back.';
         case 'mistake':
-            return `${counted(card.options.length - 1)} of these are true. Which one is a common mistake?`;
+            return `${counted(card.options.length - 1)} of these are true. Which one is false?`;
         case 'recall':
             return card.question;
         case 'predict':

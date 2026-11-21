@@ -9,7 +9,7 @@ export const phase0Answers: Record<string, TopicAnswers> = {
             answer: `Call the error e = ŷ − y, so the loss is L = e². Use the chain rule: first how L changes with e, then how e changes with each weight.\n\ndL/de = 2e.\nSince ŷ = w·x + b, a small change in w changes e by x, and a small change in b changes e by 1.\n\nSo:\n∂L/∂w = 2(ŷ − y) · x\n∂L/∂b = 2(ŷ − y)\n\nFor many examples, the loss is the mean, so the gradients are means too: ∂L/∂w = mean(2(ŷ − y)·x) and ∂L/∂b = mean(2(ŷ − y)). These are exactly grad_w and grad_b in the lesson's code.\n\nRead it in words: if the prediction is too high (ŷ − y > 0), both gradients are positive, so gradient descent makes w and b smaller. The x in ∂L/∂w means big houses push w harder than small ones.`,
         },
         build: {
-            answer: `Keep a list, append the loss every step, print every 100 steps, then plot the list. The loss falls very fast at first and then flattens: a healthy curve.\n\nThe numbers fall from 69,900 at step 0 to almost 0 by step 100, because this data fits a straight line exactly. The loss falls so far that a log y-axis is the only way to see the end of training.`,
+            answer: `Where to run it: open colab.research.google.com, choose New notebook, paste the code into the first cell and press Shift+Enter. Colab is a free Python notebook that runs in your browser, with NumPy and Matplotlib already installed, so there is nothing to set up. (Later you can install Python on your own computer and run the same code there.)\n\nKeep a list, append the loss every step, print every 100 steps, then plot the list. The loss falls very fast at first and then flattens: a healthy curve.\n\nThe numbers fall from 69,900 at step 0 to almost 0 by step 100, because this data fits a straight line exactly. The loss falls so far that a log y-axis is the only way to see the end of training.`,
             code: py`
                 import numpy as np
                 import matplotlib.pyplot as plt
@@ -63,6 +63,66 @@ export const phase0Answers: Record<string, TopicAnswers> = {
         },
         explain: {
             answer: `Training a model is like learning to throw darts. You throw (the model makes a prediction), you look at how far the dart landed from the bullseye (the loss: one number for how wrong it was), and you adjust your arm a little in the direction that would have helped (the optimiser changes the weights, using the gradient). Then you throw again. Each throw gets a bit closer, and after hundreds of throws you hit the middle.\n\nThe size of each arm adjustment is the learning rate: too small and you need forever, too big and you over-correct and miss by more each time. And you only trust your aim once you can hit a board you've never practised on: that's testing on new data.`,
+        },
+    },
+    'f0-t7': {
+        derive: {
+            answer: `Go through the loop one pass at a time. The line total = total + x * x means: work out the right-hand side with the old total, then store the result as the new total.\n\nBefore the loop: total = 0.\nPass 1, x = 2: total = 0 + 2 × 2 = 4.\nPass 2, x = 5: total = 4 + 5 × 5 = 29.\nPass 3, x = 3: total = 29 + 3 × 3 = 38.\n\nThe list has run out, so the loop ends with total = 38: the sum of the squares. Tracing code by hand like this is the fastest way to find out why a program gives the wrong answer.`,
+            code: py`
+                total = 0
+                for x in [2, 5, 3]:
+                    total = total + x * x
+                    print(x, total)
+                # 2 4
+                # 5 29
+                # 3 38
+            `,
+        },
+        build: {
+            answer: `mean: start a running total at 0, add every value to it in a loop, then divide by how many values there are. For [150, 240, 360] that is 750 / 3 = 250.0.\n\nlargest: remember the best value seen so far. Start with the first item, then look at each value in turn, and replace the best whenever a bigger one comes along.\n\nStart largest from the first item, not from 0: with a list of negative numbers, 0 would wrongly win. That is why the last line tests it on [-5, -2, -9].`,
+            code: py`
+                def mean(values):
+                    total = 0
+                    for v in values:
+                        total = total + v
+                    return total / len(values)
+
+                def largest(values):
+                    best = values[0]                  # start with the first value
+                    for v in values:
+                        if v > best:                  # found a bigger one: remember it
+                            best = v
+                    return best
+
+                prices = [150, 240, 360]
+                print(mean(prices))                   # 250.0
+                print(largest(prices))                # 360
+                print(largest([-5, -2, -9]))          # -2: works for negative numbers too
+            `,
+        },
+        break: {
+            answer: `1. sizes[3] on a list of 3 items gives "IndexError: list index out of range". Positions run from 0 to 2, so there is no position 3. The fix is sizes[2], or sizes[-1] for "the last one".\n\n2. "if x = 3:" gives "SyntaxError: invalid syntax. Maybe you meant '==' or ':=' instead of '='?". A single = stores a value and can't be used as a test. Python even suggests the fix: ==.\n\n3. A function that prints its answer but has no return hands back None. Adding 1 to that gives "TypeError: unsupported operand type(s) for +: 'NoneType' and 'int'". The message means "you tried to add nothing and a number". The fix is to write return x * 2 instead of print(x * 2).\n\nEach message names the kind of error first, then says what went wrong. Read the last line first: it is nearly always enough to find the problem.`,
+            code: py`
+                # Run each part in its own cell: an error stops the cell it happens in.
+
+                # Cell 1
+                sizes = [50, 80, 120]
+                sizes[3]              # IndexError: list index out of range
+
+                # Cell 2
+                x = 3
+                if x = 3:             # SyntaxError: invalid syntax. Maybe you meant '==' or ':=' instead of '='?
+                    print("three")
+
+                # Cell 3
+                def double(x):
+                    print(x * 2)      # prints 8, but returns nothing
+
+                double(4) + 1         # TypeError: unsupported operand type(s) for +: 'NoneType' and 'int'
+            `,
+        },
+        explain: {
+            answer: `Think of a kitchen. A variable is a labelled jar: the label is the name, and what is inside is the value. Write w = 3.0 and the jar labelled w now holds 3.0.\n\nA list is a shelf of jars in a fixed order. You can ask for the first one, the second one, and so on, and Python counts them from 0.\n\nA loop is the instruction "do this for every jar on the shelf, one after another". You write the steps once, and Python repeats them for each item.\n\nA function is a recipe card. You hand it ingredients (the arguments), it follows its steps, and it hands a dish back (the return value). Once the card is written you can use it as often as you like, with different ingredients each time.`,
         },
     },
     'f0-t1': {

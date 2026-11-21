@@ -18,7 +18,7 @@ export const sqlPhase4: SqlPhase = {
             priority: 'must',
             definition: 'A subquery is a SELECT inside another query, in brackets: it can return one value (to compare with), a list (for IN), or a whole table (to select FROM).',
             problem: '"Who earns more than the average?" needs the average first, then a comparison. "What is the average customer\'s total spend?" needs a total per customer first, then an average of those. Each needs two steps, and a subquery puts both steps into one query.',
-            idea: 'The database runs the inner query and uses its result in the outer one. There are three shapes. A scalar subquery returns one value — `(SELECT AVG(salary) FROM employees)` — and goes anywhere a single value can. A list subquery returns one column of many rows and goes after IN. A table subquery (a derived table) goes in FROM, needs an alias, and is used like any other table — which is how you aggregate an aggregate.',
+            idea: 'The database runs the inner query and uses its result in the outer one. There are three shapes.\nA scalar subquery returns one value — `(SELECT AVG(salary) FROM employees)` — and goes anywhere a single value can.\nA list subquery returns one column of many rows and goes after IN.\nA table subquery (a derived table) goes in FROM, needs an alias, and is used like any other table — which is how you aggregate an aggregate.',
             analogy: 'Asking a friend to look something up while you wait. "What is the average salary?" — they come back with 63750 — "OK, then show me everyone above that." The inner question is answered first and its answer is slotted into the outer one.',
             breaks: 'Your friend answers once. A correlated subquery (next lesson) is different: it is asked again for every outer row, with that row\'s values plugged in.',
             syntax: code`
@@ -92,7 +92,10 @@ export const sqlPhase4: SqlPhase = {
                 'Forgetting the alias on a derived table (required in PostgreSQL before version 16, MySQL and SQL Server).',
                 'Nesting subqueries three deep. Rewrite it with CTEs so it reads top to bottom.',
             ],
-            interviewAnswer: 'A subquery is a nested SELECT whose result the outer query uses: as a single value for comparison, as a list for IN, or as a derived table in FROM. I use derived tables when I need to aggregate in two stages — like averaging per-customer totals — and once nesting gets deeper than one level I switch to CTEs so the logic reads top to bottom.',
+            myths: [
+                { claim: 'Subquery in FROM: an alias is optional in PostgreSQL 15, MySQL and SQL Server.', truth: 'PostgreSQL before version 16, MySQL and SQL Server all require an alias for a subquery in FROM. Give it one every time.' },
+            ],
+            interviewAnswer: 'A subquery is a nested SELECT whose result the outer query uses: as a single value for comparison, as a list for IN, or as a derived table in FROM. I use derived tables when I need to aggregate in two stages, like averaging per-customer totals. Once nesting gets deeper than one level, I switch to CTEs, so the logic reads top to bottom.',
             followUps: [
                 { q: 'Subquery or join — which is faster?', a: 'Usually the same: modern optimisers rewrite IN and EXISTS subqueries as joins. Choose for clarity, then check the plan if it is slow.' },
                 { q: 'What happens if a scalar subquery returns no rows?', a: 'It returns NULL, so a comparison with it is unknown and filters everything out.' },
@@ -114,9 +117,9 @@ export const sqlPhase4: SqlPhase = {
             kind: 'lesson',
             name: 'Correlated subqueries, EXISTS, and the NOT IN trap',
             priority: 'must',
-            definition: 'A correlated subquery refers to a column of the outer row, so it is worked out once per outer row; EXISTS asks "does the subquery return any row at all?", which makes it the safe way to test for a match.',
+            definition: 'A correlated subquery refers to a column of the outer row, so it is worked out once for each outer row. EXISTS asks "does the subquery return any row at all?", which makes it the safe way to test for a match.',
             problem: '"Each customer\'s latest order", "employees paid above their own department\'s average", "customers with at least one delivered order" — the comparison changes for every row. And the obvious way to find "no match", NOT IN, has a trap that returns nothing at all when NULLs are around.',
-            idea: 'In `WHERE o.order_date = (SELECT MAX(o2.order_date) FROM orders o2 WHERE o2.customer_id = o.customer_id)`, the inner query uses o.customer_id from the outer row, so it is re-run (in effect) for each order. EXISTS (subquery) is true if the subquery finds at least one row; what it selects doesn\'t matter, so people write `SELECT 1`. NOT EXISTS is true when it finds none. The NOT IN trap: `x NOT IN (1, 2, NULL)` means `x <> 1 AND x <> 2 AND x <> NULL`, and the last part is always unknown — so the whole test is never true.',
+            idea: 'In `WHERE o.order_date = (SELECT MAX(o2.order_date) FROM orders o2 WHERE o2.customer_id = o.customer_id)`, the inner query uses o.customer_id from the outer row, so it is re-run (in effect) for each order.\n\nEXISTS (subquery) is true if the subquery finds at least one row; what it selects doesn\'t matter, so people write `SELECT 1`. NOT EXISTS is true when it finds none.\n\nThe NOT IN trap: `x NOT IN (1, 2, NULL)` means `x <> 1 AND x <> 2 AND x <> NULL`, and the last part is always unknown — so the whole test is never true.',
             analogy: 'A correlated subquery is a teacher checking each pupil\'s mark against that pupil\'s own previous best, not one class-wide number. EXISTS is calling out "is anyone here from Leeds?" — one hand up is enough, and nobody has to say their name.',
             breaks: 'A teacher really does check each pupil one at a time. A database usually doesn\'t: the optimiser rewrites most correlated subqueries into a join that does all the rows at once. Think of it as row by row; don\'t assume it is slow.',
             syntax: code`
@@ -205,10 +208,13 @@ export const sqlPhase4: SqlPhase = {
                 'Forgetting the correlation (`WHERE o2.customer_id = o.customer_id`), which compares every row with the overall maximum instead.',
                 'Thinking EXISTS cares what the subquery selects. It only checks whether a row exists.',
             ],
+            myths: [
+                { claim: 'EXISTS gives a different answer depending on which columns the subquery selects.', truth: 'EXISTS only checks whether at least one row comes back. What the row contains makes no difference, which is why `SELECT 1` is the usual choice.' },
+            ],
             dialects: [
                 'All major databases support EXISTS, NOT EXISTS and correlated subqueries the same way. If you must use NOT IN, add `WHERE dept_id IS NOT NULL` inside the subquery.',
             ],
-            interviewAnswer: 'A correlated subquery references the outer query\'s row, so logically it is evaluated per row — useful for comparisons against a row\'s own group, like each customer\'s latest order. EXISTS tests whether a subquery returns any row, and NOT EXISTS is my default anti-join, because NOT IN returns nothing if the subquery yields a single NULL: x not in a list containing NULL can never be true.',
+            interviewAnswer: 'A correlated subquery references the outer query\'s row, so logically it is evaluated per row — useful for comparisons against a row\'s own group, like each customer\'s latest order. EXISTS tests whether a subquery returns any row. NOT EXISTS is my default anti-join, because NOT IN returns nothing if the subquery yields a single NULL: x not in a list containing NULL can never be true.',
             followUps: [
                 { q: 'Why is NOT IN dangerous?', a: '`x NOT IN (a, NULL)` means `x <> a AND x <> NULL`. The second part is unknown, so the whole condition is never true and no rows return.' },
                 { q: 'EXISTS or IN — which is better?', a: 'For "has a match" they are equivalent and usually optimised the same. For "has no match", use NOT EXISTS because of NULLs.' },
@@ -231,9 +237,9 @@ export const sqlPhase4: SqlPhase = {
             kind: 'lesson',
             name: 'CTEs: naming each step with WITH',
             priority: 'must',
-            definition: 'A CTE (common table expression) is a named, temporary result written at the top of a query with WITH name AS (…), which later parts of the query can use like a table.',
+            definition: 'A CTE (common table expression) is a named, temporary result, written at the top of a query with WITH name AS (…). Later parts of the query can use it like a table.',
             problem: 'Subqueries inside subqueries read inside-out and quickly become unreadable. In an interview, the person watching needs to follow your thinking. CTEs let you write a hard query as a list of small, named steps, in the order you would explain them.',
-            idea: '`WITH per_customer AS (SELECT …)` defines a step and gives it a name. The main query after it can use per_customer like a table — even more than once. You can chain several CTEs, separated by commas, and each one can use the ones above it. A CTE exists only for that one query. It is mostly about readability: the database runs it much like the equivalent subquery.',
+            idea: '`WITH per_customer AS (SELECT …)` defines a step and gives it a name. The main query after it can use per_customer like a table — even more than once.\n\nYou can chain several CTEs, separated by commas, and each one can use the ones above it.\n\nA CTE exists only for that one query. It is mostly about readability: the database runs it much like the equivalent subquery.',
             analogy: 'A recipe that says "first make the sauce; set it aside" before the main steps. Later steps just say "add the sauce". You name the sub-result once and refer to it by name.',
             breaks: 'Sauce made once is used everywhere it is needed. A database may compute a CTE once or re-run it each time it is used — that is up to the optimiser — so don\'t use CTEs as a speed trick.',
             syntax: code`
@@ -312,6 +318,9 @@ export const sqlPhase4: SqlPhase = {
                 'A comma after the last CTE, before the main SELECT.',
                 'Expecting a CTE to exist in the next query. It is gone after the statement ends.',
             ],
+            myths: [
+                { claim: 'A comma is needed after the last CTE, before the main SELECT.', truth: 'Commas go between CTEs only. After the last CTE comes the main SELECT, with no comma.' },
+            ],
             dialects: [
                 'PostgreSQL before version 12 always computed a CTE separately (an "optimisation fence"); since 12 it can fold it into the main query, and you can force either with MATERIALIZED / NOT MATERIALIZED.',
                 'MySQL supports CTEs from version 8.0.',
@@ -338,9 +347,9 @@ export const sqlPhase4: SqlPhase = {
             kind: 'lesson',
             name: 'Recursive CTEs: walking trees and filling in dates',
             priority: 'should',
-            definition: 'A recursive CTE refers to itself: an anchor query gives the starting rows, and a recursive part, joined with UNION ALL, keeps adding rows from the previous round until no new rows appear.',
+            definition: 'A recursive CTE refers to itself. An anchor query gives the starting rows. Then a recursive part, joined with UNION ALL, keeps adding rows from the previous round until no new rows appear.',
             problem: 'An org chart can be any number of levels deep, so a fixed number of self joins can\'t walk it. The same goes for folder trees, category trees and "every day in this range, including days with no orders". Recursion handles any depth.',
-            idea: 'The anchor runs once: for the org chart, "the person with no manager" (Asha, level 0). Then the recursive part runs on the rows found in the previous round: "employees whose manager is in the previous round" (Ben, Chen, Dara, Fatima, level 1), then their reports (Eli, Gus, Hana, level 2), and so on. When a round finds nothing, it stops. Always give it a way to stop — a WHERE that eventually fails — or it runs forever.',
+            idea: 'The anchor runs once: for the org chart, "the person with no manager" (Asha, level 0). Then the recursive part runs on the rows found in the previous round: "employees whose manager is in the previous round". That finds Ben, Chen, Dara and Fatima (level 1), then their reports Eli, Gus and Hana (level 2), and so on.\n\nWhen a round finds nothing, it stops. Always give it a way to stop — a WHERE that eventually fails — or it runs forever.',
             analogy: 'Passing a message down a phone tree. The boss calls her direct reports, each of them calls theirs, and the calling stops when someone has nobody left to call.',
             breaks: 'A phone tree stops on its own. Data can loop — if A manages B and B manages A — and a recursive CTE would go round forever. Put a limit on the depth when the data might not be a clean tree.',
             syntax: code`
@@ -432,11 +441,14 @@ export const sqlPhase4: SqlPhase = {
                 'Using UNION instead of UNION ALL by habit. UNION ALL is the normal choice; UNION removes duplicates and can stop cycles, but costs more.',
                 'Joining the wrong way round (`chart.manager_id = e.emp_id`), which walks up the tree instead of down.',
             ],
+            myths: [
+                { claim: 'The anchor part of a recursive CTE runs again in every round.', truth: 'The anchor runs once, to give the starting rows. Only the recursive part repeats, each time using the rows found in the round before.' },
+            ],
             dialects: [
                 'PostgreSQL, MySQL 8+ and SQLite need the word RECURSIVE. SQL Server and Oracle use plain WITH.',
                 'PostgreSQL makes date series easier with `generate_series`. SQL Server limits recursion to 100 rounds unless you add `OPTION (MAXRECURSION n)`.',
             ],
-            interviewAnswer: 'A recursive CTE has an anchor member that produces the starting rows and a recursive member, unioned with UNION ALL, that joins back to the CTE to produce the next level, repeating until no new rows appear. I use it for hierarchies of unknown depth, like an org chart with a level column, and for generating date series to fill gaps — always with a clear termination condition, and a depth limit if the data might contain cycles.',
+            interviewAnswer: 'A recursive CTE has two parts, joined with UNION ALL. The anchor member produces the starting rows. The recursive member joins back to the CTE to produce the next level, and repeats until no new rows appear. I use it for hierarchies of unknown depth, like an org chart with a level column, and for generating date series to fill gaps. I always give it a clear termination condition, and a depth limit if the data might contain cycles.',
             followUps: [
                 { q: 'How does a recursive CTE know when to stop?', a: 'When the recursive part returns no new rows. A WHERE condition (like n < 5, or reaching people with no reports) makes that happen.' },
                 { q: 'How do you protect against cycles in the data?', a: 'Carry a level or a path column and stop at a maximum depth, or stop when the next id is already in the path.' },
@@ -458,9 +470,9 @@ export const sqlPhase4: SqlPhase = {
             kind: 'lesson',
             name: 'UNION, UNION ALL, INTERSECT and EXCEPT',
             priority: 'should',
-            definition: 'Set operators stack the results of two queries: UNION ALL keeps every row, UNION removes duplicates, INTERSECT keeps rows found in both, and EXCEPT keeps rows in the first but not the second.',
+            definition: 'Set operators stack the results of two queries. UNION ALL keeps every row, and UNION removes duplicates. INTERSECT keeps rows found in both, and EXCEPT keeps rows in the first but not the second.',
             problem: 'Sometimes the rows you need come from two places: every city mentioned by departments or customers; cities that have both a department and a customer. Joins put tables side by side; set operators put results on top of each other.',
-            idea: 'Write two SELECTs with the same number of columns, of matching types, and put a set operator between them. The column names come from the first SELECT. UNION ALL simply stacks the rows — fast, and keeps duplicates. UNION stacks them and removes duplicate rows — which costs a sort or hash. INTERSECT keeps rows in both results; EXCEPT keeps rows of the first that are not in the second. A single ORDER BY at the very end sorts the combined result.',
+            idea: 'Write two SELECTs with the same number of columns, of matching types, and put a set operator between them. The column names come from the first SELECT.\n\nUNION ALL simply stacks the rows — fast, and keeps duplicates. UNION stacks them and removes duplicate rows — which costs a sort or hash. INTERSECT keeps rows in both results; EXCEPT keeps rows of the first that are not in the second.\n\nA single ORDER BY at the very end sorts the combined result.',
             analogy: 'Two class lists. UNION ALL staples them together. UNION staples them and crosses out anyone listed twice. INTERSECT is pupils on both lists. EXCEPT is pupils on the first list but not on the second.',
             breaks: 'Pupils are matched by name. Set operators match whole rows, column by column — so adding a column that differs (like a source label) stops rows from counting as duplicates.',
             syntax: code`
@@ -537,6 +549,9 @@ export const sqlPhase4: SqlPhase = {
                 'Using UNION when the two sets can\'t overlap — paying for duplicate removal you don\'t need.',
                 'Putting ORDER BY on the first query instead of at the end.',
                 'Lining columns up in a different order in the second query: they are matched by position, not by name.',
+            ],
+            myths: [
+                { claim: 'UNION matches the columns of its two queries by name.', truth: 'Columns are matched by position, not by name. If the second query lists them in another order, the values land in the wrong columns.' },
             ],
             dialects: [
                 'Oracle calls EXCEPT `MINUS`. MySQL only added INTERSECT and EXCEPT in version 8.0.31.',

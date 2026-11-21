@@ -31,16 +31,25 @@ export const useGlossaryActions = () => useContext(GlossaryActionsContext);
 export const GlossaryTopicContext = createContext<string | undefined>(undefined);
 export const useGlossaryTopic = () => useContext(GlossaryTopicContext);
 
+/**
+ * True inside an answer choice. A tap there must choose the answer, so its
+ * words don't open on a tap or with the keyboard; a mouse still gets the
+ * explanation by hovering.
+ */
+export const GlossaryQuietContext = createContext(false);
+export const useGlossaryQuiet = () => useContext(GlossaryQuietContext);
+
 /** A text that may have its glossary words marked. */
 export type Prose = string | TextSegment[];
 
 /**
  * Mark the first mention of each word across a whole card. The sections are
  * given in display order; ask for a section by its key to get its slice of the
- * result (an empty list for a section the card doesn't have).
+ * result (an empty list for a section the card doesn't have). `topicId` is the
+ * lesson the card belongs to: words that are plain in that lesson stay plain.
  */
-export const segmentSections = <K extends string>(source: PageGlossary, sections: [K, string[]][]) => {
-    const segmented = source.segmentFirstMentions(sections.flatMap(([, texts]) => texts));
+export const segmentSections = <K extends string>(source: PageGlossary, sections: [K, string[]][], topicId?: string) => {
+    const segmented = source.segmentFirstMentions(sections.flatMap(([, texts]) => texts), undefined, topicId);
     const slices = new Map<K, TextSegment[][]>();
     let at = 0;
     for (const [key, texts] of sections) {

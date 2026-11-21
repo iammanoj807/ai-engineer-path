@@ -23,7 +23,7 @@ export const foundationPhase2: FoundationPhase = {
         {
             id: 'f2-t1',
             name: 'The ML setup: features, labels, loss, train/validation/test',
-            definition: 'Supervised learning turns examples (features plus a label) into a model by minimising a loss on a training set, tuning choices on a validation set, and measuring the final result once on a test set.',
+            definition: 'Supervised learning turns examples, each with features and a label, into a model. You fit it on a training set, make your choices on a validation set, and measure the final result once on a test set.',
             problem: 'A model that scores well on the data it learned from may still fail on anything new; it may simply have memorised. To know how it will really behave, you must measure it on data it never saw, and you must not let that data influence any of your choices. The three-way split is the simplest honest way to do that.',
             howItWorks: [
                 'Decide what one example is (a house), its features (size, rooms, age) and its label (price). Every row of X is one example; y holds the labels.',
@@ -47,6 +47,10 @@ export const foundationPhase2: FoundationPhase = {
                 'Splitting rows that belong together (several photos of the same person) across train and test.',
                 'Shuffling time-series data, so the model trains on the future.',
                 'Reporting training accuracy as if it were real-world accuracy.',
+            ],
+            myths: [
+                { claim: 'Several photos of the same person can safely be spread across the training set and the test set.', truth: 'The model is then tested on a face it has already seen, so the score is too good. Keep rows that belong together on the same side of the split.' },
+                { claim: 'Tuning a model on the test set just a little does no harm to the final score.', truth: 'Every choice made by looking at the test set fits the model to it, so the final score over-promises. Make choices on the validation set, and use the test set once.' },
             ],
             followUps: [
                 { q: 'Why do you need a validation set as well as a test set?', a: 'You make many choices using the validation score, which slowly fits it. The test set stays untouched, so it still gives an honest final number.' },
@@ -82,8 +86,8 @@ export const foundationPhase2: FoundationPhase = {
         {
             id: 'f2-t2',
             name: 'Linear regression: normal equation and gradient descent',
-            definition: 'Linear regression predicts a number as a weighted sum of the features, ŷ = Xw + b, choosing the weights that make the mean squared error as small as possible.',
-            problem: 'Many questions ask for a number: a price, a temperature, a delivery time. Linear regression is the simplest model that learns how each feature pushes the answer up or down. It trains in a fraction of a second, its weights are easy to read, and it is the baseline every fancier model must beat. Its two training routes, a formula and gradient descent, are the same two routes used everywhere else in ML.',
+            definition: 'Linear regression predicts a number as a weighted sum of the features. It chooses the weights that make the mean squared error as small as possible.',
+            problem: 'Many questions ask for a number: a price, a temperature, a delivery time. Linear regression is the simplest model that learns how each feature pushes the answer up or down. It trains in a fraction of a second, its weights are easy to read, and it is the baseline every fancier model must beat.\n\nIts two training routes, a formula and gradient descent, are the same two routes used everywhere else in ML.',
             howItWorks: [
                 'Put the examples in a matrix X (one row each) and add a column of 1s, so the bias b becomes just another weight.',
                 'The prediction for every row at once is ŷ = Xw.',
@@ -96,7 +100,7 @@ export const foundationPhase2: FoundationPhase = {
             keyPoints: [
                 'Model ŷ = Xw + b; loss = mean squared error.',
                 'Normal equation: w = (XᵀX)⁻¹Xᵀy. In code, solve the system (np.linalg.solve or lstsq); never form the inverse.',
-                'Gradient of MSE: (2/n)·Xᵀ(Xw − y).',
+                'The gradient of the mean squared error with respect to the weights is (2/n)·Xᵀ(Xw − y).',
                 'Minimising squared error is maximum likelihood when the noise is Gaussian.',
                 'Curves need curved features: add x², x³ or interactions, and the model is still "linear" in its weights.',
                 'Check the residuals (y − ŷ): a pattern in them means the model is missing something.',
@@ -106,6 +110,10 @@ export const foundationPhase2: FoundationPhase = {
                 'Reading a weight as a cause. It only says how the prediction moves, with the other features held still.',
                 'Duplicated or near-duplicate features: XᵀX becomes nearly singular and the weights blow up.',
                 'Forgetting the bias column, which forces the line through the origin.',
+            ],
+            myths: [
+                { claim: 'A large weight in a linear regression shows that its feature causes the outcome.', truth: 'A weight only says how the prediction moves when that feature changes and the others stay still. It shows an association, not a cause.' },
+                { claim: 'Without a bias term: the fitted line can still cross the y-axis where the data needs it to.', truth: 'Without the bias, the line is forced through the origin. The bias (a column of ones) lets the line sit at any height.' },
             ],
             followUps: [
                 { q: 'What does the weight 0.8 mean in ŷ = 1.8 + 0.8x?', a: 'Each extra unit of x raises the prediction by 0.8.' },
@@ -141,7 +149,7 @@ export const foundationPhase2: FoundationPhase = {
         {
             id: 'f2-t3',
             name: 'Logistic regression and the sigmoid',
-            definition: 'Logistic regression answers yes/no questions: it computes a score z = Xw + b, turns it into a probability with the sigmoid σ(z) = 1 / (1 + e⁻ᶻ), and is trained with cross-entropy loss.',
+            definition: 'Logistic regression answers yes/no questions. It computes a score, squashes it into a probability with the sigmoid, and is trained with cross-entropy loss.',
             problem: 'Many questions have a yes/no answer: spam or not, fraud or not, pass or fail. A straight line gives numbers below 0 and above 1, which can\'t be probabilities. Logistic regression keeps the simple weighted sum but squashes it into a probability, so it can say "83% likely". It is the standard first model for classification, and the single neuron at the heart of every neural network.',
             howItWorks: [
                 'Compute a score for each example, exactly as in linear regression: z = Xw + b.',
@@ -165,6 +173,10 @@ export const foundationPhase2: FoundationPhase = {
                 'Perfectly separable data with no regularisation: the weights grow forever. Add L2.',
                 'Always using 0.5 as the threshold, even when one kind of mistake costs much more.',
             ],
+            myths: [
+                { claim: 'A threshold of 0.5 is the right cut-off even when one kind of mistake costs far more.', truth: 'The threshold should follow the costs. When missing a positive is much worse than a false alarm, a lower threshold is better.' },
+                { claim: 'Loss for logistic regression: squared error works as well as cross-entropy.', truth: 'With a sigmoid, squared error makes the loss non-convex and learning slow. Binary cross-entropy is convex, and its gradient is the simple Xᵀ(p − y)/n.' },
+            ],
             followUps: [
                 { q: 'What is σ(0), and what does it mean?', a: '0.5: a score of 0 means the model is undecided, exactly on the boundary.' },
                 { q: 'Why not train logistic regression with squared error?', a: 'With the sigmoid inside, squared error is non-convex and its gradients become tiny when the model is confidently wrong. Cross-entropy is convex and punishes confident mistakes strongly.' },
@@ -179,7 +191,7 @@ export const foundationPhase2: FoundationPhase = {
                 idea: 'For yes/no questions. Compute a score z = Xw + b, then squash it into a probability with the sigmoid, σ(z) = 1 / (1 + e⁻ᶻ). Train with cross-entropy loss.',
                 analogy: 'A dimmer switch. The score turns the dial, and the sigmoid keeps the light between 0 (off) and 1 (fully on).',
                 breaks: 'The decision boundary is still a straight line (a flat plane). It cannot separate data shaped like circles unless you add new features.',
-                example: 'z = 0 gives 0.5. z = 2 gives 0.88. z = −2 gives 0.12.',
+                example: 'z = 0 gives 0.5. z = 2 gives 0.88. z = −2 gives 0.12. So an email with score z = 2 is spam with probability 0.88, and with a threshold of 0.5 the model says spam. If it really is spam, the loss is −log(0.88) ≈ 0.13. If it is not, the loss is −log(0.12) ≈ 2.13: a confident mistake costs far more.',
                 code: 'p = 1 / (1 + np.exp(-(X @ w + b)))\ngrad_w = X.T @ (p - y) / len(y)   # the gradient is beautifully simple\ngrad_b = (p - y).mean()',
                 codeLanguage: 'python',
             },
@@ -199,7 +211,7 @@ export const foundationPhase2: FoundationPhase = {
         {
             id: 'f2-t4',
             name: 'Regularisation: L1 and L2',
-            definition: 'Regularisation adds a penalty for large weights to the loss: L2 (λΣw²) shrinks every weight, while L1 (λΣ|w|) pushes the weak ones to exactly zero.',
+            definition: 'Regularisation adds a penalty for large weights to the loss. L2 shrinks every weight, while L1 pushes the weak ones to exactly zero.',
             problem: 'A flexible model with many features can fit the training data too well, using huge weights that balance each other out on noise. It then does badly on new data. Regularisation tells the model "simple explanations are better": it trades a little training error for much smaller weights, which usually generalise better. L1 also picks features for you.',
             howItWorks: [
                 'Start from the normal loss, for example mean squared error.',
@@ -220,10 +232,26 @@ export const foundationPhase2: FoundationPhase = {
             ],
             mistakes: [
                 'Regularising without scaling features: features measured in small units need big weights, so they get punished unfairly.',
-                'Penalising the bias term.',
+                'Penalising the bias term as well. Regularise only the weights: shrinking the bias just shifts every prediction.',
                 'Picking λ by looking at the test set.',
                 'Expecting L2 to remove features. It only shrinks them.',
             ],
+            myths: [
+                { claim: 'A penalty on the weights treats every feature fairly, whatever units the features are measured in.', truth: 'A feature measured in small units needs a big weight, so the penalty punishes it more. Scale the features before regularising.' },
+                { claim: 'L2 regularisation removes unneeded features by setting their weights exactly to 0.', truth: 'L2 only shrinks weights towards 0; they rarely reach it. L1 is the penalty that sets weights exactly to 0.' },
+            ],
+            deeper: {
+                title: 'Why L2 regularisation is a Gaussian prior on the weights',
+                steps: [
+                    'Maximum likelihood picks the weights that make the data most probable: maximise P(data | w). MAP also uses a belief about the weights before seeing data, the prior P(w): maximise P(data | w)·P(w).',
+                    'Take logs and flip the sign, so that we minimise: −log P(data | w) − log P(w). With Gaussian noise of variance σ², the first term is the squared error: Σ (y − ŷ)² / (2σ²).',
+                    'Choose the prior "weights are probably small": each weight is Gaussian with mean 0 and variance τ². Then −log P(w) = Σ w² / (2τ²), plus a constant.',
+                    'Add the two and multiply through by 2σ²: the objective is Σ (y − ŷ)² + (σ²/τ²)·Σ w².',
+                    'That is squared error plus an L2 penalty, with λ = σ²/τ². A stronger belief that weights are small (small τ), or noisier data (large σ), means a larger λ.',
+                    'Use a Laplace prior instead, whose −log is |w|/b, and the penalty becomes λΣ|w|: L1.',
+                ],
+                result: 'L2 regularisation is MAP estimation with a Gaussian prior on the weights, with λ = σ²/τ². L1 is MAP with a Laplace prior.',
+            },
             followUps: [
                 { q: 'Why does L1 give exact zeros, but L2 doesn\'t?', a: 'L1 pushes with the same force however small a weight is, so small weights reach 0. L2\'s push is proportional to the weight, so it fades as the weight shrinks and never quite reaches 0.' },
                 { q: 'What happens with a huge λ?', a: 'All weights are squeezed towards 0 and the model underfits, predicting little more than the average.' },
@@ -257,7 +285,7 @@ export const foundationPhase2: FoundationPhase = {
         {
             id: 'f2-t5',
             name: 'Bias–variance trade-off and overfitting',
-            definition: 'Bias is error from a model too simple to capture the pattern; variance is error from a model so flexible it chases the noise in its training data; good models balance the two.',
+            definition: 'Bias is error from a model too simple to capture the pattern. Variance is error from a model so flexible that it chases the noise in its training data. Good models balance the two.',
             problem: 'Every model choice — degree, depth, number of features, k — moves you between underfitting and overfitting. Without this picture you can\'t tell whether to make a model bigger or smaller, or whether to collect more data. The bias–variance trade-off is the map for those decisions.',
             howItWorks: [
                 'Take 12 noisy points from a smooth curve, and fit polynomials of growing degree.',
@@ -280,6 +308,21 @@ export const foundationPhase2: FoundationPhase = {
                 'Adding complexity when the model is already overfitting.',
                 'Collecting more data to fix bias. It won\'t help a model that is too simple.',
             ],
+            myths: [
+                { claim: 'Collecting more data is the reliable fix for a model that is too simple.', truth: 'More data reduces variance, not bias. A model too simple for the pattern stays wrong however much data it sees: make the model or its features richer.' },
+                { claim: 'The model with the lowest training error is the best one to choose.', truth: 'A model can reach a low training error by memorising. Choose by validation error, which shows how it does on data it has not seen.' },
+            ],
+            deeper: {
+                title: 'Proving that expected error = bias² + variance + noise',
+                steps: [
+                    'Set-up: the data follows y = f(x) + ε, where the noise ε has mean 0 and variance σ². A model trained on a random training set predicts f̂(x). Fix one point x. Write f for the true value, f̂ for the prediction, and m = E[f̂] for the prediction averaged over every possible training set.',
+                    'Split the error into three pieces: y − f̂ = ε + (f − m) + (m − f̂). They are the noise, how far the average model is from the truth, and how far this model is from the average model.',
+                    'Square it and take the expectation. The three squares give E[ε²] = σ², (f − m)² and E[(m − f̂)²].',
+                    'The cross terms all vanish. The noise ε has mean 0 and is independent of the training set, so every term containing ε averages to 0. And E[m − f̂] = m − m = 0, so the term 2(f − m)·E[m − f̂] is 0 as well.',
+                    'Name what is left: (f − m)² is the bias squared, E[(f̂ − m)²] is the variance of the model, and σ² is the noise.',
+                ],
+                result: 'E[(y − f̂)²] = (f − E[f̂])² + E[(f̂ − E[f̂])²] + σ² = bias² + variance + noise. The noise term does not depend on the model at all.',
+            },
             followUps: [
                 { q: 'Training error 2%, validation error 25%. Bias or variance problem?', a: 'Variance: overfitting. Add data, regularise or simplify.' },
                 { q: 'Training error 20%, validation error 21%. Bias or variance?', a: 'Bias: the model is too simple. Make it more flexible or add better features.' },
@@ -334,10 +377,14 @@ export const foundationPhase2: FoundationPhase = {
                 'Choose the metric from the cost of each mistake, before you train.',
             ],
             mistakes: [
-                'Reporting accuracy on imbalanced data.',
+                'Reporting accuracy on imbalanced data: with 1% positives, always answering "no" scores 99%.',
                 'Quoting precision without recall, or the other way round.',
                 'Choosing the threshold on the test set.',
                 'Mixing up FP and FN. Write out the 2 × 2 table every time.',
+            ],
+            myths: [
+                { claim: 'A model with high precision must also have high recall.', truth: 'They pull against each other. A model that says yes only when it is very sure has high precision but misses many positives, so its recall is low.' },
+                { claim: 'With 1% positives, an accuracy of 99% shows that a model is good.', truth: 'A model that always answers "no" also scores 99%, and finds nothing. On imbalanced data, look at precision and recall.' },
             ],
             followUps: [
                 { q: 'TP = 60, FP = 20, FN = 40. Precision and recall?', a: 'Precision = 60/80 = 0.75. Recall = 60/100 = 0.60.' },
@@ -373,7 +420,7 @@ export const foundationPhase2: FoundationPhase = {
         {
             id: 'f2-t7',
             name: 'Cross-validation and data leakage',
-            definition: 'Cross-validation scores a model by rotating which slice of the data is held out, so every row is tested once; data leakage is any way information from the held-out data sneaks into training.',
+            definition: 'Cross-validation scores a model by rotating which slice of the data is held out, so every row is tested once. Data leakage is any way that information from the held-out data sneaks into training.',
             problem: 'One train/validation split can be lucky or unlucky, especially with small datasets, so a single score can mislead you by several percent. Cross-validation gives a steadier score and tells you how much it wobbles. Leakage is the most common reason a model that looked brilliant in testing fails in real use, so you need to know where it hides.',
             howItWorks: [
                 'Shuffle the rows and cut them into k equal folds, for example k = 5.',
@@ -397,6 +444,10 @@ export const foundationPhase2: FoundationPhase = {
                 'A feature computed from the label, or from the future (a "days until churn" column).',
                 'Using cross-validation to choose settings and then reporting that same score as final.',
             ],
+            myths: [
+                { claim: 'It is safe to scale the features on the whole dataset before splitting it into folds.', truth: 'The scaler then learns the mean and spread of the test rows too, which is leakage. Fit it inside each fold, on the training part only.' },
+                { claim: 'The cross-validation score used to choose the settings is also a fair final score.', truth: 'Choosing settings by that score fits them to those folds, so the score is too optimistic. Report the final score on data that was never used for any choice.' },
+            ],
             followUps: [
                 { q: 'Why use cross-validation instead of one validation split?', a: 'The score no longer depends on one lucky or unlucky split, every row is used for testing once, and you also learn how much the score varies.' },
                 { q: 'Give an example of data leakage.', a: 'Standardising with the mean of all rows, test rows included; or the same patient\'s scans in both training and test data.' },
@@ -411,7 +462,7 @@ export const foundationPhase2: FoundationPhase = {
                 idea: 'Cross-validation splits the data into k parts: train on k − 1 parts, test on the last one, and rotate. Data leakage is when information from the test data sneaks into training, so results look better than they really are.',
                 analogy: 'Leakage is like a student seeing the exam answers the night before. The high score is real, but it means nothing.',
                 breaks: 'Cheating is on purpose. Leakage is usually an accident, hidden in preprocessing, so you must hunt for it.',
-                example: 'Common leaks: scaling with the mean of all the data (including test rows); the same patient in both train and test, with two scans (split by patient, not by scan); using the future to predict the past in time series.',
+                example: 'There are three common leaks. Scaling with the mean of all the data, test rows included. The same patient in both train and test, with two scans: split by patient, not by scan. And, in time series, using the future to predict the past.',
                 code: 'mu, sd = X_train.mean(0), X_train.std(0)   # training rows only\nX_train = (X_train - mu) / sd\nX_test  = (X_test  - mu) / sd              # reuse the SAME mu and sd',
                 codeLanguage: 'python',
             },
@@ -432,7 +483,7 @@ export const foundationPhase2: FoundationPhase = {
             id: 'f2-t8',
             name: 'Feature scaling and encoding',
             definition: 'Feature scaling puts numeric features on similar ranges, and encoding turns categories into numbers, so that models treat every feature fairly and don\'t invent orders that aren\'t there.',
-            problem: 'Models only see numbers. A feature measured in thousands drowns out one measured in single digits in any distance or gradient, and coding "red, green, blue" as 1, 2, 3 tells the model green sits between the other two. Getting this wrong quietly ruins k-NN, SVMs, regularised models and neural networks, while trees barely notice.',
+            problem: 'Models only see numbers. A feature measured in thousands drowns out one measured in single digits, in any distance or gradient. And coding "red, green, blue" as 1, 2, 3 tells the model that green sits between the other two. Getting this wrong quietly ruins k-NN, SVMs, regularised models and neural networks, while trees barely notice.',
             howItWorks: [
                 'Standardisation: for each numeric feature, subtract the training mean and divide by the training standard deviation. The result has mean 0 and spread 1.',
                 'Min–max scaling squeezes values into 0 to 1 instead. It is handy for pixel values, but sensitive to outliers.',
@@ -452,9 +503,13 @@ export const foundationPhase2: FoundationPhase = {
             ],
             mistakes: [
                 'Fitting the scaler on all the data: leakage.',
-                'Coding unordered categories as 1, 2, 3.',
+                'Coding unordered categories (red, green, blue) as 1, 2, 3, which tells the model that blue is "more" than red.',
                 'Forgetting to apply the same scaling at prediction time.',
                 'One-hot encoding a feature with 50,000 values into 50,000 columns.',
+            ],
+            myths: [
+                { claim: 'At prediction time: new data goes into the model as it is, without the scaler.', truth: 'The model learned from scaled numbers, so new inputs must go through the same scaler, using the mean and spread of the training data.' },
+                { claim: 'Red, green, blue coded as 1, 2, 3: a neutral choice that tells the model nothing false.', truth: 'The numbers tell the model that blue is more than red, and that green lies between them. For categories with no order, use one-hot encoding.' },
             ],
             followUps: [
                 { q: 'A feature has training mean 50 and standard deviation 10. What does the value 70 become after standardising?', a: '(70 − 50) / 10 = 2: two standard deviations above the mean.' },
@@ -503,15 +558,19 @@ export const foundationPhase2: FoundationPhase = {
                 'No training step; all the work happens at prediction time, so prediction is slow on big data.',
                 'Small k: wiggly boundaries, overfits. Large k: smooth boundaries, underfits.',
                 'Use an odd k for two classes, to avoid ties.',
-                'Feature scaling is essential.',
+                'Feature scaling is essential for k-NN: without it, the feature with the biggest numbers decides every distance.',
                 'Curse of dimensionality: with hundreds of features, all points are nearly the same distance apart.',
                 'Fast approximate nearest-neighbour search (Unit 5) makes this idea work at the scale of millions of vectors.',
             ],
             mistakes: [
-                'Forgetting to scale features.',
-                'Choosing k on the test set.',
+                'Forgetting to scale features, so one feature with large numbers decides which neighbours count as nearest.',
+                'Choosing k on the test set. Choose it on validation data, and keep the test set for the final score.',
                 'Using it with many irrelevant features: noise dimensions swamp the useful ones.',
                 'Expecting fast predictions on millions of rows without an index.',
+            ],
+            myths: [
+                { claim: 'k-nearest neighbours improves as you add more features, even irrelevant ones.', truth: 'Irrelevant features add noise to every distance, and with many of them the useful features are drowned out: the curse of dimensionality.' },
+                { claim: 'k-NN has no training step: so it also predicts quickly on millions of rows.', truth: 'No training means all the work happens at prediction time: each prediction compares the new point with the stored rows. Large data needs an index.' },
             ],
             followUps: [
                 { q: 'What does k-NN learn during training?', a: 'Nothing: it just stores the data. All the work happens when predicting.' },
@@ -567,7 +626,11 @@ export const foundationPhase2: FoundationPhase = {
             mistakes: [
                 'Growing trees with no depth limit and trusting the training accuracy.',
                 'Expecting a smooth diagonal boundary from a single tree.',
-                'Reading a tree\'s splits as causes.',
+                'Reading a tree\'s splits as causes. A split shows that a feature helps to predict, not that it causes the outcome.',
+            ],
+            myths: [
+                { claim: 'A tree grown until it fits its training data perfectly is equally accurate on new data.', truth: 'A tree with no depth limit memorises the training data, noise included. Limit its depth or its leaf size, or prune it.' },
+                { claim: 'A single decision tree can draw a smooth diagonal boundary.', truth: 'Each split tests one feature against one threshold, so the boundary is made of steps along the axes. A diagonal becomes a staircase.' },
             ],
             followUps: [
                 { q: 'What is the Gini impurity of a node with 5 yes and 5 no?', a: '1 − (0.5² + 0.5²) = 0.5, the worst possible for two classes.' },
@@ -603,7 +666,7 @@ export const foundationPhase2: FoundationPhase = {
         {
             id: 'f2-t11',
             name: 'Ensembles: bagging, random forests, gradient boosting',
-            definition: 'Ensembles combine many models: bagging and random forests average trees trained on random resamples to cut variance, while boosting adds small trees one after another, each correcting the errors left so far, to cut bias.',
+            definition: 'An ensemble combines many models. Bagging and random forests average trees trained on random resamples, which cuts variance. Boosting adds small trees one after another, each fixing the errors left so far, which cuts bias.',
             problem: 'A single deep tree is unstable: change a few rows and it changes completely. A single shallow tree is too simple. Ensembles get the best of both, and gradient-boosted trees (XGBoost, LightGBM) and random forests are still the strongest models for most tabular data in industry.',
             howItWorks: [
                 'Bagging: draw a bootstrap sample (n rows chosen at random, with repeats) and grow a deep tree on it. Repeat to get, say, 100 different trees.',
@@ -626,6 +689,10 @@ export const foundationPhase2: FoundationPhase = {
                 'Using identical trees: no randomness means no benefit from averaging.',
                 'Boosting with a large learning rate and many rounds, without early stopping.',
                 'Expecting an ensemble to be as easy to explain as one tree.',
+            ],
+            myths: [
+                { claim: 'Gradient boosting can run for as many rounds as you like without overfitting.', truth: 'Each round fits the errors that remain, noise included. With many rounds and a large learning rate it overfits, so stop early using validation data.' },
+                { claim: 'Averaging many identical trees gives a better model than any one of them.', truth: 'Identical trees make identical mistakes, so their average is the same tree. Averaging helps only when the trees differ, which is why forests add randomness.' },
             ],
             followUps: [
                 { q: 'Which part of the error does bagging reduce, and which does boosting reduce?', a: 'Bagging reduces variance; boosting mainly reduces bias.' },
@@ -673,7 +740,7 @@ export const foundationPhase2: FoundationPhase = {
                 'Kernels replace dot products with a similarity function, giving curved boundaries without building the curved features by hand.',
             ],
             keyPoints: [
-                'Margin width = 2/‖w‖.',
+                'The margin is 2/‖w‖ wide, so a smaller ‖w‖ means a wider margin.',
                 'Hinge loss max(0, 1 − y·s): 0 for confident correct points, growing linearly for violations.',
                 'Support vectors are the only points that matter for the final boundary.',
                 'C trades margin width against training mistakes.',
@@ -682,9 +749,24 @@ export const foundationPhase2: FoundationPhase = {
             ],
             mistakes: [
                 'Using 0/1 labels with the ±1 formulas.',
-                'Forgetting to scale features.',
+                'Forgetting to scale features. The margin is a distance, so a feature with large numbers dominates it.',
                 'Reading SVM scores as probabilities. They are distances, not probabilities.',
             ],
+            myths: [
+                { claim: 'An SVM\'s score for a point is the probability that the point belongs to the positive class.', truth: 'The score is a signed distance from the boundary, not a probability. Turning it into a probability needs a separate calibration step.' },
+                { claim: 'The SVM formulas work unchanged with labels of 0 and 1.', truth: 'The margin and the hinge loss use y·s, which needs labels of −1 and +1. With a label of 0, y·s is always 0 and the formulas break.' },
+            ],
+            deeper: {
+                title: 'Why the margin is exactly 2/‖w‖',
+                steps: [
+                    'The two margin lines are w·x + b = +1 and w·x + b = −1. The vector w points straight across the street: it is at 90° to both lines.',
+                    'Take any point x₁ on the −1 line and walk along w until you hit the +1 line. Walking a distance d in the direction of w takes you to x₂ = x₁ + d·w/‖w‖.',
+                    'x₂ is on the +1 line, so w·x₂ + b = 1. Substitute x₂: (w·x₁ + b) + d·(w·w)/‖w‖ = 1.',
+                    'Since w·x₁ + b = −1 and w·w = ‖w‖², this reads −1 + d·‖w‖ = 1. So d = 2/‖w‖.',
+                    'To make the street as wide as possible, make ‖w‖ as small as possible while every point stays on its own side: y·(w·x + b) ≥ 1. Minimising ‖w‖²/2 gives the same answer and is easier to differentiate.',
+                ],
+                result: 'The margin lines are 2/‖w‖ apart, so "maximise the margin" becomes "minimise ‖w‖² subject to y·(w·x + b) ≥ 1": a convex problem with one best answer.',
+            },
             followUps: [
                 { q: 'What are support vectors?', a: 'The training points lying on the edges of the margin. They alone fix where the boundary goes.' },
                 { q: 'Hinge loss for y = +1 and score 0.2?', a: 'max(0, 1 − 0.2) = 0.8: right side, but well inside the margin.' },
@@ -729,10 +811,10 @@ export const foundationPhase2: FoundationPhase = {
                 'Add-one (Laplace) smoothing: add 1 to every count, so a word never seen in spam doesn\'t force P(spam) to exactly 0.',
             ],
             keyPoints: [
-                'posterior ∝ prior × Π P(featureᵢ | class).',
+                'Naive Bayes scores each class as prior × Π P(featureᵢ | class): how common the class is, times the probability of each feature given that class.',
                 'The "naive" assumption is false for real text, yet the ranking of classes is often still right.',
                 'Training is just counting: very fast, works on small data.',
-                'Always use log-probabilities and smoothing.',
+                'Always add log-probabilities instead of multiplying probabilities, and use smoothing so that one unseen word can\'t make the whole product zero.',
                 'Words that are equally common in both classes add no evidence.',
                 'The probabilities it outputs are badly calibrated (too extreme); trust the ranking more than the numbers.',
             ],
@@ -740,6 +822,10 @@ export const foundationPhase2: FoundationPhase = {
                 'Multiplying raw probabilities, which underflow to 0 on long documents.',
                 'No smoothing: one unseen word sends a class to probability 0.',
                 'Treating its probabilities as well calibrated.',
+            ],
+            myths: [
+                { claim: 'Naive Bayes gives well-calibrated probabilities: when it says 0.99, it is right 99% of the time.', truth: 'Treating the features as independent counts the same evidence several times, which pushes its probabilities towards 0 and 1. Trust its ranking of the classes, not the numbers.' },
+                { claim: 'Naive Bayes only works when the features really are independent.', truth: 'The assumption is false for real text, where words depend on each other, yet the ranking of the classes is often still right. That makes it a useful baseline.' },
             ],
             followUps: [
                 { q: 'What is "naive" about Naive Bayes?', a: 'It assumes features are independent given the class. Words like "New" and "York" clearly aren\'t, but it often still works.' },
@@ -789,15 +875,19 @@ export const foundationPhase2: FoundationPhase = {
                 'Objective: minimise the sum of squared distances from each point to its centre.',
                 'Assign = nearest centre; move = mean of members. Alternate until stable.',
                 'Assumes round clusters of similar size; struggles with long, curved or uneven clusters.',
-                'Scale features first.',
+                'Scale features first: k-means uses distances, so a feature with large numbers would decide the clusters.',
                 'Results depend on the start: use k-means++ and several restarts.',
                 'It is the "hard" version of a Gaussian mixture with EM (later in this unit).',
             ],
             mistakes: [
                 'Running it once from random starts and trusting the result.',
-                'Forgetting to scale features.',
+                'Forgetting to scale features, so the clusters are decided by whichever feature has the largest numbers.',
                 'Using it on shapes like two interlocking moons.',
-                'Treating k as known when it isn\'t.',
+                'Treating the number of clusters k as known when it isn\'t. Try several values and compare the results.',
+            ],
+            myths: [
+                { claim: 'Starting centres: they do not affect the clusters k-means ends with.', truth: 'The result depends on the starting centres and can be a poor one. Run it several times, or choose the start with k-means++.' },
+                { claim: 'Cluster shape: k-means handles long, curved shapes (two interlocking moons) as well as round ones.', truth: 'k-means assumes round clusters of similar size. On long, curved or interlocking shapes it cuts straight across them.' },
             ],
             followUps: [
                 { q: 'What are the two steps of k-means?', a: 'Assign each point to its nearest centre; move each centre to the mean of its points.' },
@@ -845,7 +935,7 @@ export const foundationPhase2: FoundationPhase = {
             ],
             keyPoints: [
                 'Centre always; standardise when features have different units.',
-                'Cumulative explained variance chooses k.',
+                'Choose the number of components k from the cumulative explained variance: keep enough to reach, say, 95%.',
                 'PCA ignores labels: maximum spread is not always maximum usefulness.',
                 'It removes correlated, redundant features and can denoise data.',
                 'Non-linear structure needs other tools (t-SNE or UMAP for plotting, autoencoders in Unit 7).',
@@ -853,9 +943,13 @@ export const foundationPhase2: FoundationPhase = {
             ],
             mistakes: [
                 'Fitting PCA on the full dataset, test set included.',
-                'Not scaling mixed-unit features.',
+                'Not scaling features that have different units: the one with the largest numbers becomes the first component.',
                 'Assuming components have a human meaning.',
                 'Dropping low-variance components that actually separate the classes.',
+            ],
+            myths: [
+                { claim: 'Each principal component stands for one real-world quantity, such as income or age.', truth: 'A component is a mix of all the original features, chosen because the data spreads out along it. It usually has no simple meaning.' },
+                { claim: 'Low-variance components: they carry no information that separates the classes.', truth: 'PCA ignores the labels. A direction with little spread can be exactly the one that separates the classes, so check before dropping it.' },
             ],
             followUps: [
                 { q: 'The eigenvalues are [6, 2, 1, 1]. What share do the top 2 components keep?', a: '(6 + 2) / 10 = 80%.' },
@@ -892,7 +986,7 @@ export const foundationPhase2: FoundationPhase = {
             id: 'f2-t16',
             name: 'Gaussian mixture models and EM',
             definition: 'A Gaussian mixture model describes data as a blend of several bell curves, and the EM algorithm fits it by alternating soft assignment of points (E-step) with refitting each curve (M-step).',
-            problem: 'Real data is often a mix of hidden groups: delivery times from two routes, heights of two populations, colours in an image. You don\'t know which group each point came from, and the groups overlap, so hard clustering is too crude. A mixture model gives each point a probability of belonging to each group, and EM is the classic way to fit models with hidden variables like this.',
+            problem: 'Real data is often a mix of hidden groups: delivery times from two routes, heights of two populations, colours in an image. You don\'t know which group each point came from, and the groups overlap, so hard clustering is too crude.\n\nA mixture model gives each point a probability of belonging to each group, and EM is the classic way to fit models with hidden variables like this.',
             howItWorks: [
                 'Choose the number of components, and start each with a rough mean, spread and weight.',
                 'E-step: for each point, compute how much each component explains it: rₖ = πₖ·N(x | μₖ, σₖ) / Σⱼ πⱼ·N(x | μⱼ, σⱼ). These shares are the responsibilities.',
@@ -911,9 +1005,25 @@ export const foundationPhase2: FoundationPhase = {
             ],
             mistakes: [
                 'Starting every component at the same place: they never separate.',
-                'No variance floor, so a component collapses.',
+                'Setting no floor on the variance, so a component collapses onto a single point and the likelihood shoots to infinity.',
                 'Reading responsibilities as certainty about hidden truth. They are model-based guesses.',
             ],
+            myths: [
+                { claim: 'EM separates the components even when they all start in the same place.', truth: 'Components that start identical get identical responsibilities and identical updates, so they stay identical. Start them in different places.' },
+                { claim: 'Responsibility 0.9: the point really did come from that component.', truth: 'A responsibility is the model\'s guess, based on its current means and spreads. A different or better model would give a different number.' },
+            ],
+            deeper: {
+                title: 'Why EM can never make the likelihood worse',
+                steps: [
+                    'Call the hidden information z (which component made each point) and the parameters θ (the means, spreads and weights). For any guess q(z) about the hidden part, the log-likelihood splits in two: log p(x | θ) = F(q, θ) + KL(q ‖ p(z | x, θ)).',
+                    'Here F(q, θ) = E_q[log p(x, z | θ)] − E_q[log q(z)]. Because a KL divergence is never negative, F is a lower bound on the log-likelihood.',
+                    'E-step: set q to the responsibilities under the current parameters, q = p(z | x, θ_old). The KL term becomes 0, so the bound touches the likelihood: F(q, θ_old) = log p(x | θ_old).',
+                    'M-step: keep q fixed and choose the parameters that make F as large as possible. So F(q, θ_new) ≥ F(q, θ_old).',
+                    'Chain the three facts: log p(x | θ_new) ≥ F(q, θ_new) ≥ F(q, θ_old) = log p(x | θ_old).',
+                    'F is the same lower bound a VAE maximises, where it is called the ELBO (Unit 7).',
+                ],
+                result: 'Each E-step lifts the lower bound up to the likelihood, and each M-step pushes the bound higher, so the log-likelihood never goes down. It can still stop at a local optimum.',
+            },
             followUps: [
                 { q: 'What is a responsibility?', a: 'The probability that a given component generated a given point, computed in the E-step.' },
                 { q: 'How does a GMM differ from k-means?', a: 'Points belong softly to every cluster, and clusters can have different spreads and sizes. k-means uses hard assignments and assumes equal round clusters.' },
@@ -947,7 +1057,7 @@ export const foundationPhase2: FoundationPhase = {
         {
             id: 'f2-t17',
             name: 'Generalisation: VC dimension and double descent',
-            definition: 'Generalisation is doing well on unseen data; the VC dimension measures a model family\'s capacity to fit any labelling, and double descent is the surprise that test error can fall again as models grow past the point of fitting the training data exactly.',
+            definition: 'Generalisation is doing well on unseen data. The VC dimension measures how much a family of models is able to fit. Double descent is the surprise that test error can fall again once models grow big enough to fit the training data exactly.',
             problem: 'Classical theory says bigger models need more data or they overfit. Yet today\'s best models have far more parameters than training examples and still generalise well. To reason about model size and data size — and to read modern research — you need both the classical picture and the newer one.',
             howItWorks: [
                 'Capacity: a family of models "shatters" a set of points if it can separate every possible labelling of them.',
@@ -970,6 +1080,22 @@ export const foundationPhase2: FoundationPhase = {
                 'Assuming bigger is always better: near the interpolation threshold it can be worse.',
                 'Treating VC bounds as accurate predictions. They are loose worst-case guarantees.',
             ],
+            myths: [
+                { claim: 'Adding parameters always makes a model generalise worse.', truth: 'Past the point where a model can fit its training data exactly, test error often falls again as the model grows: double descent.' },
+                { claim: 'Model size: test error falls steadily as parameters are added, with no peak on the way.', truth: 'Near the interpolation threshold, where the model can only just fit the training data, test error peaks. Bigger helps again only past that point.' },
+            ],
+            deeper: {
+                title: 'Where a generalisation bound comes from',
+                steps: [
+                    'Fix one model, chosen before seeing the data. Its training error is an average of n independent 0-or-1 mistakes, so it lands close to its true error (its error on new data). Hoeffding\'s inequality says how close: P(|true error − training error| > ε) ≤ 2·e^(−2nε²).',
+                    'But training picks the best of many models after seeing the data, and the best-looking one may just be lucky. Suppose the family has M models. The chance that at least one of them is off by more than ε is at most the sum of the separate chances: 2M·e^(−2nε²).',
+                    'Call that chance δ and solve for ε: ε = √(ln(2M/δ) / (2n)).',
+                    'So with probability at least 1 − δ, every model in the family, including the one training picks, satisfies: true error ≤ training error + √(ln(2M/δ) / (2n)).',
+                    'Read the formula. The gap grows with ln M, the capacity of the family, and shrinks like 1/√n. With M = 1,000 models, n = 10,000 examples and δ = 0.05, the gap is at most about 2.3 percentage points.',
+                    'Real model families are infinite, so ln M is replaced by a measure such as the VC dimension. For networks with millions of weights these bounds come out above 100% and say nothing, which is exactly the puzzle that double descent points at.',
+                ],
+                result: 'With probability 1 − δ: true error ≤ training error + √(ln(2M/δ) / (2n)). More capacity loosens the bound; more data tightens it like 1/√n.',
+            },
             followUps: [
                 { q: 'What is the VC dimension of a linear classifier in 2-D?', a: '3: lines can separate every labelling of 3 points, but not the XOR labelling of 4.' },
                 { q: 'Where does the double-descent peak occur?', a: 'Near the interpolation threshold, where the number of parameters is about the number of training examples.' },

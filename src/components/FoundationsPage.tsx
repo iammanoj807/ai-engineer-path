@@ -37,6 +37,7 @@ import {
     type CheckKey,
 } from '../data/foundations';
 import { foundationAnimations } from '../data/foundationsAnimations';
+import { mythTexts } from '../data/lessonMyth';
 import { foundationAnswers } from '../data/foundationsAnswers';
 import { mlInterviewSet } from '../data/interviewPrep/ml';
 import { genAiInterviewSet } from '../data/interviewPrep/genai';
@@ -50,10 +51,11 @@ import {
 } from '../utils/foundationsProgress';
 import type { FoundationsProgress } from '../services/progress';
 import { foundationsGlossary } from '../utils/foundationsGlossary';
-import { CONFIDENT, CYAN, TAP, px, stepId, useStudyMode, useTextSize, useTextSizeChoice } from './learning/learning';
+import { CONFIDENT, CYAN, TAP, hiddenOnPhone, px, stepId, useStudyMode, useTextSize, useTextSizeChoice } from './learning/learning';
 import {
     LearningPageFrame,
     TextSizeControl,
+    LessonToolbar,
     SectionLabel,
     Tag,
     TopicResourceRow,
@@ -64,11 +66,13 @@ import {
     Callout,
     MUST_KNOW,
     MISTAKE,
+    MythCheck,
     Bullets,
     NumberedSteps,
     CodeBlock,
     QuoteBox,
     FollowUps,
+    GoDeeper,
     AnswerReveal,
 } from './learning/LearningParts';
 import { AnimatedScene } from './learning/anim/AnimatedScene';
@@ -78,10 +82,9 @@ import { MermaidDiagram } from './learning/MermaidDiagram';
 import { segmentSections } from './learning/glossaryContext';
 import PathLearn from './app/PathLearn';
 import QuickPracticePanel from './practice/QuickPracticePanel';
-import GuessFirst from './learning/GuessFirst';
 import { StudyStrip } from './learning/StudyStrip';
 import { useTracksProgress } from '../services/account';
-import { useCourseNav } from '../game/useCourseNav';
+import { useCourseNav, useLessonOpen } from '../game/useCourseNav';
 import { courseById } from '../game/courses';
 
 const FOUNDATIONS_COURSE = courseById('foundations');
@@ -152,6 +155,8 @@ type Section =
     | 'example'
     | 'keyPoints'
     | 'mistakes'
+    | 'myths'
+    | 'deeper'
     | 'practice'
     | 'followUps'
     | 'answers';
@@ -172,6 +177,9 @@ const cardSections = (topic: FoundationTopic): [Section, string[]][] => [
     ['example', topic.note.example ? [topic.note.example] : []],
     ['keyPoints', topic.keyPoints],
     ['mistakes', topic.mistakes],
+    ['myths', mythTexts(topic.myths)],
+    // The steps of the derivation, then its result.
+    ['deeper', topic.deeper ? [...topic.deeper.steps, topic.deeper.result] : []],
     ['practice', PRACTICE_ORDER.map(({ key }) => topic.practice[key])],
     ['followUps', topic.followUps.flatMap(item => [item.q, item.a])],
     ['answers', PRACTICE_ORDER.map(({ key }) => foundationAnswers[topic.id]?.[key].answer ?? '')],
@@ -216,7 +224,7 @@ const TopicCard = ({
     const confident = isTopicConfident(progress, topic.id);
     const { note } = topic;
     const { core, papers } = orderResources(topic.resources);
-    const marked = useMemo(() => segmentSections(foundationsGlossary, cardSections(topic)), [topic]);
+    const marked = useMemo(() => segmentSections(foundationsGlossary, cardSections(topic), topic.id), [topic]);
     const answers = foundationAnswers[topic.id];
 
     return (
@@ -263,7 +271,6 @@ const TopicCard = ({
                     {/* ---- STEP 1 ---- the lesson, written to be enough on its own */}
                     <SectionLabel color={accent} id={stepId(topic.id, 1)}>{STEPS[0].label}</SectionLabel>
                     <Stack spacing={3} sx={{ maxWidth: 760 }}>
-                        <GuessFirst topic={topic} accent={accent} glossary={foundationsGlossary} />
                         <QuoteBox accent={accent}>
                             <Typography variant="body1">
                                 <strong style={{ color: accent }}>In one line.</strong> <ProseText value={marked('definition')[0]} />
@@ -271,13 +278,13 @@ const TopicCard = ({
                         </QuoteBox>
                         <NewWordsBox topicId={topic.id} accent={accent} />
                         <Block title="The problem it solves">
-                            <Typography variant="body1"><ProseText value={marked('problem')[0]} /></Typography>
+                            <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}><ProseText value={marked('problem')[0]} /></Typography>
                         </Block>
                         <Block title="Watch it happen">
                             <TopicAnimation topicId={topic.id} accent={accent} />
                         </Block>
                         <Block title="The idea">
-                            <Typography variant="body1"><ProseText value={marked('idea')[0]} /></Typography>
+                            <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}><ProseText value={marked('idea')[0]} /></Typography>
                         </Block>
                         <Block title="How it works, step by step">
                             <NumberedSteps items={marked('howItWorks')} accent={accent} />
@@ -306,7 +313,17 @@ const TopicCard = ({
                         </Callout>
                         <Callout kind="mistakes">
                             <Bullets items={marked('mistakes')} marker={MISTAKE} />
+                            <MythCheck myths={marked('myths')} />
                         </Callout>
+                        {topic.deeper && (
+                            <GoDeeper
+                                id={`deeper-${topic.id}`}
+                                title={topic.deeper.title}
+                                steps={marked('deeper').slice(0, -1)}
+                                result={marked('deeper').at(-1) ?? ''}
+                                accent={accent}
+                            />
+                        )}
                     </Stack>
 
                     {/* ---- STEP 2 ---- optional extras */}
@@ -435,6 +452,10 @@ const FoundationsPage = () => {
     const [glossaryOpen, setGlossaryOpen] = useState(false);
 
     const { openTopic: showTopic } = useCourseNav(FOUNDATIONS_COURSE);
+    // With a lesson open, the page starts with the lesson, not with the course's introduction.
+    const lessonOpen = useLessonOpen();
+    // On a phone, an open lesson gets one slim row (text size, glossary) in place of the course header.
+    const slimHeader = lessonOpen && mode === 'learn';
     const openTopic = (topicId: string) => {
         changeMode('learn');
         showTopic(topicId);
@@ -467,7 +488,8 @@ const FoundationsPage = () => {
             <GlossaryProvider source={foundationsGlossary} openTopic={openTopic}>
                 <Box sx={{ width: '100%', maxWidth: 940, mx: 'auto' }}>
                     {/* ---- HEADER ---- */}
-                    <Box sx={{ mb: 4 }}>
+                    {slimHeader && <LessonToolbar textSize={textSize} onTextSize={changeTextSize} onGlossary={() => setGlossaryOpen(true)} />}
+                    <Box sx={{ mb: 4, ...hiddenOnPhone(slimHeader) }}>
                         <Stack
                             direction={{ xs: 'column', sm: 'row' }}
                             justifyContent="space-between"
@@ -486,16 +508,20 @@ const FoundationsPage = () => {
                             <TextSizeControl value={textSize} onChange={changeTextSize} />
                         </Stack>
                         <GlossaryDrawer open={glossaryOpen} onClose={() => setGlossaryOpen(false)} onOpenTopic={openTopic} />
-                        <Typography
-                            variant="h2"
-                            fontWeight="bold"
-                            sx={{ color: 'text.primary', mb: 1, fontSize: { xs: `${2 * t.heading}rem`, sm: `${3 * t.heading}rem` } }}
-                        >
-                            Learn it, practise it, prove it
-                        </Typography>
-                        <Typography variant="body1" color="text.secondary">
-                            AI and ML from scratch. Every topic is a full lesson: an animation, the idea step by step, a worked example and exercises with answers. Videos and readings are optional extras.
-                        </Typography>
+                        {!lessonOpen && (
+                            <>
+                                <Typography
+                                    variant="h2"
+                                    fontWeight="bold"
+                                    sx={{ color: 'text.primary', mb: 1, fontSize: { xs: `${2 * t.heading}rem`, sm: `${3 * t.heading}rem` } }}
+                                >
+                                    Learn it, practise it, prove it
+                                </Typography>
+                                <Typography variant="body1" color="text.secondary">
+                                    AI and ML from scratch. Every lesson is complete: an animation, the idea step by step, a worked example and exercises with answers. Videos and readings are optional extras.
+                                </Typography>
+                            </>
+                        )}
                         {/* Mode, and the glossary beside it (the same as SQL and System Design). */}
                         <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mt: 2.5 }}>
                             <ToggleButtonGroup
@@ -545,7 +571,7 @@ const FoundationsPage = () => {
                         {tracking && (
                         <Stack direction="row" spacing={4} sx={{ mb: 3 }} flexWrap="wrap" useFlexGap>
                             {[
-                                { value: confident, total: allFoundationTopics.length, label: 'TOPICS CONFIDENT', color: CONFIDENT },
+                                { value: confident, total: allFoundationTopics.length, label: 'LESSONS CONFIDENT', color: CONFIDENT },
                                 { value: checksDone, total: allFoundationTopics.length * CHECK_KEYS.length, label: 'CHECKS PASSED', color: CYAN },
                                 { value: builds, total: allMiniBuilds.length, label: 'MINI-BUILDS', color: 'text.primary' },
                             ].map(stat => (
@@ -564,7 +590,7 @@ const FoundationsPage = () => {
 
                         {/* ---- HOW EACH LESSON WORKS ---- a picture; the full text opens from Details */}
                         <Box sx={{ mb: 3 }}>
-                            <StudyStrip title="How to learn a topic" checks={CHECK_KEYS.map(key => CHECK_LABELS[key])}>
+                            <StudyStrip title="How to learn a lesson" checks={CHECK_KEYS.map(key => CHECK_LABELS[key])}>
                                 <Typography variant="body1" sx={{ color: 'text.primary' }}>
                                     {CONFIDENT_RULE}
                                 </Typography>
@@ -671,7 +697,7 @@ const FoundationsPage = () => {
                                 {/* Ready questions, answers hidden until asked for */}
                                 <SectionLabel>READY WHEN YOU CAN ANSWER</SectionLabel>
                                 <Typography color="text.secondary" sx={{ mb: 1.25, fontSize: px(t.small), maxWidth: 760 }}>
-                                    Interview-style questions across this phase. Say your answer out loud, then tap to compare.
+                                    Interview-style questions across this unit. Say your answer out loud, then tap to compare.
                                 </Typography>
                                 <Box sx={{ maxWidth: 760 }}>
                                     <FollowUps
@@ -690,7 +716,7 @@ const FoundationsPage = () => {
                                         border="rgba(255,255,255,0.08)"
                                     >
                                         <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, maxWidth: 760 }}>
-                                            The main courses and books for this whole phase. Each topic above already lists its own exact chapters and videos.
+                                            The main courses and books for this whole unit. Each lesson above already lists its own exact chapters and videos.
                                         </Typography>
                                         <SectionLabel>MAIN RESOURCES FOR THIS UNIT</SectionLabel>
                                         <Stack spacing={1.5}>

@@ -24,7 +24,7 @@ export const foundationPhase4: FoundationPhase = {
         {
             id: 'f4-t1',
             name: 'Tokenisation and byte-pair encoding (BPE)',
-            definition: 'Tokenisation splits text into the units a language model reads, called tokens; byte-pair encoding (BPE) builds those units by starting from single characters (or bytes) and repeatedly merging the most frequent neighbouring pair.',
+            definition: 'Tokenisation splits text into the units a language model reads, called tokens. Byte-pair encoding (BPE) builds those units by starting from single characters (or bytes) and repeatedly merging the most frequent neighbouring pair.',
             problem: 'A model needs a fixed vocabulary of ids. Whole words give a huge vocabulary and no way to handle new or misspelled words. Single characters make sequences very long and slow. BPE sits in between: common words become one token, rare words break into familiar pieces, and nothing is ever "unknown". Tokens are also how LLM context and cost are measured.',
             howItWorks: [
                 'Start with every character (or every byte, in GPT-style tokenizers) as its own token.',
@@ -47,6 +47,10 @@ export const foundationPhase4: FoundationPhase = {
                 'Using a different tokenizer from the one the model was trained with.',
                 'Forgetting that leading spaces and capital letters change tokens.',
                 'Blaming the model for odd behaviour on spelling or digit-counting that really comes from tokenisation.',
+            ],
+            myths: [
+                { claim: 'A word always becomes the same tokens, with or without a space or a capital letter in front of it.', truth: 'A leading space or a capital letter changes the tokens: "apple", " apple" and "Apple" are all different. That is why exact spacing matters in a prompt.' },
+                { claim: 'One token is always one word.', truth: 'A token is often a piece of a word. In English, one token is about 4 characters, or three-quarters of a word, so a text has more tokens than words.' },
             ],
             followUps: [
                 { q: 'Why not use whole words as tokens?', a: 'The vocabulary would be enormous, and any new, rare or misspelled word would be unknown.' },
@@ -90,7 +94,7 @@ export const foundationPhase4: FoundationPhase = {
                 'Learned positions: a second table with one row per position, trained like any weight (GPT-2).',
                 'Sinusoidal positions: fixed sine and cosine waves of different frequencies, so every position gets a unique pattern (the original transformer).',
                 'Add the two: x = token_embedding + position_embedding. The sum goes into the first transformer block.',
-                'RoPE (rotary embeddings, used by Llama and many others) instead rotates each query and key by an angle that depends on its position, so attention scores depend on the relative distance between tokens.',
+                'RoPE (rotary embeddings, used by Llama and many others) works differently. It rotates each query and key by an angle that depends on its position, so attention scores depend on the relative distance between tokens.',
             ],
             keyPoints: [
                 'Without positions, attention is blind to order.',
@@ -104,6 +108,10 @@ export const foundationPhase4: FoundationPhase = {
                 'Forgetting positions entirely in a hand-built transformer.',
                 'Running a model past its trained context length and expecting good results.',
                 'Adding positions with the wrong shape, so they broadcast across the batch instead of the sequence.',
+            ],
+            myths: [
+                { claim: 'Position information reaches the model as a separate input, kept apart from the token embeddings.', truth: 'Learned and sinusoidal positions are simply added to the token embeddings, and rotary positions are applied inside attention. There is no separate position input.' },
+                { claim: 'A model works just as well on texts longer than the context length it was trained on.', truth: 'Learned positions do not exist beyond the longest one seen in training, and quality drops quickly past it. Stay within the trained context length.' },
             ],
             followUps: [
                 { q: 'Why does a transformer need positional information?', a: 'Attention treats the input as a set; without positions, reordering the words wouldn\'t change what the model sees.' },
@@ -138,7 +146,7 @@ export const foundationPhase4: FoundationPhase = {
         {
             id: 'f4-t3',
             name: 'Self-attention: queries, keys and values',
-            definition: 'Self-attention lets every token build its new representation as a weighted average of all the tokens\' value vectors, with weights from how well its query matches each token\'s key: softmax(QKᵀ/√d)·V.',
+            definition: 'Self-attention lets every token look at all the tokens and build a new version of itself as a weighted mix of their values. The weights come from how well its query matches each token\'s key.',
             problem: 'The meaning of a word depends on other words, often far away: "it" depends on what "it" refers to, and "bank" depends on "river" or "money". RNNs pass information step by step and forget. Attention lets every word look directly at every other word in one step, in parallel, and learn which ones matter. It is the core operation of every transformer.',
             howItWorks: [
                 'Each token\'s vector x is multiplied by three learned matrices: query q = x·W_Q, key k = x·W_K, value v = x·W_V.',
@@ -150,7 +158,7 @@ export const foundationPhase4: FoundationPhase = {
                 'In a GPT, a causal mask sets the scores for future tokens to −∞ before the softmax, so each token only looks back.',
             ],
             keyPoints: [
-                'Attention(Q, K, V) = softmax(QKᵀ/√d)·V.',
+                'The whole operation in one line: Attention(Q, K, V) = softmax(QKᵀ/√d)·V. Score, scale, turn into weights, then mix the values.',
                 'Query: what I am looking for. Key: what I offer for matching. Value: what I pass on.',
                 'Every pair of tokens is compared, so the cost grows with the square of the sequence length.',
                 'The weights depend on the input: attention is a data-dependent mixing of tokens.',
@@ -158,11 +166,27 @@ export const foundationPhase4: FoundationPhase = {
                 'Self-attention: Q, K and V come from the same sequence. Cross-attention: queries from one sequence, keys and values from another.',
             ],
             mistakes: [
-                'Forgetting the √d scaling.',
+                'Forgetting the √d scaling, so the scores are large, the softmax becomes almost one-hot and gradients vanish.',
                 'Applying the softmax over the wrong axis: each row (one query) must sum to 1.',
                 'Adding the causal mask after the softmax instead of before.',
                 'Mixing up the roles of keys (for matching) and values (for the content passed on).',
             ],
+            myths: [
+                { claim: 'The causal mask can be applied after the softmax and still hide the future correctly.', truth: 'After the softmax the future tokens have already taken their share of the weight, and the rows no longer add up to 1. Set their scores to −∞ before the softmax.' },
+                { claim: 'The √d scaling in attention is optional: leaving it out makes little difference.', truth: 'Without dividing by √d, the scores are large and the softmax becomes almost one-hot. The gradients then vanish and training stalls.' },
+            ],
+            deeper: {
+                title: 'Why the scores are divided by √d, and not by d',
+                steps: [
+                    'Model a query q and a key k as vectors of d independent numbers, each with mean 0 and variance 1. That is roughly true at the start of training.',
+                    'The score is q·k = Σ qᵢkᵢ. Each term has mean 0 and variance E[qᵢ²]·E[kᵢ²] = 1.',
+                    'The d terms are independent, so their variances add: Var(q·k) = d. The typical size of a score is √d, about 23 for d = 512.',
+                    'Softmax compares scores through e to their difference. A score 22 above another gets about 3.6 billion times its weight, so one token takes almost everything and the gradient through the softmax is close to 0.',
+                    'Divide by √d: Var(q·k/√d) = d/d = 1, whatever the size of the model. The softmax sees scores of ordinary size and spreads its weight.',
+                    'Dividing by d would go too far: the variance would be 1/d, every score would be nearly equal, and attention would be an almost uniform average that ignores the content.',
+                ],
+                result: 'Var(q·k) = d, so q·k/√d has variance 1 for any model size: the softmax neither saturates nor goes flat.',
+            },
             followUps: [
                 { q: 'What shape is the attention weight matrix for a sequence of T tokens?', a: '(T, T): one row of weights per query token, each row summing to 1.' },
                 { q: 'Why divide the scores by √d?', a: 'Dot products grow with the vector size. Large scores make softmax nearly one-hot, with tiny gradients; dividing by √d keeps them in a good range.' },
@@ -177,7 +201,7 @@ export const foundationPhase4: FoundationPhase = {
                 idea: 'Every token makes three vectors: a query (what I am looking for), a key (what I contain) and a value (what I will share). Each token compares its query with every key, turns the scores into weights with softmax, and takes a weighted average of the values.',
                 analogy: 'A library. Your question is the query. Book titles are keys. The contents are values. You read a mix of the books whose titles best match your question.',
                 breaks: 'In a library you read only the best books. In attention you get a blend of all of them, weighted by how well they match.',
-                example: 'In \'The animal didn\'t cross the street because it was tired\', attention for \'it\' can put a high weight on \'animal\'.',
+                example: 'In \'The animal didn\'t cross the street because it was tired\', attention for \'it\' can put a high weight on \'animal\'. With numbers: suppose the scores of \'it\' against animal, street and tired are 2, 0 and 1. Softmax turns them into weights of about 0.67, 0.09 and 0.24. The new vector for \'it\' is then 0.67 × the value of animal + 0.09 × the value of street + 0.24 × the value of tired.',
                 code: 'Q, K, V = X @ Wq, X @ Wk, X @ Wv            # each (T, d)\nscores = Q @ K.T / np.sqrt(d)                # (T, T)\nscores = scores - scores.max(axis=1, keepdims=True)\nA = np.exp(scores); A /= A.sum(axis=1, keepdims=True)\nout = A @ V                                  # (T, d)',
                 codeLanguage: 'python',
             },
@@ -197,7 +221,7 @@ export const foundationPhase4: FoundationPhase = {
         {
             id: 'f4-t4',
             name: 'Multi-head attention and the transformer block',
-            definition: 'Multi-head attention runs several smaller attentions in parallel and joins their results; a transformer block wraps attention and an MLP, each with layer norm and a residual connection, and a model stacks many identical blocks.',
+            definition: 'Multi-head attention runs several smaller attentions side by side and joins their results. A transformer block wraps attention and an MLP, each with a layer norm and a residual connection, and a model stacks many of these blocks.',
             problem: 'One attention pattern per layer is limiting: a word may need to look at its subject, its object and the previous word all at once. Several heads can each specialise. And attention alone only mixes information between tokens; the MLP then processes it inside each token. The block is the repeating unit of every transformer, so knowing it means you can read any model\'s architecture.',
             howItWorks: [
                 'Split d_model into h heads: with d_model = 768 and 12 heads, each head works with 64-dimensional queries, keys and values.',
@@ -220,6 +244,10 @@ export const foundationPhase4: FoundationPhase = {
                 'Reshaping heads in the wrong order and silently mixing tokens with heads.',
                 'Forgetting the output projection after joining the heads.',
                 'Leaving out the residual connections or the layer norms.',
+            ],
+            myths: [
+                { claim: 'A deep stack of transformer blocks trains equally well without residual connections.', truth: 'Without the residual path, gradients fade through a deep stack and training gets much worse. Every block adds its output back to its input.' },
+                { claim: 'Eight attention heads cost about eight times as much as one big head.', truth: 'Each head works with vectors of size d/heads, so the total cost is about the same as one big head. The work is split up, not multiplied.' },
             ],
             followUps: [
                 { q: 'With d_model = 512 and 8 heads, how big is each head?', a: '512 / 8 = 64 dimensions.' },
@@ -279,6 +307,10 @@ export const foundationPhase4: FoundationPhase = {
                 'Off-by-one errors when shifting inputs and targets.',
                 'Expecting the model to know facts that weren\'t in its training text, or after its cut-off date.',
             ],
+            myths: [
+                { claim: 'A language model knows about events that happened after its training text was collected.', truth: 'It learned only from its training text. Anything newer has to be given to it, in the prompt or through retrieval.' },
+                { claim: 'Training without the causal mask: a better model, because the loss is much lower.', truth: 'The loss is low only because the model can see the answer and copy it. When it generates, there is no future to copy from, so it fails.' },
+            ],
             followUps: [
                 { q: 'What are the targets when training a GPT on a sequence?', a: 'The same tokens shifted left by one: each position must predict the token that follows it.' },
                 { q: 'Why can a GPT train on all positions of a sequence at once?', a: 'The causal mask stops each position from seeing later tokens, so every position is a separate, fair prediction problem in the same forward pass.' },
@@ -313,7 +345,7 @@ export const foundationPhase4: FoundationPhase = {
         {
             id: 'f4-t6',
             name: 'Encoder models (BERT) vs decoder models (GPT)',
-            definition: 'Encoder models (like BERT) let every token attend in both directions and are trained to fill in masked words, which suits understanding tasks; decoder models (like GPT) attend only backwards and are trained to predict the next word, which suits generation.',
+            definition: 'Encoder models, like BERT, let every token look in both directions and learn by filling in masked words, which suits understanding text. Decoder models, like GPT, look only backwards and learn by predicting the next word, which suits writing it.',
             problem: 'Different jobs need different views of the text. Classifying a review or building a search embedding benefits from seeing the whole sentence at once. Writing text one word at a time needs a model that never peeks ahead. Knowing which family a model belongs to tells you what it is good for and how to use it.',
             howItWorks: [
                 'Both families use the same transformer blocks. The difference is the attention mask and the training goal.',
@@ -334,6 +366,10 @@ export const foundationPhase4: FoundationPhase = {
                 'Trying to generate long text with a BERT-style model.',
                 'Assuming decoders can\'t do classification: they can, by prompting or with a small head.',
                 'Mixing up masked-language-model "masks" (hidden words) with attention masks (blocked connections).',
+            ],
+            myths: [
+                { claim: 'A decoder model such as GPT cannot be used for classification.', truth: 'It can: ask for the label in the prompt, or put a small classification head on top. An encoder is simply the more efficient choice for the job.' },
+                { claim: 'Encoder (BERT) = the natural choice for writing long text.', truth: 'BERT is trained to fill in hidden words while seeing both sides, not to continue a text. Writing one word after another is the job of a decoder such as GPT.' },
             ],
             followUps: [
                 { q: 'What is BERT trained to do?', a: 'Predict randomly hidden (masked) tokens using the words on both sides.' },
@@ -366,7 +402,7 @@ export const foundationPhase4: FoundationPhase = {
         {
             id: 'f4-t13',
             name: 'Vision transformers and CLIP',
-            definition: 'A vision transformer (ViT) cuts an image into patches and runs them through a standard transformer as if they were tokens; CLIP trains an image encoder and a text encoder together so matching pictures and captions get similar vectors.',
+            definition: 'A vision transformer (ViT) cuts an image into patches and feeds them to a standard transformer as if they were tokens. CLIP trains an image encoder and a text encoder together, so that a picture and its caption get similar vectors.',
             problem: 'CNNs needed hand-designed structure for images, and every vision task needed its own labelled data. ViT showed the same transformer recipe works for images given enough data, unifying vision and language architectures. CLIP links the two worlds, so you can search photos with words, classify images with no task-specific training, and give language models eyes.',
             howItWorks: [
                 'Cut the image into a grid of patches, for example 16 × 16 pixels. A 224 × 224 image gives 14 × 14 = 196 patches.',
@@ -389,6 +425,10 @@ export const foundationPhase4: FoundationPhase = {
                 'Forgetting position embeddings, so patch order is lost.',
                 'Comparing unnormalised CLIP vectors with a raw dot product instead of cosine similarity.',
             ],
+            myths: [
+                { claim: 'CLIP is trained on images that each carry a class label from a fixed list.', truth: 'CLIP learns from pictures paired with their captions. No fixed list of classes is needed, which is why it can recognise new categories from a text description.' },
+                { claim: 'A vision transformer trained from scratch on a small dataset beats a CNN.', truth: 'A ViT has fewer built-in assumptions about images, so it needs far more data, or pretraining, to do well. On small data a CNN usually wins.' },
+            ],
             followUps: [
                 { q: 'How does a ViT turn an image into tokens?', a: 'It cuts the image into patches, flattens each one and maps it to a vector with a linear layer.' },
                 { q: 'What is CLIP trained to do?', a: 'Give a picture and its caption similar vectors, and mismatched pairs dissimilar ones.' },
@@ -400,7 +440,7 @@ export const foundationPhase4: FoundationPhase = {
                 caption: 'Top: a ViT reads an image as a sequence of patches. Bottom: CLIP places images and captions in one space, so matching ones land close together.',
             },
             note: {
-                idea: 'A vision transformer (ViT) treats an image like a sentence: cut it into small patches, for example 16 × 16 pixels, turn each patch into a vector, add positions, and run a normal transformer. CLIP trains an image encoder and a text encoder together, so a picture and its caption land close together in the same embedding space. That lets you search images with text, and classify images with no task-specific training.',
+                idea: 'A vision transformer (ViT) treats an image like a sentence. Cut the image into small patches, for example 16 × 16 pixels. Turn each patch into a vector, add positions, and run a normal transformer.\n\nCLIP trains an image encoder and a text encoder together, so a picture and its caption land close together in the same embedding space. That lets you search images with text, and classify images with no task-specific training.',
                 analogy: 'ViT reads a photo like a comic strip, panel by panel. CLIP is two translators, one for pictures and one for words, trained until they give the same \'meaning code\' to a picture and its description.',
                 breaks: 'Comic panels come in a set order. A ViT has no built-in sense of which patch sits next to which, so it must learn that from position embeddings. That is one reason ViTs need much more data than CNNs.',
                 example: 'A 224 × 224 image cut into 16 × 16 patches gives 14 × 14 = 196 patches, so 196 \'tokens\'. For zero-shot classification, CLIP compares an image with texts like \'a photo of a cat\' and \'a photo of a dog\', and picks the closest.',
@@ -447,6 +487,10 @@ export const foundationPhase4: FoundationPhase = {
                 'Using T = 0 for creative writing and getting loops.',
                 'Setting both a tiny top-k and a high temperature, then wondering why the settings seem to fight.',
             ],
+            myths: [
+                { claim: 'Temperature 0 = the setting for creative writing.', truth: 'At temperature 0 the model always takes the most likely token, which makes the text repetitive and can trap it in loops. Creative writing needs some randomness.' },
+                { claim: 'High temperature: the choice for answers that have to be exact and repeatable.', truth: 'High temperature adds randomness, so answers vary and errors creep in. For exact, repeatable output use a low temperature, or greedy decoding.' },
+            ],
             followUps: [
                 { q: 'What does a temperature of 0.5 do to logits [2, 0]?', a: 'It divides them by 0.5, giving [4, 0], so the top token\'s probability rises (from about 0.88 to about 0.98).' },
                 { q: 'How does top-p differ from top-k?', a: 'Top-k keeps a fixed number of tokens; top-p keeps however many it takes for their probabilities to reach p.' },
@@ -480,8 +524,8 @@ export const foundationPhase4: FoundationPhase = {
         {
             id: 'f4-t8',
             name: 'KV cache and the cost of generation',
-            definition: 'The KV cache stores the keys and values of every token already processed, so generating each new token only computes its own keys and values instead of recomputing them for the whole sequence.',
-            problem: 'Each new token attends to all earlier tokens. Recomputing every earlier key and value at every step makes generation cost grow with the square of the length, which is far too slow for long replies. The cache makes each step cheap, but its memory grows with every token, layer and user, and it often limits how many users a GPU can serve and how long a context can be.',
+            definition: 'The KV cache stores the keys and values of every token already processed. Generating a new token then computes only that token\'s keys and values, instead of recomputing them for the whole sequence.',
+            problem: 'Each new token attends to all earlier tokens. Recomputing every earlier key and value at every step makes generation cost grow with the square of the length, which is far too slow for long replies.\n\nThe cache makes each step cheap, but its memory grows with every token, layer and user. It often limits how many users a GPU can serve, and how long a context can be.',
             howItWorks: [
                 'The prompt is processed in one pass (prefill), and the keys and values of every layer are saved.',
                 'For each new token, compute only its query, key and value.',
@@ -502,6 +546,10 @@ export const foundationPhase4: FoundationPhase = {
                 'Forgetting the cache when estimating how many users a GPU can serve.',
                 'Estimating memory from the parameter count alone.',
                 'Running past the cache\'s maximum length without a strategy (truncation, sliding window).',
+            ],
+            myths: [
+                { claim: 'The KV cache changes the model\'s answers a little, in exchange for speed.', truth: 'The cache stores exactly what would otherwise be recomputed, so the output is identical. It trades memory for time, not quality.' },
+                { claim: 'The memory needed to serve a model can be worked out from its parameter count alone.', truth: 'The KV cache grows with every token and every user, and at long contexts it can take more memory than the weights. Count it when planning capacity.' },
             ],
             followUps: [
                 { q: 'What exactly is stored in the KV cache?', a: 'The key and value vectors of every past token, at every layer (and every key/value head).' },
@@ -545,7 +593,7 @@ export const foundationPhase4: FoundationPhase = {
             ],
             keyPoints: [
                 'Loss falls as a power law in parameters, data and compute.',
-                'Training compute ≈ 6·N·D (N = parameters, D = tokens).',
+                'Training compute is about 6·N·D floating-point operations, for a model with N parameters trained on D tokens.',
                 'Compute-optimal: roughly 20 tokens per parameter.',
                 'Data quality, deduplication and mixture matter as much as size.',
                 'Lower loss doesn\'t map neatly to every ability; some skills seem to appear suddenly with scale.',
@@ -555,6 +603,10 @@ export const foundationPhase4: FoundationPhase = {
                 'Assuming more data always helps, even when it is duplicated or low quality.',
                 'Reading scaling laws as guarantees for specific skills rather than for the average loss.',
                 'Comparing models trained on different data as if size were the only difference.',
+            ],
+            myths: [
+                { claim: 'More training text improves a model even when much of it is duplicated or low quality.', truth: 'Duplicates and poor text waste compute and can teach bad habits. Filtering the text and removing repeats is a large part of building a pretraining set.' },
+                { claim: 'Fixed compute budget: put it into the biggest model that fits, and train on what data is left.', truth: 'A model that is too big for its data ends up under-trained. The compute-optimal balance is roughly 20 training tokens for every parameter.' },
             ],
             followUps: [
                 { q: 'What is the Chinchilla rule of thumb?', a: 'For compute-optimal training, use about 20 training tokens per parameter.' },
@@ -587,7 +639,7 @@ export const foundationPhase4: FoundationPhase = {
         {
             id: 'f4-t12',
             name: 'Mixture of experts',
-            definition: 'A mixture-of-experts (MoE) layer replaces one big MLP with many expert MLPs and a router that sends each token to only a few of them, so the model has many parameters but uses only a fraction per token.',
+            definition: 'A mixture-of-experts (MoE) layer replaces one big MLP with many expert MLPs, plus a router that sends each token to only a few of them. The model has many parameters, but uses only a fraction of them for each token.',
             problem: 'Bigger models know more, but every parameter normally runs for every token, so cost grows with size. MoE breaks that link: total knowledge can grow while compute per token stays modest. Many frontier models use it, and it changes how you think about model size, memory and serving.',
             howItWorks: [
                 'Inside each block, replace the single MLP with E experts (for example 8), each an MLP of its own.',
@@ -600,15 +652,19 @@ export const foundationPhase4: FoundationPhase = {
             ],
             keyPoints: [
                 'Total parameters ≠ active parameters. Mixtral 8x7B: about 47B total, about 13B active per token.',
-                'Top-k routing (usually k = 1 or 2).',
-                'Load balancing is essential.',
-                'MoE saves compute, not memory.',
+                'Top-k routing: each token is sent only to its k best-scoring experts, usually 1 or 2.',
+                'Load balancing is essential: without it the router sends almost every token to a few experts, and the rest never learn.',
+                'A mixture of experts saves compute, not memory: every expert must still be loaded, although each token uses only a few.',
                 'Experts across GPUs need fast communication (expert parallelism).',
             ],
             mistakes: [
                 'Quoting the total parameter count as if it were the compute cost per token.',
                 'Training without a balancing loss and getting "dead" experts.',
                 'Forgetting that serving still needs memory for every expert.',
+            ],
+            myths: [
+                { claim: 'A mixture-of-experts model needs memory only for the experts that a token actually uses.', truth: 'Every expert must be loaded, because the next token may be sent to a different one. The saving is in compute per token, not in memory.' },
+                { claim: 'Routing: each token passes through the full set of experts.', truth: 'A router sends each token to only its k best-scoring experts, usually 1 or 2. That is why the active parameters are far fewer than the total.' },
             ],
             followUps: [
                 { q: 'What does the router do?', a: 'For each token, it scores every expert and picks the top few to run, with weights for mixing their outputs.' },
@@ -644,7 +700,7 @@ export const foundationPhase4: FoundationPhase = {
         {
             id: 'f4-t10',
             name: 'Fine-tuning and LoRA',
-            definition: 'Fine-tuning continues training a pretrained model on your own data; LoRA does it cheaply by freezing the original weights W and training a small low-rank update, so the layer uses W + B·A.',
+            definition: 'Fine-tuning continues training a pretrained model on your own data. LoRA does it cheaply: it freezes the original weights W and trains a small low-rank update, so the layer uses W + B·A.',
             problem: 'Pretrained models are general; you often need a specific style, format or domain. Full fine-tuning updates billions of weights, needs optimiser memory for all of them, and produces a whole new model copy per task. LoRA trains well under 1% of the parameters, fits on a single GPU, and produces small adapters you can swap in and out of one base model.',
             howItWorks: [
                 'Pick the weight matrices to adapt, usually the attention projections (and often the MLP).',
@@ -668,6 +724,10 @@ export const foundationPhase4: FoundationPhase = {
                 'Choosing a rank far too small for a big change in behaviour, or far too big for a small dataset.',
                 'Fine-tuning to inject facts that change often.',
                 'Forgetting the original chat template, so the tuned model loses its formatting.',
+            ],
+            myths: [
+                { claim: 'Facts that change each week: add them by fine-tuning.', truth: 'Retraining for each change is slow and costly, and the old facts stay in the weights. Facts that change belong in retrieval (RAG), not in fine-tuning.' },
+                { claim: 'LoRA rank: r = 1 covers a big change in behaviour as well as a small one.', truth: 'The rank limits how much the update can express. A big change in behaviour needs a higher rank; a small dataset needs a lower one, or it overfits.' },
             ],
             followUps: [
                 { q: 'Why does LoRA start B at zero?', a: 'So B·A = 0 and the model initially behaves exactly like the pretrained one; training then moves it gradually.' },
@@ -708,7 +768,7 @@ export const foundationPhase4: FoundationPhase = {
                 'Supervised fine-tuning (SFT): train on thousands of (prompt, ideal answer) conversations, written in a chat template, with the loss computed only on the answer tokens.',
                 'Collect preferences: for one prompt, sample two answers and have people (or a strong model) mark the better one: (prompt, chosen, rejected).',
                 'RLHF, step 1: train a reward model to give the chosen answer a higher score than the rejected one.',
-                'RLHF, step 2: use reinforcement learning (often PPO) to make the model produce high-reward answers, with a KL penalty that keeps it close to the SFT model so it doesn\'t game the reward.',
+                'RLHF, step 2: use reinforcement learning (often PPO) to make the model produce high-reward answers. A KL penalty keeps it close to the SFT model, so it doesn\'t game the reward.',
                 'DPO skips both the reward model and RL: a classification-style loss directly makes the chosen answer more likely than the rejected one, relative to a frozen reference model.',
                 'Evaluate carefully: preference tuning can teach shortcuts, such as longer or more flattering answers winning.',
             ],
@@ -723,6 +783,10 @@ export const foundationPhase4: FoundationPhase = {
                 'Computing the SFT loss on the prompt tokens as well as the answers.',
                 'Preference data with hidden biases, such as "longer is always better".',
                 'Dropping the KL penalty, so the model drifts into strange, reward-gaming text.',
+            ],
+            myths: [
+                { claim: 'SFT loss: computed on the prompt tokens as well as on the answer.', truth: 'The model should learn to write answers, not to predict what users will ask. The loss is taken on the answer tokens only.' },
+                { claim: 'KL penalty in RLHF: an optional extra that can be dropped.', truth: 'The KL penalty keeps the model close to the SFT model. Without it, the model drifts into strange text that pleases the reward model but not people.' },
             ],
             followUps: [
                 { q: 'What does instruction tuning add to a pretrained model?', a: 'The habit and format of answering requests helpfully, learned from example conversations.' },
@@ -756,7 +820,7 @@ export const foundationPhase4: FoundationPhase = {
         {
             id: 'f4-t14',
             name: 'Reasoning models and test-time compute',
-            definition: 'Reasoning models are trained to write out intermediate steps before answering, and test-time compute means spending more computation at answer time — longer reasoning, or many samples plus a vote — to get better answers.',
+            definition: 'A reasoning model is trained to write out its steps before answering. Test-time compute means spending more computation at answer time, through longer reasoning or several samples and a vote, to get better answers.',
             problem: 'Some problems can\'t be solved in a single forward pass: multi-step maths, tricky code, planning. Letting the model work step by step, and spend more tokens on harder questions, greatly improves accuracy. It gives a new knob — accuracy versus cost per query — alongside model size, and it is behind the jump in maths and coding ability of recent models.',
             howItWorks: [
                 'Chain of thought: the model writes its reasoning first ("12 pens is 4 groups of 3 …"), then the answer. Each step is a smaller, easier prediction that the next step can build on.',
@@ -778,6 +842,10 @@ export const foundationPhase4: FoundationPhase = {
                 'Trusting a chain of thought as a faithful explanation.',
                 'Using self-consistency at temperature 0, which gives the same answer every time.',
             ],
+            myths: [
+                { claim: 'The reasoning a model writes out is a faithful record of how it reached its answer.', truth: 'The written steps can leave out or misstate what really drove the answer. Treat them as useful output, not as a guaranteed explanation.' },
+                { claim: 'Self-consistency works at temperature 0.', truth: 'At temperature 0 every sample is the same answer, so there is nothing to vote on. Self-consistency needs varied attempts, so sample with some randomness.' },
+            ],
             followUps: [
                 { q: 'What is test-time compute?', a: 'Extra computation spent when answering — longer reasoning, or several samples — to improve accuracy, instead of a bigger model.' },
                 { q: 'How does self-consistency work?', a: 'Sample several reasoning paths with some randomness and take the most common final answer.' },
@@ -789,7 +857,7 @@ export const foundationPhase4: FoundationPhase = {
                 caption: 'Self-consistency: spend more compute at answer time by sampling several reasoning paths and taking the most common answer.',
             },
             note: {
-                idea: 'A reasoning model is trained to \'think\' before answering: it writes out intermediate steps (a chain of thought) and can spend more tokens on harder problems. Spending more computation at answer time, by reasoning for longer or by sampling several answers and picking the best, is called test-time compute. Much of this ability is trained with reinforcement learning on problems whose answers can be checked, like maths and code.',
+                idea: 'A reasoning model is trained to \'think\' before answering: it writes out intermediate steps (a chain of thought) and can spend more tokens on harder problems.\n\nSpending more computation at answer time, by reasoning for longer or by sampling several answers and picking the best, is called test-time compute. Much of this ability is trained with reinforcement learning on problems whose answers can be checked, like maths and code.',
                 analogy: 'A student allowed to use scrap paper and check their work, instead of shouting the first answer that comes to mind.',
                 breaks: 'A student\'s scrap paper shows their real reasoning. A model\'s written steps are not guaranteed to be the true cause of its answer. And more thinking costs more time and money; it helps most on problems with checkable steps.',
                 example: 'Self-consistency: sample 10 reasoning paths for a maths question and take the most common final answer. It is often more accurate than one greedy answer, at 10 times the cost.',

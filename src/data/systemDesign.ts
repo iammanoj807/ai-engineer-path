@@ -14,6 +14,8 @@
 //
 // Fixed content only. Ticked checks live in services/progress.ts.
 
+import type { LessonMyth } from './lessonMyth';
+
 export type SDCheckKey = 'explain' | 'draw' | 'apply' | 'tradeoffs';
 
 /** The order the checks are shown, practised and ticked in. */
@@ -34,7 +36,7 @@ export const SD_CHECK_MEANINGS: Record<SDCheckKey, string> = {
 };
 
 export const SD_CONFIDENT_RULE =
-    'A topic is finished when you pass all four checks, not when you finish a video. ' +
+    'A lesson is finished when you pass all four checks, not when you finish a video. ' +
     'Be strict: if you needed your notes, it is not ticked yet.';
 
 export type SDPriority = 'must' | 'should' | 'bonus';
@@ -47,8 +49,8 @@ export const SD_PRIORITY_LABELS: Record<SDPriority, string> = {
 
 /** Suggested order through the phases. */
 export const sdHowToStudy: string[] = [
-    'The notes on every topic are written to be enough on their own. The free resources are optional: a second explanation and extra practice.',
-    'Start with Unit 0. Its first topic is a map of every building block; then learn the step-by-step answer frameworks.',
+    'The notes on every lesson are written to be enough on their own. The free resources are optional: a second explanation and extra practice.',
+    'Start with Unit 0. Its first lesson is a map of every building block; then learn the step-by-step answer frameworks.',
     'HLD track: Units 1 → 2 → 3 → 4, then practise with Unit 8.',
     'LLD track: Units 5 → 6, then practise with Unit 7. You can run it alongside the HLD track.',
     'AI/ML track: Unit 9, once the core concepts and ML Foundations Unit 5 (AI engineering) feel solid.',
@@ -91,6 +93,8 @@ interface SDTopicBase {
     problem: string;
     /** Common mistakes and misunderstandings to avoid. */
     mistakes: string[];
+    /** Statements that sound right and are wrong, each with what is true instead (lessonMyth.ts). */
+    myths?: LessonMyth[];
     diagram: SDDiagram;
     /** A 20–40 second spoken answer for the interview. */
     interviewAnswer: string;
@@ -175,13 +179,13 @@ export const systemDesignPhases: SDPhase[] = [
                 kind: 'concept',
                 name: 'Meet the building blocks: a map of a typical web system',
                 priority: 'must',
-                definition: 'Most large web systems are built from the same dozen parts — clients, DNS, a CDN, load balancers, app servers, caches, databases, queues, workers and object storage — connected in a familiar shape.',
-                problem: 'System design questions use many technical words at once. If you don\'t know what each part does, answers sound like a list of jargon. Learning the map first makes every later topic easier, because each one is a closer look at one box on this map.',
+                definition: 'Most large web systems are built from the same dozen parts, connected in a familiar shape: clients, DNS, a CDN, load balancers, app servers, caches, databases, queues, workers and object storage.',
+                problem: 'System design questions use many technical words at once. If you don\'t know what each part does, answers sound like a list of jargon. Learning the map first makes every later lesson easier, because each one is a closer look at one box on this map.',
                 diagram: {
                     code: 'flowchart LR\n  U["Client<br/>(phone or browser)"] -->|"1 where is api.example.com?"| DNS["DNS"]\n  U -->|"photos, scripts"| CDN["CDN<br/>(nearby copies)"]\n  U -->|"2 API request"| LB["Load balancer"]\n  LB --> A1["App server"]\n  LB --> A2["App server"]\n  A1 --> C[("Cache")]\n  A1 --> DB[("Database")]\n  A1 -->|"slow job"| Q[["Queue"]]\n  Q --> W["Worker"]\n  A1 --> OS[("Object storage")]\n  CDN -.->|"on a miss"| OS',
                     caption: 'Follow the numbers. The client finds the servers through DNS, then sends its request to the load balancer. App servers read the cache and database, hand slow jobs to the queue, and keep files in object storage, which the CDN serves to users.',
                 },
-                idea: 'A user\'s app (the client) sends a request over the internet. DNS finds your servers\' address, a CDN serves files like photos from somewhere nearby, and a load balancer spreads the other requests across many identical app servers. App servers run your code: they read quick copies of data from a cache and the real data from a database. Slow jobs go onto a queue for background workers, and big files live in object storage.',
+                idea: 'A user\'s app (the client) sends a request over the internet. DNS finds your servers\' address, a CDN serves files like photos from somewhere nearby, and a load balancer spreads the other requests across many identical app servers.\n\nApp servers run your code: they read quick copies of data from a cache and the real data from a database. Slow jobs go onto a queue for background workers, and big files live in object storage.',
                 howItWorks: [
                     'Client: the phone app is the client. It sends a request: \'upload this photo with this caption\'.',
                     'DNS: the app asks DNS for the address of api.example.com and gets back an IP address — like a phone number for a server.',
@@ -211,7 +215,11 @@ export const systemDesignPhases: SDPhase[] = [
                     'Thinking every system needs every box. A small app may only need one server and one database.',
                     'Treating the cache as the place where data really lives. The database is the source of truth.',
                 ],
-                interviewAnswer: 'Most designs start from the same shape. Clients reach us through DNS; files come from a CDN; a load balancer spreads requests across stateless app servers; those servers read from a cache and a database, push slow work onto a queue for workers, and keep large files in object storage. Then I scale whichever box the requirements stress most.',
+                myths: [
+                    { claim: 'A small app: still needs the CDN, the cache, the queue and the load balancer.', truth: 'Each box is added to solve one problem. A small app may need only one server and one database.' },
+                    { claim: 'Source of truth: the cache, since reads go there first.', truth: 'The cache holds copies for speed and can be emptied at any time. The database is the source of truth.' },
+                ],
+                interviewAnswer: 'Most designs start from the same shape. Clients reach us through DNS, and files come from a CDN. A load balancer spreads requests across stateless app servers. Those servers read from a cache and a database, push slow work onto a queue for workers, and keep large files in object storage. Then I scale whichever box the requirements stress most.',
                 followUps: [
                     { q: 'Which box is usually the hardest to scale?', a: 'The database, because it holds data that must stay correct. App servers are easy to copy; data is not.' },
                     { q: 'Why put a queue between the app server and the workers?', a: 'So the user doesn\'t wait for slow work, and so a burst of jobs waits in line instead of overloading the workers.' },
@@ -271,6 +279,10 @@ export const systemDesignPhases: SDPhase[] = [
                     'Long silences. The interviewer can only give credit for what you say.',
                     'Never stating trade-offs. Every choice has a cost, and naming it is what earns the strongest marks.',
                 ],
+                myths: [
+                    { claim: 'A stronger answer: add Kafka, microservices and sharding, even at 10 requests a second.', truth: 'A system that gets 10 requests a second needs none of them. Match the design to the numbers: every extra part costs complexity.' },
+                    { claim: 'First minute: start drawing boxes; questions about requirements can wait.', truth: 'The first five minutes are for requirements: what the system must do, and at what scale. A design built on wrong assumptions answers the wrong question.' },
+                ],
                 interviewAnswer: 'Before I design anything, I\'d like to clarify the requirements and the scale. Then I\'ll propose a simple design that works end to end, and we can go deep on the parts you care about most, discussing the trade-offs as we go.',
                 followUps: [
                     { q: 'What if they mention a technology you don\'t know?', a: 'Say so honestly, then reason from first principles: describe what the component must do (for example, \'a durable queue that keeps order per user\') and the properties you need.' },
@@ -324,6 +336,10 @@ export const systemDesignPhases: SDPhase[] = [
                     'Using the average and forgetting the peak.',
                     'Mixing up bits and bytes: network speeds are in bits, so 1 Gbps ≈ 125 MB a second.',
                     'Working out numbers and then never using them to make a decision.',
+                ],
+                myths: [
+                    { claim: '1 Gbps ≈ 1 GB of data a second.', truth: 'Network speeds are given in bits, and a byte is 8 bits. 1 Gbps is about 125 MB a second.' },
+                    { claim: 'Sizing: plan for the average load; the peak takes care of itself.', truth: 'Traffic comes in peaks, often several times the average. Size the system for the peak, or it falls over just when it is needed most.' },
                 ],
                 interviewAnswer: 'I\'ll estimate the scale first, because it decides the design. For example, 100 million requests a day is only about 1,200 per second on average, maybe 5,000 at peak. A few load-balanced app servers and one database with read replicas can handle that. If it were 100 times more, I\'d plan for sharding and heavy caching.',
                 followUps: [
@@ -380,6 +396,10 @@ export const systemDesignPhases: SDPhase[] = [
                     'Using patterns that don\'t fit, just to mention them.',
                     'Ignoring concurrency when two users can act on the same thing.',
                 ],
+                myths: [
+                    { claim: 'Inheritance is the first tool to reach for when two classes share code.', truth: 'Deep inheritance trees are rigid and hard to change. Composition, where a class holds another object and uses it, is often simpler.' },
+                    { claim: 'One big class holding the whole design is easy to extend later.', truth: 'A class that does everything (a \'god class\') is hard to change, because each change risks all the rest. Give each class one job.' },
+                ],
                 interviewAnswer: 'I\'ll confirm the use cases first, then pull the main entities out of them and sketch a class diagram. Where behaviour is likely to change, like pricing, I\'ll put it behind an interface. Then I\'ll code the core flow and finish with concurrency and how the design extends.',
                 followUps: [
                     { q: 'Which language should I use?', a: 'The one you\'re strongest in. Python and Java are both fine; clean structure matters more than syntax.' },
@@ -418,7 +438,7 @@ export const systemDesignPhases: SDPhase[] = [
                     code: 'sequenceDiagram\n  participant B as Browser\n  participant R as DNS resolver\n  participant S as Web server\n  B->>R: Where is example.com?\n  R-->>B: 203.0.113.10 (kept for its TTL)\n  B->>S: TCP handshake (SYN, SYN-ACK, ACK)\n  B->>S: TLS handshake (certificate and keys)\n  B->>S: GET / (Host example.com)\n  S-->>B: 200 OK and the page',
                     caption: 'Time runs from top to bottom. First the browser finds the address, then it opens a connection, secures it, and only then asks for the page.',
                 },
-                idea: 'When you type a URL, the browser asks DNS for the server\'s IP address (often from a cache), opens a TCP connection, does a TLS handshake for HTTPS, and sends an HTTP request. The request usually reaches a load balancer, which passes it to an application server. That server may read a cache or database, then sends the response back.',
+                idea: 'When you type a URL, the browser asks DNS for the server\'s IP address (often from a cache). Then it opens a TCP connection, does a TLS handshake for HTTPS, and sends an HTTP request. The request usually reaches a load balancer, which passes it to an application server. That server may read a cache or database, then sends the response back.',
                 howItWorks: [
                     'You type example.com. The browser checks its own DNS cache, then the operating system\'s.',
                     'On a miss, it asks a resolver, often run by your internet provider. The resolver asks a root server (\'who handles .com?\'), then a .com server (\'who handles example.com?\'), then example.com\'s own name server, which returns the IP address, say 203.0.113.10. Every answer is cached for its TTL.',
@@ -444,6 +464,10 @@ export const systemDesignPhases: SDPhase[] = [
                     'Forgetting DNS caching when you plan a failover by changing DNS records.',
                     'Mixing up TCP (the reliable connection) with HTTP (the request format that travels over it).',
                     'Thinking HTTPS only encrypts. It also proves the server\'s identity.',
+                ],
+                myths: [
+                    { claim: 'A change to a DNS record reaches every user straight away.', truth: 'Resolvers and browsers keep the old answer until its TTL (time to live) runs out, so some users go to the old address for minutes or hours.' },
+                    { claim: 'TCP = HTTP: two names for the same thing.', truth: 'TCP is the reliable connection between two machines. HTTP is the format of the requests and responses that travel over that connection.' },
                 ],
                 interviewAnswer: 'The browser resolves the domain through DNS, usually from a cache, to get an IP address. It opens a TCP connection and does a TLS handshake, then sends the HTTP request. The request typically hits a load balancer, which forwards it to an app server; the server reads from a cache or database and sends back the response.',
                 followUps: [
@@ -504,7 +528,11 @@ export const systemDesignPhases: SDPhase[] = [
                     'No pagination, so one request can return a million rows.',
                     'Breaking changes without a new version.',
                 ],
-                interviewAnswer: 'I\'d design the API around resources with standard methods and status codes, paginate lists with cursors, version it, and require an idempotency key on any create or payment endpoint so client retries are safe.',
+                myths: [
+                    { claim: 'Errors: return 200 OK and describe the problem in the body.', truth: 'Clients, proxies and monitoring tools read the status code. Use 4xx for a client\'s mistake and 5xx for a server failure, so that errors can be seen.' },
+                    { claim: 'GET: fine for an action that changes data, such as deleting a row.', truth: 'GET must be safe: crawlers and browser prefetching may call it at any time. Use POST, PUT, PATCH or DELETE for changes.' },
+                ],
+                interviewAnswer: 'I\'d design the API around resources, with standard methods and status codes. I\'d paginate lists with cursors and version the API. I\'d also require an idempotency key on any create or payment endpoint, so client retries are safe.',
                 followUps: [
                     { q: '401 or 403?', a: '401 means not authenticated (we don\'t know who you are). 403 means authenticated but not allowed to do this.' },
                     { q: 'Why is cursor pagination better than offset?', a: 'Offset has to skip rows, which is slow for page 10,000, and pages shift when new rows arrive. A cursor continues from the last item seen, so it\'s fast and stable.' },
@@ -526,7 +554,7 @@ export const systemDesignPhases: SDPhase[] = [
                 kind: 'concept',
                 name: 'Real-time communication: polling, long polling, WebSockets, SSE',
                 priority: 'should',
-                definition: 'Ways for a server to get new data to a client quickly: the client keeps asking (polling), waits on an open request (long polling), keeps a two-way connection open (WebSockets), or receives a one-way stream (server-sent events, SSE).',
+                definition: 'There are four ways for a server to get new data to a client quickly. The client keeps asking (polling), waits on an open request (long polling), keeps a two-way connection open (WebSockets), or receives a one-way stream (server-sent events, SSE).',
                 problem: 'Normal HTTP lets the client ask but not the server tell. Chat, notifications, live prices and multiplayer games need updates pushed to the user within a fraction of a second.',
                 diagram: {
                     code: 'flowchart LR\n  A["User A"] <-->|"WebSocket"| G1["Gateway 1"]\n  B["User B"] <-->|"WebSocket"| G2["Gateway 2"]\n  G1 -->|"1 message for B"| CS["Chat service"]\n  CS -->|"2 where is B connected?"| R[("Redis<br/>user → gateway")]\n  CS -->|"3 forward"| G2',
@@ -554,6 +582,10 @@ export const systemDesignPhases: SDPhase[] = [
                     'Choosing WebSockets for one-way updates, where SSE is simpler.',
                     'Forgetting that open connections make servers stateful: you need a connection registry and reconnect logic.',
                     'No plan for messages missed while a client was disconnected.',
+                ],
+                myths: [
+                    { claim: 'One-way updates (server to client): WebSockets are simpler than SSE.', truth: 'For one-way updates, SSE is simpler: a one-way stream from the server to the client over ordinary HTTP. WebSockets earn their extra cost when both sides need to send.' },
+                    { claim: 'Reconnecting: the client automatically receives the messages it missed.', truth: 'Messages sent while a client was disconnected are lost unless the server kept them. Store them, and let the client ask for everything after the last one it saw.' },
                 ],
                 interviewAnswer: 'For chat I\'d use WebSockets, because messages flow both ways with low latency. Users connect to a fleet of gateway servers, and Redis maps each user to their gateway so a message can be pushed to the right connection. For one-way updates like live scores, SSE is simpler.',
                 followUps: [
@@ -592,7 +624,7 @@ export const systemDesignPhases: SDPhase[] = [
                     'The file stays until its TTL expires. To update it straight away, publish a new file name (app.3f9a.js → app.7c2b.js) or purge the old one.',
                 ],
                 analogy: 'Local supermarket branches stocking popular products, so you don\'t have to drive to the central warehouse.',
-                breaks: 'A supermarket can check the warehouse for the newest stock. A CDN serves its cached copy until it expires, so after you change a file, users may get the old one unless you put a version in the file name or purge the cache.',
+                breaks: 'A supermarket can check the warehouse for the newest stock. A CDN serves its cached copy until it expires. So after you change a file, users may get the old one, unless you put a version in the file name or purge the cache.',
                 example: 'Netflix places its own CDN boxes inside internet providers\' networks, so most video traffic never crosses the wider internet.',
                 keyPoints: [
                     'Best for static, popular, cacheable content: images, video segments, JavaScript and CSS files.',
@@ -604,6 +636,9 @@ export const systemDesignPhases: SDPhase[] = [
                     'Caching personalised pages at the edge, and showing one user\'s data to another.',
                     'Long TTLs on files that change, without versioned names.',
                     'Forgetting that the first request in each region is still slow (a \'cold\' cache).',
+                ],
+                myths: [
+                    { claim: 'A CDN makes even the very first request in each region fast.', truth: 'The first request in a region is a cache miss: the edge server has to fetch the file from the origin. Only the requests after it are fast.' },
                 ],
                 interviewAnswer: 'I\'d serve static assets and media through a CDN, so users download them from a nearby edge server. That lowers latency and takes most of the bandwidth off our origin. I\'d use versioned file names so updates show up immediately.',
                 followUps: [
@@ -654,6 +689,9 @@ export const systemDesignPhases: SDPhase[] = [
                     'Putting business rules in the gateway, so it slowly becomes a hidden monolith.',
                     'Running a single gateway instance: a single point of failure.',
                     'Doing heavy work in the gateway that slows down every request.',
+                ],
+                myths: [
+                    { claim: 'An API gateway is a good place to put business rules.', truth: 'A gateway should stay thin: routing, authentication, rate limiting. Business rules belong in the services, or the gateway slowly becomes a hidden monolith.' },
                 ],
                 interviewAnswer: 'I\'d put an API gateway at the edge to authenticate requests, apply rate limits and route each path to the right microservice, so services don\'t each re-implement those concerns. It\'s replicated, so it isn\'t a single point of failure.',
                 followUps: [
@@ -721,6 +759,10 @@ export const systemDesignPhases: SDPhase[] = [
                     'Keeping sessions in server memory, then adding more servers.',
                     'Sharding far too early: it adds a lot of complexity.',
                 ],
+                myths: [
+                    { claim: 'A slow system: more app servers make it faster, even when the database is the bottleneck.', truth: 'Only when the app servers are the bottleneck. If the database is the slow part, more app servers just send it more work, so measure first.' },
+                    { claim: 'Sessions in a server\'s memory: they keep working when more servers are added.', truth: 'The next request may reach a different server, which knows nothing about the session. Keep sessions in a shared store, so the app servers stay stateless.' },
+                ],
                 interviewAnswer: 'I\'d keep the application tier stateless so it scales horizontally behind a load balancer with auto-scaling. State goes into shared stores: sessions in Redis, data in the database. For the database, I\'d add read replicas first and shard only when write volume needs it.',
                 followUps: [
                     { q: 'When is vertical scaling the right answer?', a: 'Early on, or for a database that\'s hard to split. It\'s simple and modern machines are very large. Just plan the horizontal path for later.' },
@@ -777,6 +819,10 @@ export const systemDesignPhases: SDPhase[] = [
                     'Forgetting the database, DNS or load balancer when removing single points of failure.',
                     'Promising 99.99% when one of your dependencies only offers 99.9%.',
                 ],
+                myths: [
+                    { claim: 'Depending on a 99.9% database: the service can still promise 99.99%.', truth: 'A service is at most as available as what it depends on. Availabilities in series multiply, so the result is below 99.9%.' },
+                    { claim: 'Two copies on one rack: no single point of failure left.', truth: 'The rack is still a single point of failure: one power or network fault takes both copies down. Put the copies in different racks or zones.' },
+                ],
                 interviewAnswer: 'I\'d first agree a target, say 99.9%. Then I\'d remove single points of failure: several app servers across availability zones, a replicated database with automatic failover, redundant load balancers and health checks. I\'d also remember that every dependency in series lowers the overall availability.',
                 followUps: [
                     { q: 'Availability or reliability?', a: 'Availability: is it up and responding? Reliability: does it do the right thing over time, without errors or data loss? A system can be up but returning wrong answers.' },
@@ -805,7 +851,7 @@ export const systemDesignPhases: SDPhase[] = [
                     code: 'stateDiagram-v2\n  [*] --> Closed\n  Closed --> Open: too many failures\n  Open --> HalfOpen: after a cool-down\n  HalfOpen --> Closed: test calls succeed\n  HalfOpen --> Open: test calls fail\n  Closed: Closed - calls go through\n  Open: Open - fail fast, use the fallback\n  HalfOpen: Half-open - a few test calls',
                     caption: 'The three states of a circuit breaker. Arrows show what makes it switch from one state to another.',
                 },
-                idea: 'In distributed systems something is always failing: a server, a network link, a slow dependency. The defences: timeouts (never wait forever), retries with exponential backoff and jitter (try again, gently), circuit breakers (stop calling a broken service for a while), fallbacks (return cached or default data), and bulkheads (separate resources so one failure can\'t sink everything).',
+                idea: 'In distributed systems something is always failing: a server, a network link, a slow dependency. There are five defences. Timeouts: never wait forever. Retries with exponential backoff and jitter: try again, gently. Circuit breakers: stop calling a broken service for a while. Fallbacks: return cached or default data. Bulkheads: separate resources, so one failure can\'t sink everything.',
                 howItWorks: [
                     'Timeout: decide how long a call may take, say 300 ms. After that, give up instead of waiting forever.',
                     'Retry: if the failure looks temporary and the call is safe to repeat, try again after 100 ms, then 200 ms, then 400 ms (exponential backoff), each with a little randomness (jitter).',
@@ -830,6 +876,10 @@ export const systemDesignPhases: SDPhase[] = [
                     'No timeouts, or a timeout longer than the caller\'s own timeout.',
                     'Retrying operations that aren\'t safe to repeat, like charging a card.',
                     'Retrying instantly without backoff, which turns a small outage into a big one.',
+                ],
+                myths: [
+                    { claim: 'Retries: a failed card payment can be sent again like a failed read.', truth: 'The first attempt may have worked before its reply was lost, so a retry could charge the card twice. Retry only operations that are safe to repeat.' },
+                    { claim: 'During an outage: retry at once, with no delay, to recover sooner.', truth: 'Instant retries from many clients pile more load onto a service that is already struggling. Wait longer after each failure (exponential backoff), with some random jitter.' },
                 ],
                 interviewAnswer: 'Every network call gets a timeout. Idempotent calls are retried with exponential backoff and jitter. Calls to non-critical dependencies sit behind a circuit breaker with a fallback, so the core feature keeps working when they fail. That stops one slow service from causing a cascading failure.',
                 followUps: [
@@ -882,6 +932,10 @@ export const systemDesignPhases: SDPhase[] = [
                     'Sticky sessions that tie one user to a server forever, which breaks when that server dies.',
                     'Health checks that only test \'is the process running?\', not \'can it reach its database?\'.',
                     'Forgetting that the load balancer needs redundancy too.',
+                ],
+                myths: [
+                    { claim: 'A health check that finds the process running proves the server can handle requests.', truth: 'A process can be running and still be unable to reach its database. A good health check tests what a real request needs.' },
+                    { claim: 'Round robin sends each request to the server with the fewest open connections.', truth: 'Round robin simply takes the servers in turn. Sending each request to the server with the fewest open connections is the least-connections algorithm.' },
                 ],
                 interviewAnswer: 'I\'d put a layer 7 load balancer in front of the stateless app servers, with health checks and least-connections routing. It runs as a redundant pair or a managed service, so it isn\'t a single point of failure.',
                 followUps: [
@@ -939,6 +993,10 @@ export const systemDesignPhases: SDPhase[] = [
                     'No plan for a stampede when a very popular key expires.',
                     'Treating the cache as the source of truth. It can be emptied at any moment.',
                 ],
+                myths: [
+                    { claim: 'Important data: it can live in the cache alone, with no copy in a database.', truth: 'A cache can be emptied at any moment: on a restart, or when memory runs out. The database stays the source of truth.' },
+                    { claim: 'Cache-aside: the cache is filled when the data is written.', truth: 'Cache-aside fills the cache on a read miss: load from the database, then store the value. Filling the cache on every write is write-through.' },
+                ],
                 interviewAnswer: 'Reads far outnumber writes here, so I\'d add a Redis cache using cache-aside with a TTL. On writes I\'d delete the cache key so the next read loads fresh data. I\'d watch the hit rate, and protect hot keys from stampedes by letting one request rebuild while others wait.',
                 followUps: [
                     { q: 'What is a cache stampede?', a: 'A popular key expires and thousands of requests miss at the same moment and all hit the database. Fixes: let one request rebuild while the others wait, add random jitter to TTLs, or refresh early.' },
@@ -967,7 +1025,7 @@ export const systemDesignPhases: SDPhase[] = [
                     code: 'flowchart TD\n  U["User withdraws £80 in London"] --> L["London copy<br/>balance £100"]\n  L ---|"network broken ✗"| P["Paris copy<br/>balance £100"]\n  L --> CP["CP choice: refuse until Paris confirms<br/>always correct, some requests fail"]\n  L --> AP["AP choice: accept, London shows £20<br/>always answers, copies may disagree"]',
                     caption: 'The network between the two copies is broken. The system must either refuse (stay consistent) or accept and risk the copies disagreeing (stay available).',
                 },
-                idea: 'When data is copied across machines, the copies can briefly disagree. Strong consistency makes every read return the latest value, but may have to refuse requests when machines can\'t talk to each other. Eventual consistency always answers, but a read can be briefly out of date. Network partitions will happen, so the real choice is C or A during a partition. PACELC adds: else (normally), you trade latency against consistency.',
+                idea: 'When data is copied across machines, the copies can briefly disagree. Strong consistency makes every read return the latest value, but may have to refuse requests when machines can\'t talk to each other. Eventual consistency always answers, but a read can be briefly out of date.\n\nNetwork partitions will happen, so the real choice is C or A during a partition. PACELC adds: else (normally), you trade latency against consistency.',
                 howItWorks: [
                     'Picture two replicas, in London and Paris, each holding a balance of £100.',
                     'The network between them breaks: a partition. A user in London withdraws £80.',
@@ -994,6 +1052,10 @@ export const systemDesignPhases: SDPhase[] = [
                     'Calling a system \'CA\'. With replicas, partitions can\'t be wished away.',
                     'Treating CAP as one choice for the whole system, instead of a choice per type of data.',
                     'Confusing CAP\'s consistency with ACID\'s consistency.',
+                ],
+                myths: [
+                    { claim: 'With enough replicas, a system can stay both consistent and available during a network partition.', truth: 'A replica that is cut off must either refuse requests (consistent) or answer with data that may be old (available). No number of replicas removes that choice.' },
+                    { claim: 'CAP is one choice, made once for the whole system.', truth: 'Different data needs different choices. A bank balance may need consistency, while a count of likes can favour availability, in the same system.' },
                 ],
                 interviewAnswer: 'It depends on the data. For money or stock levels I\'d choose strong consistency, accepting that some requests fail during a partition. For feeds, likes or view counts I\'d choose availability with eventual consistency, because a slightly stale number is harmless and the system stays up.',
                 followUps: [
@@ -1023,7 +1085,7 @@ export const systemDesignPhases: SDPhase[] = [
                     code: 'flowchart LR\n  R["Request from key K"] --> G["Gateway"]\n  G --> D{"Token left in K\'s bucket?<br/>(kept in Redis)"}\n  D -->|"yes: take 1"| S["Service handles it"]\n  D -->|"no"| X["429 Too Many Requests"]\n  T["Refill: +10 tokens a second,<br/>max 20"] -.-> D',
                     caption: 'Each client has a bucket of tokens. A request spends one token; an empty bucket means the request is rejected until the bucket refills.',
                 },
-                idea: 'Rate limits protect services from abuse, bugs and traffic spikes, and enforce fair use, like 100 requests per minute per user. Requests over the limit get HTTP 429. Common algorithms: token bucket, leaky bucket, fixed window and sliding window. Backpressure goes further: queues have size limits, and when they fill, senders are told to wait or requests are dropped on purpose, instead of the whole system falling over.',
+                idea: 'Rate limits protect services from abuse, bugs and traffic spikes, and enforce fair use, like 100 requests per minute per user. Requests over the limit get HTTP 429. Common algorithms: token bucket, leaky bucket, fixed window and sliding window.\n\nBackpressure goes further: queues have size limits, and when they fill, senders are told to wait or requests are dropped on purpose, instead of the whole system falling over.',
                 howItWorks: [
                     'Choose the rule: for example, 10 requests per second per API key, with bursts of up to 20.',
                     'Token bucket: each key has a bucket that holds up to 20 tokens and gains 10 tokens every second.',
@@ -1049,6 +1111,10 @@ export const systemDesignPhases: SDPhase[] = [
                     'Limiting per server instead of across all servers.',
                     'One global limit, so a single heavy user blocks everyone else.',
                     'Unbounded queues that hide overload until memory runs out.',
+                ],
+                myths: [
+                    { claim: 'Counters kept on each server: the limit still holds across the whole system.', truth: 'With ten servers, a client could get ten times the limit. Keep the counters in a shared store such as Redis, so that every server sees the same count.' },
+                    { claim: 'One global limit shared by the users: a fair design, since no one gets special treatment.', truth: 'With one shared limit, a single heavy user can use it all up and block everyone else. Limit each user, API key or IP address separately.' },
                 ],
                 interviewAnswer: 'I\'d rate-limit at the API gateway with a token bucket per user or API key, keeping the counters in Redis so every gateway node shares them, and return 429 with Retry-After. Internally I\'d use bounded queues and load shedding, so overload slows the system down gracefully instead of crashing it.',
                 followUps: [
@@ -1107,6 +1173,10 @@ export const systemDesignPhases: SDPhase[] = [
                     'Expecting order across a whole Kafka topic. Order is only kept within one partition.',
                     'Using a queue where the user needs an immediate answer.',
                 ],
+                myths: [
+                    { claim: 'Delivery: a queue hands each message to its consumer exactly once.', truth: 'Most queues deliver at least once: after a crash or a timeout, a message can arrive twice. Make processing idempotent, so that a repeat does no harm.' },
+                    { claim: 'Kafka topic: messages stay in order across the whole topic.', truth: 'Order is kept only within one partition. Messages that must stay in order need the same key, so that they go to the same partition.' },
+                ],
                 interviewAnswer: 'Slow or non-critical work goes on a queue so the request stays fast. For simple task distribution I\'d use a queue like SQS with a dead-letter queue. For event streams that many services need, or that I may want to replay, I\'d use Kafka, partitioned by a key like user ID to keep each user\'s events in order. Consumers are idempotent, because delivery is at least once.',
                 followUps: [
                     { q: 'Kafka or SQS?', a: 'SQS: a simple managed queue, each message handled once, no replay. Kafka: a high-throughput ordered log with many independent consumers, replay, and ordering within a partition.' },
@@ -1156,7 +1226,11 @@ export const systemDesignPhases: SDPhase[] = [
                 mistakes: [
                     'Alerting on causes (CPU at 80%) instead of symptoms users feel (errors, slow responses).',
                     'Logs without a request or trace ID, so you can\'t connect them.',
-                    'Watching averages instead of percentiles.',
+                    'Watching the average latency instead of percentiles: an average hides the slow requests that users actually feel.',
+                ],
+                myths: [
+                    { claim: 'The best alerts fire on causes, such as CPU reaching 80%.', truth: 'High CPU may hurt nobody, and users can suffer while CPU looks fine. Alert on the symptoms users feel: errors and slow responses.' },
+                    { claim: 'Average latency shows what the slowest users experience.', truth: 'An average hides the slow requests. Percentiles show them: p99 is the time that 99% of requests beat, so it describes the slowest 1%.' },
                 ],
                 interviewAnswer: 'I\'d emit the four golden signals as metrics for each service, write structured logs with a trace ID, and use distributed tracing to follow requests across services. Alerts fire on user-facing symptoms, like p99 latency or error rate breaking the SLO, so on-call engineers are paged only for real problems.',
                 followUps: [
@@ -1208,7 +1282,7 @@ export const systemDesignPhases: SDPhase[] = [
                 ],
                 analogy: 'SQL is a well-organised filing cabinet with labelled folders and cross-references. NoSQL is a set of specialised containers: a key rack, a box of folders, a giant ledger, a map of connections.',
                 breaks: 'A filing cabinet can\'t grow past the office. Relational databases actually scale a long way with replicas and sharding, and many NoSQL stores now support transactions. The line is blurrier than the slogan.',
-                example: 'An online shop: orders and payments in PostgreSQL (transactions matter); shopping carts and sessions in a key-value store (fast and simple); product search in Elasticsearch; \'people also bought\' in a precomputed table or a graph.',
+                example: 'Take an online shop. Orders and payments go in PostgreSQL, because transactions matter. Shopping carts and sessions go in a key-value store: fast and simple. Product search goes in Elasticsearch. \'People also bought\' goes in a precomputed table or a graph.',
                 keyPoints: [
                     'Choose by access pattern: what are the main reads and writes, and by which key?',
                     'SQL: joins, ACID transactions, a strict schema; scales with replicas and, with more effort, sharding.',
@@ -1226,6 +1300,10 @@ export const systemDesignPhases: SDPhase[] = [
                     'Choosing NoSQL because it \'scales\', without checking the queries you need.',
                     'Designing a NoSQL schema like SQL tables, then needing joins.',
                     'Forgetting that different parts of one system can use different databases.',
+                ],
+                myths: [
+                    { claim: 'A system that has to scale: choose NoSQL, since SQL databases stop at one machine.', truth: 'A SQL database scales a long way with replicas and sharding. Choose by the reads and writes you need: NoSQL gives up joins, and often transactions too.' },
+                    { claim: 'One system: one kind of database for the orders, the sessions and the search alike.', truth: 'Different parts have different needs. Orders may sit in SQL, sessions in a key-value store and search in a search engine, all in one system.' },
                 ],
                 interviewAnswer: 'I\'d choose based on the access patterns. For orders and payments with relationships and transactions, PostgreSQL. For very high write volume with simple key-based reads, like chat messages, a wide-column store like Cassandra. For sessions and hot data, Redis. Using different stores for different jobs is normal.',
                 followUps: [
@@ -1282,7 +1360,11 @@ export const systemDesignPhases: SDPhase[] = [
                     'Assuming the default isolation level prevents every anomaly.',
                     'Keeping a transaction open for a long time (for example, while calling another service), which holds locks and blocks others.',
                 ],
-                interviewAnswer: 'For anything involving money or stock I\'d use ACID transactions in a relational database. To stop two users buying the last item, I\'d use a row lock with SELECT FOR UPDATE or optimistic locking with a version number, and pick the isolation level that blocks the anomalies that matter.',
+                myths: [
+                    { claim: 'Reading a balance in one query and updating it in the next works correctly without a lock.', truth: 'Two requests can both read 100, both subtract, and both write: one update is lost. Lock the row with SELECT … FOR UPDATE, or check a version column.' },
+                    { claim: 'Long transactions: fine to keep one open while the code calls another service.', truth: 'An open transaction holds its locks, so a slow call blocks everyone who needs those rows. Keep transactions short, and call other services outside them.' },
+                ],
+                interviewAnswer: 'For anything involving money or stock I\'d use ACID transactions in a relational database. To stop two users buying the last item, I\'d use a row lock with SELECT FOR UPDATE, or optimistic locking with a version number. I\'d also pick the isolation level that blocks the anomalies that matter.',
                 followUps: [
                     { q: 'Optimistic or pessimistic locking?', a: 'Pessimistic locks the row before changing it: safe under heavy contention, but others wait. Optimistic reads a version and only updates if the version hasn\'t changed: fast when conflicts are rare, with a retry when they happen.' },
                     { q: 'What is write skew?', a: 'Two transactions read the same data, each makes a decision, and each writes a different row, together breaking a rule — like two doctors both going off call at once. Serializable isolation prevents it.' },
@@ -1338,6 +1420,10 @@ export const systemDesignPhases: SDPhase[] = [
                     'A composite index with the columns in the wrong order.',
                     'Wrapping the column in a function (WHERE LOWER(email) = …) so the index can\'t be used.',
                 ],
+                myths: [
+                    { claim: 'The order of the columns in a composite index makes no difference.', truth: 'An index on (a, b) is sorted by a first, so it helps queries on a, or on a and b, but not on b alone. Put first the column your queries always filter on.' },
+                    { claim: '`WHERE LOWER(email) = …` can use a normal index on email.', truth: 'The function hides the column, so the index can\'t be used and every row is checked. Compare the bare column with a value instead, for example by storing emails in lower case.' },
+                ],
                 interviewAnswer: 'I\'d add indexes that match the main queries: for \'latest orders for a user\', a composite index on user_id and created_at. I\'d check with EXPLAIN, and avoid indexing everything, since every index slows writes.',
                 followUps: [
                     { q: 'Why doesn\'t an index on (a, b) help a query on b alone?', a: 'The index is sorted by a first, so values of b are scattered all through it — like a phone book sorted by surname being no help for finding a first name.' },
@@ -1389,6 +1475,10 @@ export const systemDesignPhases: SDPhase[] = [
                     'Reading from a replica straight after a write, and being surprised by old data.',
                     'Fully asynchronous replication for data you can\'t afford to lose.',
                     'Automatic failover with no protection against two leaders (split brain).',
+                ],
+                myths: [
+                    { claim: 'Read from a replica straight after a write: you get the new data.', truth: 'Replicas apply changes a little after the leader (replication lag), so a read straight after a write can return old data. Read your own writes from the leader.' },
+                    { claim: 'Asynchronous: fast, and no write is lost when the leader fails.', truth: 'The leader confirms a write before its followers have it. If the leader dies in that moment, the write is gone. Synchronous replication avoids this, with slower writes.' },
                 ],
                 interviewAnswer: 'I\'d use leader–follower replication: writes to the leader, reads spread across replicas, with at least one synchronous replica in another zone for safe failover. Screens where users must see their own change straight away read from the leader.',
                 followUps: [
@@ -1442,7 +1532,11 @@ export const systemDesignPhases: SDPhase[] = [
                     'A time-based key that sends every new write to the same shard.',
                     'Designs whose common requests need joins or transactions across shards.',
                 ],
-                interviewAnswer: 'Once writes or data outgrow one database, I\'d shard by a key that matches the main query — here user_id, hashed for an even spread — so a user\'s data lives on one shard. I\'d use consistent hashing or many logical shards to make adding machines easier, and handle very hot users with caching.',
+                myths: [
+                    { claim: 'Shard key: country is a good one, since each user has exactly one.', truth: 'A key with few values makes huge, uneven shards: one big country can overload its shard. A good shard key has many distinct values, spread evenly.' },
+                    { claim: 'Time-based shard key: new writes are spread evenly across the shards.', truth: 'New rows all carry the latest time, so they all land on the same shard. That shard becomes a hot spot while the others sit idle.' },
+                ],
+                interviewAnswer: 'Once writes or data outgrow one database, I\'d shard by a key that matches the main query. Here that is user_id, hashed for an even spread, so a user\'s data lives on one shard. I\'d use consistent hashing or many logical shards to make adding machines easier, and handle very hot users with caching.',
                 followUps: [
                     { q: 'Why not shard by created_at?', a: 'All new writes would land on the newest shard, a hot spot, while the old shards sit idle.' },
                     { q: 'How do you query across shards?', a: 'Scatter-gather (ask every shard, merge the results), or keep a separate index or a precomputed view built for that query.' },
@@ -1495,7 +1589,11 @@ export const systemDesignPhases: SDPhase[] = [
                     'Assuming it fixes hot keys. It doesn\'t.',
                     'Forgetting replication: each key usually lives on the next 2–3 servers on the ring, not just one.',
                 ],
-                interviewAnswer: 'For a distributed cache or a sharded store I\'d use consistent hashing with virtual nodes, so adding or removing a node moves only about 1/N of the keys instead of nearly all of them, and load stays balanced.',
+                myths: [
+                    { claim: 'Consistent hashing stops one very popular key from overloading a server.', truth: 'It spreads the keys evenly, but one hot key still lives on one server. Hot keys need their own fix, such as caching or splitting the key.' },
+                    { claim: 'Routing with hash % N moves only a few keys when a server is added.', truth: 'Changing N changes the result for almost every key. On a consistent-hashing ring, adding a server moves only about 1/N of them.' },
+                ],
+                interviewAnswer: 'For a distributed cache or a sharded store I\'d use consistent hashing with virtual nodes. Adding or removing a node then moves only about 1/N of the keys, instead of nearly all of them, and the load stays balanced.',
                 followUps: [
                     { q: 'Why virtual nodes?', a: 'With few servers, random ring positions are uneven. Many points per server average this out, and a failed server\'s keys spread over many servers instead of overloading one neighbour.' },
                     { q: 'What doesn\'t consistent hashing solve?', a: 'Hot keys. One extremely popular key still lands on one server; you need replication or caching for that.' },
@@ -1545,6 +1643,10 @@ export const systemDesignPhases: SDPhase[] = [
                     'Putting files in database BLOB columns.',
                     'Making a storage bucket public by accident.',
                     'Sending big uploads through your own app servers.',
+                ],
+                myths: [
+                    { claim: 'Videos and other large files: stored in the database, next to their metadata.', truth: 'Big files bloat the database and slow its backups. Put the file in object storage, and keep only its key and metadata in the database.' },
+                    { claim: 'Big uploads: sent through your own app servers on the way to storage.', truth: 'That ties up app servers with slow transfers. Give the client a pre-signed URL, and it uploads straight to object storage.' },
                 ],
                 interviewAnswer: 'Files go in object storage like S3, never in the database. The database keeps the object key and metadata. Clients upload directly using pre-signed URLs, and downloads go through a CDN.',
                 followUps: [
@@ -1599,6 +1701,10 @@ export const systemDesignPhases: SDPhase[] = [
                     'Forgetting that new or changed items take a moment to become searchable.',
                     'Using LIKE \'%word%\' on large tables.',
                 ],
+                myths: [
+                    { claim: 'A new document can be found by search the instant it is saved.', truth: 'The search index is updated a moment after the main database, so new or changed items take a short time to appear.' },
+                    { claim: '`LIKE \'%word%\'` is a fast way to search text in a large table.', truth: 'A pattern that starts with % cannot use a normal index, so every row is scanned. An inverted index maps each word straight to the documents that contain it.' },
+                ],
                 interviewAnswer: 'For text search I\'d use a search engine like Elasticsearch, built on inverted indexes and fed from the main database through change events. The database stays the source of truth; search can lag by a second or two.',
                 followUps: [
                     { q: 'Why not just use SQL LIKE?', a: 'A LIKE with a leading wildcard can\'t use a normal index, so it scans every row, and it can\'t rank results or handle typos.' },
@@ -1627,7 +1733,7 @@ export const systemDesignPhases: SDPhase[] = [
                     code: 'flowchart LR\n  T["Timestamp<br/>41 bits<br/>milliseconds"] --- M["Machine ID<br/>10 bits"] --- S["Sequence<br/>12 bits<br/>0–4,095"]',
                     caption: 'One 64-bit Snowflake ID, read left to right. The time comes first, so later IDs are bigger and sort by time.',
                 },
-                idea: 'A single auto-increment counter becomes a bottleneck at scale. Options: UUIDs (random, no coordination, 128-bit, but version 4 isn\'t ordered by time), a ticket server that hands out ranges of numbers, or Snowflake-style IDs: 64-bit numbers made from a timestamp, a machine ID and a sequence number. They\'re unique, roughly ordered by time, and generated locally.',
+                idea: 'A single auto-increment counter becomes a bottleneck at scale. There are three options. UUIDs: random, no coordination, 128-bit, but version 4 isn\'t ordered by time. A ticket server that hands out ranges of numbers. Or Snowflake-style IDs: 64-bit numbers made from a timestamp, a machine ID and a sequence number. They\'re unique, roughly ordered by time, and generated locally.',
                 howItWorks: [
                     'A Snowflake ID is built as: timestamp (41 bits), then machine ID (10 bits), then sequence (12 bits).',
                     'Each machine gets a unique machine ID when it starts, from configuration or a coordinator.',
@@ -1647,8 +1753,12 @@ export const systemDesignPhases: SDPhase[] = [
                 ],
                 mistakes: [
                     'Two machines accidentally sharing a machine ID.',
-                    'Ignoring clock problems.',
+                    'Ignoring clock problems: time-based IDs can repeat or go backwards when a server\'s clock is corrected.',
                     'Exposing sequential IDs that let outsiders count your orders or guess other users\' links.',
+                ],
+                myths: [
+                    { claim: 'Time-based IDs: no repeats, because a server\'s clock moves forward.', truth: 'A server\'s clock can be corrected backwards, and two machines can make IDs in the same millisecond. Time-based IDs also need a machine ID and a sequence number.' },
+                    { claim: 'Sequential IDs in public links: they reveal no information to outsiders.', truth: 'With IDs 1001, 1002, 1003, an outsider can count your orders and guess other people\'s links. Use random-looking IDs in anything public.' },
                 ],
                 interviewAnswer: 'I\'d use Snowflake-style 64-bit IDs: timestamp, machine ID and a per-millisecond sequence. They\'re generated locally without coordination, they\'re unique, and they sort roughly by time, which keeps database indexes efficient.',
                 followUps: [
@@ -1676,7 +1786,7 @@ export const systemDesignPhases: SDPhase[] = [
         title: 'Distributed systems and security',
         accent: '#ba68c8',
         goal: 'How services split up and stay correct across a network, how machines agree, and how to keep users and data secure.',
-        bigPicture: 'Once a system is many services on many machines, function calls become network calls that can fail halfway. These topics are about staying correct anyway, and about making sure only the right people can do the right things.',
+        bigPicture: 'Once a system is many services on many machines, function calls become network calls that can fail halfway. These lessons are about staying correct anyway, and about making sure only the right people can do the right things.',
         topics: [
             {
                 id: 'sd4-t1',
@@ -1716,6 +1826,10 @@ export const systemDesignPhases: SDPhase[] = [
                     'Chains of synchronous calls six services deep.',
                     'A small team starting a new product as 30 microservices.',
                 ],
+                myths: [
+                    { claim: 'A new product built by a small team should start as microservices.', truth: 'Microservices cost effort from the first day: networks between parts, many deployments, tracing. A small team moves faster with a monolith, and can split it later.' },
+                    { claim: 'Splitting into services: by technical layer, such as one \'database service\'.', truth: 'Then every feature needs changes in several services at once. Split by business capability (orders, payments, shipping), so each team owns one whole piece.' },
+                ],
                 interviewAnswer: 'I\'d start with a modular monolith unless there\'s a clear need for independent scaling or many separate teams. If we split, each service owns its data, services talk through APIs and events, and we invest in a gateway, tracing and automated deployments from day one.',
                 followUps: [
                     { q: 'What\'s a \'distributed monolith\'?', a: 'Services that are split up but so tightly coupled they must be deployed together: all the costs of microservices and none of the benefits.' },
@@ -1744,7 +1858,7 @@ export const systemDesignPhases: SDPhase[] = [
                     code: 'sequenceDiagram\n  participant O as Orchestrator\n  participant S as Stock service\n  participant P as Payment service\n  O->>S: reserve stock\n  S-->>O: reserved\n  O->>P: charge the card\n  P-->>O: declined\n  O->>S: compensate - release the stock\n  S-->>O: released\n  Note over O: the order is marked FAILED',
                     caption: 'Each step is a local transaction. When the payment fails, the orchestrator undoes the earlier step instead of leaving the order half done.',
                 },
-                idea: 'Across services you can\'t wrap everything in one ACID transaction. A saga runs steps one by one — reserve stock, charge the card, create the shipment — and if charging fails, it runs compensations, like releasing the stock. Steps are coordinated by choreography (services react to each other\'s events) or orchestration (a central coordinator tells each step what to do). The outbox pattern makes \'update my database and publish an event\' reliable: write the event into an outbox table in the same transaction, then publish it.',
+                idea: 'Across services you can\'t wrap everything in one ACID transaction. A saga runs steps one by one — reserve stock, charge the card, create the shipment — and if charging fails, it runs compensations, like releasing the stock. Steps are coordinated by choreography (services react to each other\'s events) or orchestration (a central coordinator tells each step what to do).\n\nThe outbox pattern makes \'update my database and publish an event\' reliable: write the event into an outbox table in the same transaction, then publish it.',
                 howItWorks: [
                     'The orchestrator starts the saga: \'reserve stock\'. The stock service reserves it and replies OK.',
                     'Next, \'charge the card\'. The payment service tries, and the card is declined.',
@@ -1754,7 +1868,7 @@ export const systemDesignPhases: SDPhase[] = [
                 ],
                 analogy: 'Booking a holiday: flight, hotel, car. If the car booking fails, you cancel the hotel and the flight. You don\'t pretend the trip never happened; you undo each step.',
                 breaks: 'When you cancel a holiday, nobody else sees the half-booked state. In a saga, other users can see the in-between state (stock reserved, then released), so every step and compensation must allow for that, and be idempotent.',
-                example: 'The order service writes the order and an \'OrderCreated\' outbox row in one transaction; a relay publishes it to Kafka; the payment service charges the card, or emits \'PaymentFailed\' if it\'s declined; the order service then cancels the order.',
+                example: 'The order service writes the order and an \'OrderCreated\' outbox row in one transaction. A relay publishes it to Kafka. The payment service charges the card, or emits \'PaymentFailed\' if it\'s declined. In that case the order service cancels the order.',
                 keyPoints: [
                     'Two-phase commit (2PC) gives an atomic commit across databases, but blocks on failures and couples services.',
                     'Saga = local transactions + compensating actions.',
@@ -1766,6 +1880,10 @@ export const systemDesignPhases: SDPhase[] = [
                     'Forgetting compensations, or making them unsafe to repeat.',
                     'Publishing events outside the database transaction (the dual-write problem).',
                     'Using two-phase commit across services and creating fragile coupling.',
+                ],
+                myths: [
+                    { claim: 'Saving to the database and then publishing an event always succeed or fail together.', truth: 'A crash between the two leaves the data saved and the event never sent (the dual-write problem). The outbox pattern writes the event in the same transaction as the data.' },
+                    { claim: 'Saga: a failed step is undone by the database\'s own rollback.', truth: 'Each step is its own committed transaction, so there is nothing left to roll back. A saga runs a compensating action instead, such as releasing the stock.' },
                 ],
                 interviewAnswer: 'For checkout across services I\'d use an orchestrated saga: reserve stock, take payment, confirm the order, with a compensating step for each. Each service writes its state change and its outgoing event atomically using the outbox pattern, and every handler is idempotent.',
                 followUps: [
@@ -1815,9 +1933,13 @@ export const systemDesignPhases: SDPhase[] = [
                     'Don\'t build your own: use etcd, ZooKeeper or a managed service.',
                 ],
                 mistakes: [
-                    'Running an even number of nodes.',
+                    'Running an even number of nodes: 4 nodes survive only 1 failure, the same as 3, so the extra node buys nothing.',
                     'Thinking the smaller side of a partition can still accept writes.',
                     'Building your own consensus instead of using a tested system.',
+                ],
+                myths: [
+                    { claim: '4 nodes: one more failure survived than with 3 nodes.', truth: 'A majority of 4 is 3, so 4 nodes survive only 1 failure, the same as 3 nodes. That is why clusters use odd sizes such as 3 or 5.' },
+                    { claim: 'Partition: the smaller side keeps accepting writes.', truth: 'Only the side with a majority can elect a leader and accept writes. That rule is what stops two leaders (split brain).' },
                 ],
                 interviewAnswer: 'Where we need a single leader or a distributed lock, I\'d rely on a consensus system like etcd or ZooKeeper. It uses Raft or a similar protocol, so a majority must agree and the cluster survives the failure of a minority of nodes.',
                 followUps: [
@@ -1847,7 +1969,7 @@ export const systemDesignPhases: SDPhase[] = [
                     code: 'sequenceDiagram\n  participant U as App\n  participant A as Login server\n  participant G as Gateway\n  participant S as Service\n  U->>A: password and one-time code\n  A-->>U: access token (15 min) and refresh token\n  U->>G: request with the access token\n  G->>G: check the signature and expiry\n  G->>S: forward, as user 42\n  S->>S: does user 42 own this account?\n  S-->>U: result',
                     caption: 'Authentication happens once at login. After that, every request carries a token, and the service still checks permissions on every request.',
                 },
-                idea: 'A user logs in once and gets a session ID or a token that proves who they are on later requests. A JWT is a signed token that services can check without a database lookup. OAuth 2.0 lets one app act on another service for a user without seeing their password; \'Sign in with Google\' adds OpenID Connect on top. Also essential: HTTPS everywhere, passwords stored with a slow salted hash, least privilege, encryption at rest, and no secrets in code.',
+                idea: 'A user logs in once and gets a session ID or a token that proves who they are on later requests. A JWT is a signed token that services can check without a database lookup. OAuth 2.0 lets one app act on another service for a user without seeing their password; \'Sign in with Google\' adds OpenID Connect on top.\n\nAlso essential: HTTPS everywhere, passwords stored with a slow salted hash, least privilege, encryption at rest, and no secrets in code.',
                 howItWorks: [
                     'Login: the user sends their password over HTTPS. The server hashes it with the stored salt and compares the result with the stored hash.',
                     'If it matches (and the second factor is valid), the server issues a short-lived access token and a longer-lived refresh token.',
@@ -1857,7 +1979,7 @@ export const systemDesignPhases: SDPhase[] = [
                 ],
                 analogy: 'A hotel: reception checks your passport (authentication) and gives you a key card that opens only your room and the gym (authorisation).',
                 breaks: 'A key card can be switched off at reception instantly. A JWT stays valid until it expires, because services only check its signature, not a central list. So keep JWTs short-lived and use refresh tokens.',
-                example: 'A banking app: log in with a password plus a one-time code (multi-factor), get a 15-minute access token and a refresh token; the gateway checks the token\'s signature; the payments service checks the user owns the account before moving any money.',
+                example: 'Take a banking app. You log in with a password plus a one-time code (multi-factor), and get a 15-minute access token and a refresh token. The gateway checks the token\'s signature. The payments service checks that the user owns the account before moving any money.',
                 keyPoints: [
                     'Never store plain passwords: use a slow, salted hash (bcrypt, scrypt, Argon2).',
                     'Session cookies (state kept on the server, easy to revoke) or JWTs (stateless, hard to revoke).',
@@ -1870,7 +1992,11 @@ export const systemDesignPhases: SDPhase[] = [
                     'Checking permissions only in the user interface.',
                     'Long-lived JWTs that can\'t be revoked.',
                     'Storing passwords with a fast hash (MD5, SHA-256) or without a salt.',
-                    'Secrets committed to Git.',
+                    'Committing secrets such as passwords or API keys to Git, where they stay in the history for ever.',
+                ],
+                myths: [
+                    { claim: 'Hiding a button in the user interface stops a user from doing that action.', truth: 'Anyone can send a request straight to the server, without the interface. Check permissions on the server, for every request.' },
+                    { claim: 'Storing passwords: SHA-256 is a good choice, because it is fast.', truth: 'Fast is the problem: an attacker can try billions of guesses a second. Use a slow, salted hash made for passwords, such as bcrypt or Argon2.' },
                 ],
                 interviewAnswer: 'Authentication goes through an identity provider with multi-factor login, issuing short-lived access tokens and refresh tokens. The gateway verifies tokens, and each service enforces authorisation on every request — for example, that the user owns the account. Passwords are stored with a slow hash, everything runs over TLS, and sensitive data is encrypted at rest.',
                 followUps: [
@@ -1935,7 +2061,10 @@ export const systemDesignPhases: SDPhase[] = [
                     'Using inheritance just to reuse a few lines of code.',
                     'Type checks (if isinstance …) where polymorphism would do.',
                 ],
-                interviewAnswer: 'Encapsulation protects an object\'s state, abstraction exposes only what callers need, inheritance models an \'is-a\' relationship to reuse behaviour, and polymorphism lets code work with an interface while each class supplies its own behaviour — like checkout calling pay() on any payment method.',
+                myths: [
+                    { claim: 'Public fields: fine, as long as other code sets sensible values.', truth: 'Nothing then stops other code from setting an invalid value, such as a negative balance. Keep the state private and change it through methods that check it.' },
+                ],
+                interviewAnswer: 'Encapsulation protects an object\'s state. Abstraction exposes only what callers need. Inheritance models an \'is-a\' relationship to reuse behaviour. Polymorphism lets code work with an interface while each class supplies its own behaviour, like checkout calling pay() on any payment method.',
                 followUps: [
                     { q: 'Abstract class or interface?', a: 'An interface only declares methods. An abstract class can also hold shared code and state. In Python both are usually written with ABC.' },
                     { q: 'Overloading or overriding?', a: 'Overloading: the same method name with different parameters, chosen at compile time (for example in Java). Overriding: a subclass replaces a parent\'s method, chosen at runtime — that\'s polymorphism.' },
@@ -1974,9 +2103,9 @@ export const systemDesignPhases: SDPhase[] = [
                 breaks: 'Phone modules have sockets designed in advance. In code you still have to choose good interfaces, and composing everything everywhere can create a maze of tiny objects.',
                 example: 'Instead of Duck → FlyingDuck → QuackingFlyingDuck classes, a Duck has a flying behaviour and a quacking behaviour. A rubber duck gets NoFly and Squeak.',
                 keyPoints: [
-                    '\'Is-a\' → maybe inheritance. \'Has-a\' → composition.',
+                    'If one thing "is a" kind of another, inheritance may fit. If it "has a" part, use composition.',
                     'Composition lets you change behaviour at runtime and test with fakes.',
-                    'Program to an interface, not to an implementation.',
+                    'Program to an interface, not to an implementation: depend on what a part does, not on which class does it.',
                     'Dependency injection: pass collaborators in; don\'t create them inside the class.',
                 ],
                 code: 'class Duck:\n    def __init__(self, flyer, quacker):\n        self.flyer, self.quacker = flyer, quacker   # has-a, not is-a\n    def perform(self):\n        return f"{self.flyer.fly()} / {self.quacker.quack()}"\n\nclass Wings:\n    def fly(self): return "flaps its wings"\n\nclass NoFly:\n    def fly(self): return "can\'t fly"\n\nclass Squeak:\n    def quack(self): return "squeak"\n\nrubber_duck = Duck(NoFly(), Squeak())\nrubber_duck.perform()        # "can\'t fly / squeak"',
@@ -1984,6 +2113,9 @@ export const systemDesignPhases: SDPhase[] = [
                 mistakes: [
                     'Using inheritance for \'has-a\' relationships (a Car extends Engine).',
                     'Creating collaborators inside the class instead of passing them in.',
+                ],
+                myths: [
+                    { claim: 'A Car class should extend Engine, because a car needs an engine.', truth: 'A car has an engine; it is not a kind of engine. Use composition: the Car holds an Engine object and calls it.' },
                 ],
                 interviewAnswer: 'I prefer composition: a class holds small collaborator objects behind interfaces, and they\'re injected. It\'s more flexible than inheritance, easier to test, and avoids fragile class trees. I use inheritance only for a genuine \'is-a\' with shared behaviour.',
                 followUps: [
@@ -2033,6 +2165,9 @@ export const systemDesignPhases: SDPhase[] = [
                     'Splitting by the number of methods instead of by reason to change.',
                     'Creating dozens of tiny classes that are always changed together.',
                 ],
+                myths: [
+                    { claim: 'Single responsibility: one method per class.', truth: 'It means one reason to change: one person or team who would ask for changes. A class can have many methods that serve that one purpose.' },
+                ],
                 interviewAnswer: 'Single responsibility means each class has one reason to change. For example, I\'d separate invoice calculation, saving and emailing, so a change to the email template can\'t break the tax logic.',
                 followUps: [
                     { q: 'Isn\'t that just \'make classes small\'?', a: 'No, it\'s about cohesion: things that change together stay together, and things that change for different reasons are separated.' },
@@ -2081,6 +2216,9 @@ export const systemDesignPhases: SDPhase[] = [
                     'Adding abstractions for variations that will never happen.',
                     'Still having to edit one central if/else to create the new class. Use a registry or configuration instead.',
                 ],
+                myths: [
+                    { claim: 'The open/closed principle says to add an abstraction for every variation you can imagine.', truth: 'Every abstraction costs effort to read and maintain. Add one when a real variation appears, not for changes that may never come.' },
+                ],
                 interviewAnswer: 'Open/closed means I can add behaviour without editing existing code — for example, new discount types as new classes behind a DiscountRule interface, instead of a growing if/else chain.',
                 followUps: [
                     { q: 'Does it mean you never edit code?', a: 'No. You still fix bugs and refactor. It means designing so that the variations you expect don\'t require changing working code.' },
@@ -2128,6 +2266,9 @@ export const systemDesignPhases: SDPhase[] = [
                     'Overriding a method just to throw \'not supported\'.',
                     'A subclass that needs more specific input than its parent accepts.',
                 ],
+                myths: [
+                    { claim: 'Overriding a method to throw \'not supported\': allowed, and code written for the parent still works.', truth: 'Code written for the parent calls that method and now crashes. A subclass must keep the parent\'s promises; if it can\'t, the abstraction is wrong.' },
+                ],
                 interviewAnswer: 'Liskov means a subclass must work anywhere its parent does. The classic counter-example is Square extending Rectangle: setting width and height separately breaks for a square, so they shouldn\'t share that inheritance.',
                 followUps: [
                     { q: 'Penguin extends Bird, and Bird has fly()?', a: 'A penguin can\'t fly, so fly() would throw — a Liskov violation. Fix it with a separate FlyingBird type, or give flying as an ability through composition.' },
@@ -2174,6 +2315,9 @@ export const systemDesignPhases: SDPhase[] = [
                 mistakes: [
                     'One interface per method everywhere, which fragments the design.',
                     'Keeping the fat interface \'for convenience\'.',
+                ],
+                myths: [
+                    { claim: 'Interface segregation means one method per interface.', truth: 'It means no client should depend on methods it doesn\'t use. Group methods by what each client needs: one role may well need several.' },
                 ],
                 interviewAnswer: 'Interface segregation means small, client-specific interfaces, so classes don\'t implement methods they don\'t need — for example separate Printer and Scanner interfaces instead of one big Machine interface.',
                 followUps: [
@@ -2224,6 +2368,9 @@ export const systemDesignPhases: SDPhase[] = [
                     'An interface that copies one vendor\'s API exactly, so the abstraction leaks.',
                     'Creating dependencies inside methods \'just this once\'.',
                 ],
+                myths: [
+                    { claim: 'Creating the database object inside the method that uses it keeps the code easy to test.', truth: 'The method is then tied to the real database, so a test can\'t hand it a fake one. Pass the dependency in from outside (dependency injection).' },
+                ],
                 interviewAnswer: 'Dependency inversion means business logic depends on interfaces, and concrete implementations are injected. My OrderService depends on an OrderRepository interface, so I can use Postgres in production and an in-memory fake in tests.',
                 followUps: [
                     { q: 'Dependency inversion or dependency injection?', a: 'Inversion is the design rule: depend on abstractions. Injection is the technique: pass dependencies in, often done for you by a framework like Spring.' },
@@ -2270,10 +2417,13 @@ export const systemDesignPhases: SDPhase[] = [
                 code: 'ParkingLot 1 ◆──── * Floor        (composition)\nFloor      1 ◆──── * Spot         (composition)\nSpot       1 ────── 0..1 Vehicle  (association)\nCar, Truck, Bike ───▷ Vehicle     (inheritance)\nCardPayment ┄┄┄▷ PaymentMethod    (implements an interface)',
                 codeLanguage: 'text',
                 mistakes: [
-                    'Drawing every getter and setter.',
+                    'Drawing every getter and setter in a class diagram, which buries the few methods that matter.',
                     'Spending 20 minutes on the diagram and leaving no time to code.',
                 ],
-                interviewAnswer: 'I start an LLD answer by listing the main entities, then draw a class diagram with the key fields, methods and relationships: composition for owned parts, inheritance only for a true \'is-a\', and interfaces for anything likely to vary.',
+                myths: [
+                    { claim: 'A good class diagram shows every getter and setter.', truth: 'Listing every getter and setter buries the few methods that matter. Show only the important fields, methods and relationships.' },
+                ],
+                interviewAnswer: 'I start an LLD answer by listing the main entities. Then I draw a class diagram with the key fields, methods and relationships: composition for owned parts, inheritance only for a true \'is-a\', and interfaces for anything likely to vary.',
                 followUps: [
                     { q: 'Aggregation or composition?', a: 'Composition: the part dies with the whole, like a room in a house. Aggregation: the part can exist on its own, like a player in a team.' },
                 ],
@@ -2299,19 +2449,19 @@ export const systemDesignPhases: SDPhase[] = [
                     code: 'sequenceDiagram\n  participant A as Thread A\n  participant S as seats_left\n  participant B as Thread B\n  A->>S: read - 1 seat left\n  B->>S: read - 1 seat left\n  A->>S: write 0 (seat sold)\n  B->>S: write 0 (seat sold again!)\n  Note over A,B: two tickets for one seat. A lock makes read, check and write one step.',
                     caption: 'Both threads read before either writes, so both think the seat is free. That\'s a race condition.',
                 },
-                idea: 'LLD questions like seat booking or elevators often ask: what if two users act at once? If two threads read a counter, add one and write it back at the same moment, one update is lost. Locks (mutexes) make a critical section run one thread at a time; atomic operations and thread-safe queues avoid manual locks. Watch out for deadlock: two threads each waiting for a lock the other one holds.',
+                idea: 'LLD questions like seat booking or elevators often ask: what if two users act at once? If two threads read a counter, add one and write it back at the same moment, one update is lost.\n\nLocks (mutexes) make a critical section run one thread at a time; atomic operations and thread-safe queues avoid manual locks. Watch out for deadlock: two threads each waiting for a lock the other one holds.',
                 howItWorks: [
                     'Thread A reads seats_left = 1. Thread B also reads seats_left = 1.',
                     'A sells the seat and writes 0. B also sells the seat and writes 0. Two tickets have been sold for one seat.',
                     'Fix: wrap \'read, check, write\' in a lock. Now B waits until A has finished, then reads 0 and refuses.',
-                    'Across many servers, do it in the database with a conditional update — UPDATE seats SET sold = true WHERE id = 7 AND sold = false — and check that exactly one row changed.',
+                    'Across many servers, do it in the database with a conditional update: UPDATE seats SET sold = true WHERE id = 7 AND sold = false. Then check that exactly one row changed.',
                 ],
                 analogy: 'Two people filling in the same paper form at once: both read \'3 seats left\', both write \'2 seats left\', and one booking disappears. A lock is a rule that only one person may hold the form at a time.',
                 breaks: 'People can see each other. Threads can\'t, and the bug may appear once in a million runs, so you have to reason about it, not just test for it.',
-                example: 'Seat booking: \'check the seat is free, then mark it booked\' must happen as one step — inside a lock within one program, or inside a database transaction with a row lock across many servers.',
+                example: 'Seat booking: \'check the seat is free, then mark it booked\' must happen as one step. Within one program, that means inside a lock. Across many servers, it means inside a database transaction with a row lock.',
                 keyPoints: [
                     'Critical section: code that touches shared data; protect it with a lock.',
-                    'Race condition: read–modify–write without protection.',
+                    'A race condition: two threads read a value, change it and write it back with no lock, so one of the updates is lost.',
                     'Deadlock needs four conditions; break \'circular wait\' by always taking locks in the same order, or use timeouts.',
                     'Across several servers, an in-program lock isn\'t enough: use database transactions or a distributed lock.',
                     'Prefer thread-safe queues and data that never changes, where you can.',
@@ -2323,7 +2473,11 @@ export const systemDesignPhases: SDPhase[] = [
                     'Holding a lock while doing slow work, like a network call.',
                     'Taking locks in different orders in different places, which causes deadlock.',
                 ],
-                interviewAnswer: 'Anywhere two users can change the same thing — like booking the last seat — I\'d make \'check and update\' a single atomic step: a lock within one process, or a database transaction with a row lock or optimistic versioning across servers. I\'d take locks in a fixed order to avoid deadlock.',
+                myths: [
+                    { claim: 'Locking only the write is enough to make a read-check-write sequence safe.', truth: 'Two threads can both read and check before either one writes, so both pass the check. Hold the lock around the whole read-check-write.' },
+                    { claim: 'Two locks, two threads: the order in which each thread takes them does not matter.', truth: 'If one thread holds lock A and waits for B while the other holds B and waits for A, both wait for ever: a deadlock. Always take locks in the same order.' },
+                ],
+                interviewAnswer: 'Anywhere two users can change the same thing, like booking the last seat, I\'d make \'check and update\' a single atomic step. Within one process that is a lock. Across servers it is a database transaction with a row lock, or optimistic versioning. I\'d take locks in a fixed order to avoid deadlock.',
                 followUps: [
                     { q: 'Process or thread?', a: 'A process has its own memory. Threads share their process\'s memory, which makes communication easy but needs synchronisation.' },
                     { q: 'How do you prevent deadlock?', a: 'Take locks in one agreed global order, hold them briefly, or use try-lock with a timeout.' },
@@ -2384,6 +2538,9 @@ export const systemDesignPhases: SDPhase[] = [
                     'Using Singleton for things that aren\'t truly single, like \'the current user\'.',
                     'Hidden dependencies: code reaches for the global instead of receiving what it needs.',
                 ],
+                myths: [
+                    { claim: 'Singleton is a good fit for anything used all over the code, such as the current user.', truth: 'Many users can be active at the same moment, so \'the current user\' is not truly single. Keep Singleton for one shared resource, and pass everything else in.' },
+                ],
                 interviewAnswer: 'Singleton guarantees one instance with one access point, for things like configuration or a connection pool. I\'d make creation thread-safe, but I usually prefer creating one instance at start-up and injecting it, because a global singleton hides dependencies and makes testing harder.',
                 followUps: [
                     { q: 'Why is Singleton sometimes called an anti-pattern?', a: 'It\'s global, changeable state: hidden dependencies, hard to replace in tests, and tricky lifetimes.' },
@@ -2433,6 +2590,9 @@ export const systemDesignPhases: SDPhase[] = [
                     'A factory that\'s just a giant if/else edited for every new type.',
                     'Factories for objects that only ever have one type.',
                 ],
+                myths: [
+                    { claim: 'A factory written as one long if/else is easy to extend with new types.', truth: 'Every new type then means editing that same if/else. A registry (a dictionary from a name to a class) lets a new type be added without touching the factory.' },
+                ],
                 interviewAnswer: 'A factory centralises object creation: callers ask for a type by name or configuration and get an object behind a common interface, so adding a new type doesn\'t change the calling code. Abstract Factory extends this to whole families of matching objects.',
                 followUps: [
                     { q: 'Factory or Builder?', a: 'A factory picks which class to create, in one step. A builder assembles one complex object step by step.' },
@@ -2481,6 +2641,9 @@ export const systemDesignPhases: SDPhase[] = [
                     'Letting the half-built object escape before build() is called.',
                     'Using a builder for objects with only two or three fields.',
                 ],
+                myths: [
+                    { claim: 'A builder is the right way to create an object with two fields.', truth: 'For two or three fields, a plain constructor is shorter and clearer. A builder pays off when there are many optional settings, or several steps.' },
+                ],
                 interviewAnswer: 'Builder constructs a complex object step by step through readable, named methods, then validates it and returns it, instead of a constructor with many parameters. I\'d use it for things like requests or reports with lots of optional settings.',
                 followUps: [
                     { q: 'Why is Builder less needed in Python?', a: 'Keyword arguments with defaults already make optional settings readable. Builder still helps when construction has several steps or needs validation.' },
@@ -2528,7 +2691,10 @@ export const systemDesignPhases: SDPhase[] = [
                     'Letting the third-party\'s types leak through the adapter into business code.',
                     'Losing error details during the conversion.',
                 ],
-                interviewAnswer: 'Adapter wraps an incompatible class so it matches the interface my code expects — for example making an old bank SDK fit our PaymentGateway interface — so business code doesn\'t change and vendors can be swapped.',
+                myths: [
+                    { claim: 'An adapter should hand the third party\'s own types back to the code that calls it.', truth: 'The business code would then depend on the vendor after all. An adapter converts everything into your own types, so the vendor\'s code stays in one place.' },
+                ],
+                interviewAnswer: 'Adapter wraps an incompatible class so that it matches the interface my code expects: for example, making an old bank SDK fit our PaymentGateway interface. Business code doesn\'t change, and vendors can be swapped.',
                 followUps: [
                     { q: 'Adapter or Facade?', a: 'An adapter makes one interface match another that\'s expected. A facade gives a simpler interface over a complicated set of classes.' },
                 ],
@@ -2577,6 +2743,9 @@ export const systemDesignPhases: SDPhase[] = [
                     'Wrappers that change what the method means, rather than just adding to it.',
                     'Wrapping in the wrong order (for example, caching errors).',
                 ],
+                myths: [
+                    { claim: 'The order in which decorators are stacked never changes the result.', truth: 'Order matters: with the cache in the wrong place, a failure is stored and served again and again. Choose the order on purpose.' },
+                ],
                 interviewAnswer: 'Decorator wraps an object with another that has the same interface and adds one behaviour, like logging, caching or retries. Wrappers can be stacked in any combination, which avoids an explosion of subclasses.',
                 followUps: [
                     { q: 'Decorator or inheritance?', a: 'Inheritance fixes behaviour for a whole class when you write the code. Decorators add it to individual objects at runtime, and combine freely.' },
@@ -2624,6 +2793,9 @@ export const systemDesignPhases: SDPhase[] = [
                     'Putting business rules into the facade.',
                     'Forcing every caller through the facade even when they need fine control.',
                 ],
+                myths: [
+                    { claim: 'A facade adds new features to the subsystem it wraps.', truth: 'A facade adds no features. It offers a simpler way in to what the subsystem already does.' },
+                ],
                 interviewAnswer: 'Facade gives callers one simple method, like place_order(), over a complex subsystem of inventory, payment and shipping classes, which reduces coupling. I keep it thin so it doesn\'t become a god class.',
                 followUps: [
                     { q: 'Facade or API gateway?', a: 'The same idea at different levels: a facade simplifies classes inside one program; an API gateway simplifies many services for outside clients.' },
@@ -2662,7 +2834,7 @@ export const systemDesignPhases: SDPhase[] = [
                 example: 'Payment fees, sorting, compression formats, and ride pricing (normal or surge).',
                 keyPoints: [
                     'Replaces \'which algorithm?\' conditionals with polymorphism.',
-                    'Strategies can be swapped at runtime.',
+                    'A strategy can be swapped while the program runs, because the caller only knows the shared interface.',
                     'In Python, plain functions can be strategies.',
                     'Very common in LLD answers: pricing, payment, parking fees.',
                 ],
@@ -2671,6 +2843,9 @@ export const systemDesignPhases: SDPhase[] = [
                 mistakes: [
                     'Strategies that need lots of the context\'s private data (a sign the interface is wrong).',
                     'Creating strategy classes for one fixed algorithm.',
+                ],
+                myths: [
+                    { claim: 'Every algorithm deserves its own strategy class, even when there will only ever be one.', truth: 'With one fixed algorithm there is nothing to swap, so the pattern only adds classes. Use Strategy when several algorithms are interchangeable.' },
                 ],
                 interviewAnswer: 'Strategy puts each interchangeable algorithm, like normal or surge pricing, behind one interface, so the class using it can switch algorithms at runtime, and new ones are added without editing it.',
                 followUps: [
@@ -2718,9 +2893,12 @@ export const systemDesignPhases: SDPhase[] = [
                 code: 'class OrderEvents:\n    def __init__(self):\n        self._subscribers = []\n    def subscribe(self, callback):\n        self._subscribers.append(callback)\n    def publish(self, order_id):\n        for notify in self._subscribers:\n            notify(order_id)\n\nevents = OrderEvents()\nevents.subscribe(lambda oid: print(f"email the receipt for {oid}"))\nevents.subscribe(lambda oid: print(f"update stock for {oid}"))\nevents.publish("A123")',
                 codeLanguage: 'python',
                 mistakes: [
-                    'Never unsubscribing, which leaks memory.',
+                    'Never unsubscribing an observer: the subject keeps a reference to it, so it is never freed (a memory leak).',
                     'Letting one subscriber\'s error stop the others from being notified.',
                     'Relying on subscribers being called in a particular order.',
+                ],
+                myths: [
+                    { claim: 'Observers are called in the order in which they subscribed, and code can rely on that.', truth: 'The pattern promises no order, and a design that depends on one is fragile. If the order matters, make it explicit.' },
                 ],
                 interviewAnswer: 'Observer lets listeners subscribe to an object\'s events, so the publisher notifies all of them without knowing who they are — like \'order placed\' triggering an email and a stock update. Across services I\'d use the same idea with a message broker, for durability.',
                 followUps: [
@@ -2771,6 +2949,9 @@ export const systemDesignPhases: SDPhase[] = [
                     'No default at the end, so requests disappear silently.',
                     'Very long chains that are hard to trace.',
                 ],
+                myths: [
+                    { claim: 'A request that no handler accepts is reported as an error automatically.', truth: 'Unless you add a default handler at the end, the request falls off the chain and disappears silently. Always handle the end of the chain.' },
+                ],
                 interviewAnswer: 'Chain of Responsibility passes a request through a sequence of handlers until one deals with it — like expense approvals by amount, or middleware for auth, rate limiting and validation. It keeps each handler small and lets me reorder the chain.',
                 followUps: [
                     { q: 'Where have you seen it?', a: 'Middleware in web frameworks (Express, Django, Spring filters), and events bubbling up through a web page.' },
@@ -2811,7 +2992,7 @@ export const systemDesignPhases: SDPhase[] = [
                 keyPoints: [
                     'Each state class handles the events that are valid in that state.',
                     'Transitions are explicit; invalid actions get a clear response.',
-                    'Start by drawing a state diagram.',
+                    'Start by drawing a state diagram: the states, and which event moves you from one to the next.',
                     'A cousin of Strategy, but here the object changes its own behaviour.',
                 ],
                 code: 'class Idle:\n    def insert_coin(self, machine):\n        machine.state = HasCoin()\n        return "coin accepted"\n    def press(self, machine):\n        return "insert a coin first"\n\nclass HasCoin:\n    def insert_coin(self, machine):\n        return "already has a coin"\n    def press(self, machine):\n        machine.state = Idle()\n        return "here is your snack"\n\nclass VendingMachine:\n    def __init__(self): self.state = Idle()\n    def insert_coin(self): return self.state.insert_coin(self)\n    def press(self): return self.state.press(self)',
@@ -2820,7 +3001,10 @@ export const systemDesignPhases: SDPhase[] = [
                     'States that know too much about each other.',
                     'Forgetting some events in some states (like cancel while dispensing).',
                 ],
-                interviewAnswer: 'State moves each state\'s behaviour into its own class, so a vending machine or an order behaves correctly for its current state and the transitions are explicit, instead of an if/else on a status field in every method.',
+                myths: [
+                    { claim: 'In the State pattern, one big if/else on a status string decides what each method does.', truth: 'That is the code the pattern removes. Each state becomes its own class, and the object passes every event to its current state.' },
+                ],
+                interviewAnswer: 'State moves each state\'s behaviour into its own class. A vending machine or an order then behaves correctly for its current state, and the transitions are explicit. It replaces an if/else on a status field in every method.',
                 followUps: [
                     { q: 'When is an enum and a switch enough?', a: 'When there are only a few states and events. The State pattern pays off as the states and rules grow.' },
                 ],
@@ -2908,6 +3092,9 @@ export const systemDesignPhases: SDPhase[] = [
                     'Ignoring two gates acting at the same moment.',
                     'Vehicle subclasses that override lots of behaviour instead of just declaring their size.',
                 ],
+                myths: [
+                    { claim: 'Pricing rules: kept inside the Ticket class.', truth: 'Prices change often, and for many reasons. Keep them in a separate pricing strategy, so that a new tariff does not touch Ticket or Vehicle.' },
+                ],
                 interviewAnswer: 'Core classes: ParkingLot, Floor, Spot, the Vehicle types, Ticket and Payment. Spot assignment and pricing are strategies, so the rules can change without touching the rest. Parking is one atomic step — a lock or a compare-and-set — so two gates can\'t take the same spot. Display boards observe spot changes.',
                 followUps: [
                     { q: 'How would this work with gates on different servers?', a: 'Keep spot state in a database and claim a spot with a conditional update (UPDATE … WHERE spot_id = ? AND vehicle_id IS NULL), trying another spot if no row changed.' },
@@ -2978,9 +3165,12 @@ export const systemDesignPhases: SDPhase[] = [
                 code: 'import heapq\n\nclass Elevator:\n    def __init__(self, eid):\n        self.id, self.floor, self.direction = eid, 0, 0     # -1 down, 0 idle, 1 up\n        self.up_stops, self.down_stops = [], []             # simplified: two heaps\n\n    def add_stop(self, floor):\n        if floor >= self.floor:\n            heapq.heappush(self.up_stops, floor)\n        else:\n            heapq.heappush(self.down_stops, -floor)\n\n    def next_stop(self):\n        if self.direction >= 0 and self.up_stops:\n            self.direction = 1\n            return heapq.heappop(self.up_stops)\n        if self.down_stops:\n            self.direction = -1\n            return -heapq.heappop(self.down_stops)\n        if self.up_stops:\n            self.direction = 1\n            return heapq.heappop(self.up_stops)\n        self.direction = 0\n        return None\n\ndef pick_elevator(elevators, floor, direction):\n    def cost(e):\n        heading_there = e.direction == direction and (floor - e.floor) * direction >= 0\n        return abs(e.floor - floor) + (0 if e.direction == 0 or heading_there else 10)\n    return min(elevators, key=cost)',
                 codeLanguage: 'python',
                 mistakes: [
-                    'First-come, first-served scheduling.',
+                    'Serving requests first-come, first-served: the lift zig-zags between floors instead of picking people up on its way.',
                     'No state machine, so \'moving with the doors open\' is possible.',
                     'Over-complicating the dispatch algorithm before the basics work.',
+                ],
+                myths: [
+                    { claim: 'Dispatch: serving calls strictly in the order they were made keeps the lift\'s travel shortest.', truth: 'The lift then zig-zags between floors. Picking up the calls that lie on its way, in its current direction, moves more people with less travel.' },
                 ],
                 interviewAnswer: 'A controller receives hall calls and gives each one to the lift with the lowest cost: near, idle, or already heading that way. Each lift serves its stops with the LOOK algorithm — continue in one direction, then reverse. A state machine per lift guarantees the doors are closed before it moves.',
                 followUps: [
@@ -3051,9 +3241,12 @@ export const systemDesignPhases: SDPhase[] = [
                 code: 'from collections import defaultdict\nimport heapq\n\nnet = defaultdict(int)       # in pence: + is owed money, - owes money\n\ndef add_equal_expense(payer, amount_pence, people):\n    share, remainder = divmod(amount_pence, len(people))\n    for i, person in enumerate(people):\n        owed = share + (1 if i < remainder else 0)    # spread the leftover pence\n        net[person] -= owed\n        net[payer] += owed\n\ndef simplify():\n    creditors = [(-v, p) for p, v in net.items() if v > 0]\n    debtors = [(v, p) for p, v in net.items() if v < 0]\n    heapq.heapify(creditors)\n    heapq.heapify(debtors)\n    payments = []\n    while creditors and debtors:\n        c_amt, c = heapq.heappop(creditors)\n        d_amt, d = heapq.heappop(debtors)\n        pay = min(-c_amt, -d_amt)\n        payments.append((d, c, pay))           # d pays c this many pence\n        if -c_amt > pay:\n            heapq.heappush(creditors, (c_amt + pay, c))\n        if -d_amt > pay:\n            heapq.heappush(debtors, (d_amt + pay, d))\n    return payments',
                 codeLanguage: 'python',
                 mistakes: [
-                    'Floats for money.',
+                    'Storing money as floats: 0.1 + 0.2 is not exactly 0.3, so balances drift. Use whole pence (integers).',
                     'Splits that don\'t add up to the total.',
                     'Losing the leftover pence when rounding.',
+                ],
+                myths: [
+                    { claim: 'Settling the debts between n people always needs one payment for every pair of people.', truth: 'Only the final balances matter. Matching the person who owes the most with the person owed the most settles n people in at most n − 1 payments.' },
                 ],
                 interviewAnswer: 'Expenses have a payer and a list of splits, created by a split strategy that checks they add up to the total. Each expense updates a net balance per user, stored in whole pence. To settle a group, I greedily match the largest debtor with the largest creditor, which needs at most n − 1 payments.',
                 followUps: [
@@ -3116,7 +3309,7 @@ export const systemDesignPhases: SDPhase[] = [
                 ],
                 deepDives: [
                     'Change-making: the greedy method works for UK coins when you have plenty of each, but with limited coins it can fail even when exact change is possible (60p with one 50p and three 20p coins). Use dynamic programming, or refuse the sale.',
-                    'Keep money in whole pence.',
+                    'Keep money in whole pence (integers), never floats, so that sums are exact.',
                     'Power cut mid-sale: record the transaction before dispensing, so it can be recovered.',
                 ],
                 code: 'COINS = [200, 100, 50, 20, 10, 5, 2, 1]          # pence\n\ndef make_change(amount, available):\n    """available: coin -> count. Returns the coins to give, or None."""\n    given = {}\n    for coin in COINS:\n        use = min(amount // coin, available.get(coin, 0))\n        if use:\n            given[coin] = use\n            amount -= coin * use\n    return given if amount == 0 else None     # None: can\'t make exact change',
@@ -3125,6 +3318,9 @@ export const systemDesignPhases: SDPhase[] = [
                     'An if/else on a status string in every method.',
                     'Taking money for an item that\'s sold out.',
                     'Assuming change can always be made.',
+                ],
+                myths: [
+                    { claim: 'Change: as long as the machine holds some coins, the right change can be given.', truth: 'With limited coins some amounts cannot be made: 30p of change is impossible with only 20p and 50p coins. Check that change can be made before taking the money.' },
                 ],
                 interviewAnswer: 'I\'d model the machine with the State pattern — Idle, ItemSelected, HasMoney, Dispensing, SoldOut — so every action is only valid in the right state. Money is in pence; change is worked out from the coins actually available, and the sale is refused if exact change isn\'t possible.',
                 followUps: [
@@ -3192,6 +3388,9 @@ export const systemDesignPhases: SDPhase[] = [
                     'A singly linked list, which can\'t remove a node in O(1).',
                     'Forgetting to update the order on get.',
                     'Forgetting to delete the evicted key from the dictionary.',
+                ],
+                myths: [
+                    { claim: 'get: reads the value and leaves the key\'s place in the eviction order as it was.', truth: 'A read is a use: get must move the key to the most recent end. Otherwise a key that is read all the time would be evicted as if nobody used it.' },
                 ],
                 interviewAnswer: 'A hash map from key to node gives O(1) lookup, and a doubly linked list keeps items in order of use. get moves the node to the front; put inserts at the front and removes the back node when over capacity. Dummy head and tail nodes keep the code simple.',
                 followUps: [
@@ -3262,7 +3461,10 @@ export const systemDesignPhases: SDPhase[] = [
                 mistakes: [
                     'Ignoring time priority at the same price.',
                     'Using locks inside the matching loop instead of processing in sequence.',
-                    'Floats for prices.',
+                    'Storing prices as floats: rounding makes equal prices compare as different. Use integers, such as whole pence.',
+                ],
+                myths: [
+                    { claim: 'Several threads on one stock: a faster engine that gives the same results.', truth: 'Matching depends on order, so threads on one stock need locks and can give different results on each run. One thread per stock stays deterministic.' },
                 ],
                 interviewAnswer: 'Each stock has an order book with bids in a max-heap and asks in a min-heap, first in first out within a price. A matching engine processes one stock\'s orders in sequence on a single thread: an incoming order fills against the best opposite prices while they cross, and any remainder rests in the book. Every order is logged first, so the book can be rebuilt.',
                 followUps: [
@@ -3349,6 +3551,9 @@ export const systemDesignPhases: SDPhase[] = [
                     'No caching, for a workload that\'s 100 times more reads than writes.',
                     'Using 301 redirects, then wondering why the analytics are empty.',
                 ],
+                myths: [
+                    { claim: '301 redirect: each click still reaches your server, so analytics work.', truth: 'Browsers remember a 301 (permanent) redirect, so later clicks never reach your server. Use 302 (temporary) when every click has to be counted.' },
+                ],
                 interviewAnswer: 'It\'s a read-heavy key-value lookup. Writes generate a unique 7-character Base62 code from a distributed counter, with ID ranges reserved per server, and store code → URL. Reads go through a Redis cache in front of the database and return a 302, so we can count clicks; click events go onto a queue for background analytics.',
                 followUps: [
                     { q: 'How do you stop people guessing other people\'s links?', a: 'Use random codes, or scramble the counter with a reversible shuffle, instead of handing out sequential codes.' },
@@ -3417,9 +3622,12 @@ export const systemDesignPhases: SDPhase[] = [
                     'Hot clients: spread counters across Redis nodes by client ID.',
                 ],
                 mistakes: [
-                    'Read-then-write counters with no atomicity.',
+                    'Reading a counter and writing it back as two separate steps: two servers read the same value, and both let a request through.',
                     'Limiting per server instead of across all servers.',
-                    'No answer to \'what if Redis is down?\'.',
+                    'Having no answer to "what if Redis is down?". Decide in advance whether the limiter then lets requests through or blocks them.',
+                ],
+                myths: [
+                    { claim: 'Shared counter: read it, add one and write it back as separate steps; that works across servers.', truth: 'Two servers can read the same value and both let a request through, so the limit is passed. Use one atomic operation, such as Redis INCR or a Lua script.' },
                 ],
                 interviewAnswer: 'I\'d enforce limits in the API gateway using a token bucket per client and rule, with state in a Redis cluster updated atomically by a Lua script, adding about a millisecond. Rules come from configuration. Requests over the limit get 429 with Retry-After. If Redis is unavailable, the gateway fails open with a local backup limit.',
                 followUps: [
@@ -3490,9 +3698,12 @@ export const systemDesignPhases: SDPhase[] = [
                     'A per-user rate limit, so nobody gets spammed.',
                 ],
                 mistakes: [
-                    'Sending inside the user\'s request.',
+                    'Sending the notification inside the user\'s request, so a slow email or push provider keeps the user waiting. Queue it instead.',
                     'One queue where marketing messages block passcodes.',
                     'Retries without idempotency, so users get duplicates.',
+                ],
+                myths: [
+                    { claim: 'One shared queue is fine for both marketing messages and login passcodes.', truth: 'A marketing blast of millions would sit in front of the passcodes and delay them. Use separate queues, by priority.' },
                 ],
                 interviewAnswer: 'Producers call a notification service that checks preferences, fills in templates and puts messages on queues per channel and priority. Workers deliver through providers like Apple and Google push services and SMS gateways, with retries, dead-letter queues and idempotency keys to avoid duplicates. Passcodes get a high-priority lane, so campaigns never delay them.',
                 followUps: [
@@ -3564,11 +3775,14 @@ export const systemDesignPhases: SDPhase[] = [
                     'End-to-end encryption: the server only ever stores ciphertext.',
                 ],
                 mistakes: [
-                    'Polling at scale.',
-                    'Forgetting offline users.',
-                    'No plan for ordering or duplicates.',
+                    'Polling for new messages at scale: millions of clients asking "anything new?" every few seconds, mostly for nothing.',
+                    'Forgetting offline users: their messages must be stored and delivered when they reconnect.',
+                    'Having no plan for message order or duplicates: retries and several servers can deliver a message twice, or out of order.',
                 ],
-                interviewAnswer: 'Clients hold WebSocket connections to gateway servers, and Redis maps each user to their gateway. The chat service stores every message in a Cassandra-style store partitioned by conversation, with a time-ordered ID, then routes it to the recipient\'s gateway — or keeps it and sends a push notification if they\'re offline. Client-generated message IDs make retries safe.',
+                myths: [
+                    { claim: 'Delivery: clients poll every few seconds, which scales well to millions of users.', truth: 'Almost every poll would come back empty, yet each one costs a request. Keep a WebSocket open to each client, and push messages as they arrive.' },
+                ],
+                interviewAnswer: 'Clients hold WebSocket connections to gateway servers, and Redis maps each user to their gateway. The chat service stores every message in a Cassandra-style store, partitioned by conversation, with a time-ordered ID. Then it routes the message to the recipient\'s gateway. If they\'re offline, it keeps the message and sends a push notification. Client-generated message IDs make retries safe.',
                 followUps: [
                     { q: 'How do you handle a group with 100,000 members?', a: 'Don\'t write a copy for every member. Store the message once and let members fetch it, or deliver lazily as they come online.' },
                     { q: 'How does a new phone get old messages?', a: 'History is stored on the server by conversation; the device syncs from the last message ID it has.' },
@@ -3636,9 +3850,12 @@ export const systemDesignPhases: SDPhase[] = [
                     'Ranking: gather candidates → score them with a model → re-rank for variety.',
                 ],
                 mistakes: [
-                    'Push-only fan-out that ignores celebrities.',
+                    'Push-only fan-out that ignores celebrities: one post from an account with millions of followers means millions of writes.',
                     'Storing whole posts in every feed instead of post IDs.',
                     'Offset pagination on a feed that keeps changing.',
+                ],
+                myths: [
+                    { claim: 'Fan-out: push each new post to the followers\' feeds, for celebrity accounts too.', truth: 'One post from an account with 50 million followers would mean 50 million writes. Push for ordinary accounts, and fetch celebrity posts when the feed is read.' },
                 ],
                 interviewAnswer: 'I\'d use a hybrid fan-out. When a normal user posts, workers push the post ID into each follower\'s feed list in Redis, so reading is a fast cache lookup. Celebrity posts aren\'t fanned out; their recent posts are fetched at read time and merged in. Post bodies come from a cache and media from a CDN.',
                 followUps: [
@@ -3707,12 +3924,15 @@ export const systemDesignPhases: SDPhase[] = [
                     'Adaptive bitrate: small segments (2–10 seconds) at several qualities.',
                     'Transcoding runs in parallel per segment, with retries per task.',
                     'Popular videos sit on the CDN; rarely watched ones are served from origin.',
-                    'Resumable uploads for big files.',
+                    'Make big uploads resumable: send the file in chunks, so a dropped connection repeats one chunk, not the whole video.',
                 ],
                 mistakes: [
                     'Streaming from your own servers instead of a CDN.',
-                    'Transcoding inside the upload request.',
+                    'Transcoding inside the upload request: it takes minutes, so the request times out. Do it in background workers.',
                     'One quality for every device and connection.',
+                ],
+                myths: [
+                    { claim: 'Transcoding: done inside the upload request, so the video is ready at once.', truth: 'Transcoding takes minutes, so the request would time out. Accept the upload first, then transcode in background workers.' },
                 ],
                 interviewAnswer: 'Uploads go straight to object storage with pre-signed URLs. A queue triggers transcoding workers that encode short segments at several bitrates and write HLS or DASH manifests. Viewers stream the segments from a CDN with adaptive bitrate. Video details live in a database behind a cache, and view counts are aggregated in the background.',
                 followUps: [
@@ -3787,6 +4007,9 @@ export const systemDesignPhases: SDPhase[] = [
                     'Saving every location update permanently in the main database.',
                     'Offering one ride to several drivers without locking.',
                 ],
+                myths: [
+                    { claim: 'Every location update from every driver should be saved for ever in the main database.', truth: 'Drivers report every few seconds, which would flood the database with rows that nobody reads. Keep only the latest position in memory, and stream the history to cheap storage.' },
+                ],
                 interviewAnswer: 'Drivers stream their location to a location service that keeps only the latest position in an in-memory geospatial index. A ride request searches nearby cells, ranks drivers by arrival time and offers the trip to one driver at a time, locking that driver atomically to prevent double-booking. Trips and payments live in a transactional database.',
                 followUps: [
                     { q: 'What is a geohash?', a: 'A short string that encodes latitude and longitude as nested grid cells. Nearby places share a prefix, so \'nearby\' becomes a prefix lookup plus the neighbouring cells.' },
@@ -3858,10 +4081,13 @@ export const systemDesignPhases: SDPhase[] = [
                 ],
                 mistakes: [
                     'Retrying a timed-out charge with a brand-new request.',
-                    'Floats for money.',
+                    'Storing money as floats: 0.1 + 0.2 is not exactly 0.3, so totals drift. Use whole pence (integers).',
                     'Updating balances in place, with no ledger history.',
                 ],
-                interviewAnswer: 'Correctness first. Every payment request carries an idempotency key enforced by a unique constraint. The payment service records a pending payment, calls the payment provider — which holds the card data, so we never store card numbers — and on the result writes balanced double-entry ledger rows in one ACID transaction. Events go out through an outbox, and daily reconciliation against the provider catches any mismatch.',
+                myths: [
+                    { claim: 'When a charge times out, the safe move is to send a brand-new charge request.', truth: 'The first charge may have gone through, so a new request could charge the customer twice. Retry with the same idempotency key, or ask the provider for the status.' },
+                ],
+                interviewAnswer: 'Correctness first. Every payment request carries an idempotency key enforced by a unique constraint. The payment service records a pending payment, then calls the payment provider. The provider holds the card data, so we never store card numbers. On the result, the service writes balanced double-entry ledger rows in one ACID transaction. Events go out through an outbox, and daily reconciliation against the provider catches any mismatch.',
                 followUps: [
                     { q: 'The call to the provider timed out. Did the customer pay?', a: 'We don\'t know. Never retry with a new request: retry with the same idempotency key, or ask the provider for the payment\'s status first.' },
                     { q: 'Why double-entry?', a: 'Every debit has a matching credit, so the books always balance, mistakes show up as imbalances, and the history is a complete audit trail.' },
@@ -3923,13 +4149,16 @@ export const systemDesignPhases: SDPhase[] = [
                 deepDives: [
                     'Store the top-k completions at every node, so a query never has to search a whole subtree.',
                     'Freshness: trending terms through a streaming pipeline, with older counts decaying over time.',
-                    'Filter out offensive suggestions.',
+                    'Filter offensive or harmful suggestions out of autocomplete before they are shown.',
                     'Personalisation: blend global suggestions with the user\'s own history.',
                 ],
                 mistakes: [
                     'Searching the whole subtree on every keystroke.',
                     'Rebuilding the trie inside the serving path.',
                     'Sending a request on every keystroke, with no pause.',
+                ],
+                myths: [
+                    { claim: 'An autocomplete box should send a request for every single keystroke, with no pause.', truth: 'Most of those requests are out of date before the reply arrives. Wait a short moment after the last keystroke, and far fewer requests are sent.' },
                 ],
                 interviewAnswer: 'Suggestions are served from an in-memory trie where each node already stores its top-k completions, so a lookup is just walking the prefix. Search logs feed a background job that rebuilds the trie regularly. Clients wait for a pause in typing and cache results, and popular prefixes are cached at the edge.',
                 followUps: [
@@ -3999,9 +4228,12 @@ export const systemDesignPhases: SDPhase[] = [
                 mistakes: [
                     'Recalculating ranks with SQL on every request.',
                     'No durable copy, so a Redis restart loses the scores.',
-                    'Ignoring ties.',
+                    'Ignoring ties: decide how two players with the same score are ranked, for example by who reached it first.',
                 ],
-                interviewAnswer: 'I\'d use a Redis sorted set with the player ID as the member and the score as the sort value: ZINCRBY to update, ZREVRANGE for the top N, and ZREVRANK for a player\'s rank — all logarithmic. Scores are also saved durably, so the set can be rebuilt. Each time period gets its own set.',
+                myths: [
+                    { claim: 'Ranks: worked out by a SQL query on each request, which keeps a live leaderboard fast.', truth: 'Sorting millions of rows for every request is far too slow. A Redis sorted set keeps the order up to date as scores change, so a rank lookup is quick.' },
+                ],
+                interviewAnswer: 'I\'d use a Redis sorted set, with the player ID as the member and the score as the sort value. ZINCRBY updates a score, ZREVRANGE gives the top N, and ZREVRANK gives a player\'s rank. All three are logarithmic. Scores are also saved durably, so the set can be rebuilt. Each time period gets its own set.',
                 followUps: [
                     { q: 'Why not SQL with ORDER BY score?', a: 'Sorting 10 million rows on every request is slow; a sorted set stays in order as scores change.' },
                     { q: 'How do you break ties?', a: 'Fold a tie-breaker into the score, for example score × 10¹⁰ minus the timestamp in seconds, so earlier players rank higher.' },
@@ -4066,8 +4298,11 @@ export const systemDesignPhases: SDPhase[] = [
                 ],
                 mistakes: [
                     'hash % N routing, which causes mass misses whenever servers change.',
-                    'No plan for hot keys.',
-                    'No warm-up after a failure.',
+                    'Having no plan for hot keys: one very popular key can overload the single cache node that holds it.',
+                    'No warm-up after a failure: an empty cache sends every request to the database at once.',
+                ],
+                myths: [
+                    { claim: 'Routing: hash % N keeps most keys on the same server when a server is added.', truth: 'Changing N changes the answer for almost every key, so nearly all lookups miss at once. Consistent hashing moves only about 1/N of the keys.' },
                 ],
                 interviewAnswer: 'Keys are spread across nodes with consistent hashing and virtual nodes, so adding a node moves only a small share of the keys. Each node is an in-memory hash map with LRU eviction and TTLs, replicated for failover. Hot keys get extra replicas or a local cache, and stampedes are prevented by letting one request rebuild a key.',
                 followUps: [
@@ -4153,6 +4388,9 @@ export const systemDesignPhases: SDPhase[] = [
                     'Handling permissions by asking the LLM not to reveal things.',
                     'Never updating the index when documents change.',
                 ],
+                myths: [
+                    { claim: 'Permissions: telling the LLM not to reveal restricted documents protects them.', truth: 'A model can be talked into revealing what it has been shown. Filter by permission at retrieval, so that restricted text never reaches the model.' },
+                ],
                 interviewAnswer: 'Two pipelines. Ingestion parses, chunks and embeds documents into a vector store with permission metadata, updated whenever a document changes. At query time we rewrite the question, run hybrid retrieval filtered by the user\'s permissions, re-rank, and give the top chunks to the LLM, which streams a cited answer. Every request is traced, and quality is tracked against a golden evaluation set.',
                 followUps: [
                     { q: 'How do you stop it leaking documents a user shouldn\'t see?', a: 'Enforce permissions in the retrieval filter, so forbidden chunks are never put into the prompt at all.' },
@@ -4222,9 +4460,12 @@ export const systemDesignPhases: SDPhase[] = [
                 mistakes: [
                     'Scoring every item with a heavy model on every request.',
                     'Judging success only by offline metrics.',
-                    'Ignoring the cold-start problem.',
+                    'Ignoring the cold-start problem: new users and new items have no history, so they need a fallback such as popular items.',
                 ],
-                interviewAnswer: 'A two-stage system: candidate generation pulls about a thousand items cheaply using embedding similarity and simple sources, then a ranking model scores them with user, item and context features from a feature store. A final re-ranking step applies variety and business rules. Models train offline on interaction logs, and every change is checked with an online A/B test.',
+                myths: [
+                    { claim: 'Offline metrics: a better score means users will like the recommendations more.', truth: 'Offline scores are measured on past behaviour, which the old system shaped. Only an online A/B test shows what real users do.' },
+                ],
+                interviewAnswer: 'It is a two-stage system. Candidate generation pulls about a thousand items cheaply, using embedding similarity and simple sources. Then a ranking model scores them with user, item and context features from a feature store. A final re-ranking step applies variety and business rules. Models train offline on interaction logs, and every change is checked with an online A/B test.',
                 followUps: [
                     { q: 'Why two stages?', a: 'Scoring millions of items with a heavy model on every request is too slow. A cheap retrieval step narrows the pool, so the expensive model only scores hundreds.' },
                     { q: 'How do you handle a brand-new user?', a: 'Popular and trending items, context such as country and device, then adapt quickly from their first clicks.' },
@@ -4292,11 +4533,14 @@ export const systemDesignPhases: SDPhase[] = [
                     'Point-in-time correct features, so no future information leaks into training.',
                 ],
                 mistakes: [
-                    'Using accuracy as the metric.',
+                    'Using accuracy as the metric: if 0.1% of payments are fraud, a model that flags nothing is 99.9% accurate and useless.',
                     'Features calculated with information from the future.',
                     'No fallback when the model service fails.',
                 ],
-                interviewAnswer: 'Each transaction hits a low-latency scoring service that pulls real-time features from a feature store kept fresh by a streaming pipeline, runs rules plus a gradient-boosted model, and returns allow, verify or block within about 100 milliseconds. Thresholds come from the business cost of fraud versus false declines. Decisions are logged, chargeback labels are joined later, and the model is monitored for drift and retrained regularly.',
+                myths: [
+                    { claim: 'Accuracy is a good metric for a fraud detection model.', truth: 'If 0.1% of payments are fraud, a model that flags nothing is 99.9% accurate and useless. Use precision and recall instead.' },
+                ],
+                interviewAnswer: 'Each transaction hits a low-latency scoring service. It pulls real-time features from a feature store, which a streaming pipeline keeps fresh. It runs rules plus a gradient-boosted model, and returns allow, verify or block within about 100 milliseconds. Thresholds come from the business cost of fraud versus false declines. Decisions are logged, chargeback labels are joined later, and the model is monitored for drift and retrained regularly.',
                 followUps: [
                     { q: 'Why not just maximise accuracy?', a: 'With 0.1% fraud, a model that always says \'not fraud\' is 99.9% accurate and useless. Use precision, recall and cost-weighted metrics.' },
                     { q: 'What if the model service is slow?', a: 'Time out and fall back to rules, with a safe default for each risk level, so payments never stall.' },
@@ -4368,6 +4612,9 @@ export const systemDesignPhases: SDPhase[] = [
                     'Ignoring KV-cache memory when planning capacity.',
                     'No per-team quotas, so one team can starve the others.',
                 ],
+                myths: [
+                    { claim: 'Handling one request at a time makes full use of an expensive GPU.', truth: 'A GPU can work on many requests in the same pass. Continuous batching adds new requests between decode steps, which raises throughput a great deal.' },
+                ],
                 interviewAnswer: 'A gateway handles auth, quotas and routing to a GPU pool per model. Each replica runs an inference server with continuous batching and a paged KV cache to keep the GPUs busy, and streams tokens back. Pools scale on queue length and latency, and we track time to first token, tokens per second and cost per team. Quantisation, prefix caching and speculative decoding cut cost and latency.',
                 followUps: [
                     { q: 'Why is batching hard for LLMs?', a: 'Requests have different lengths and finish at different times. Continuous batching swaps finished sequences out and new ones in at every step, instead of waiting for the whole batch.' },
@@ -4435,8 +4682,11 @@ export const systemDesignPhases: SDPhase[] = [
                 ],
                 mistakes: [
                     'Different feature code in training and in serving.',
-                    'No data validation.',
+                    'No data validation: a broken upstream feed, with missing values or changed units, quietly trains a bad model.',
                     'No way to roll back a bad model.',
+                ],
+                myths: [
+                    { claim: 'Writing the feature code twice, once for training and once for serving, is harmless if both follow the same idea.', truth: 'Two versions drift apart, and the model then sees different numbers in production from those it trained on. Compute each feature once and use it in both places.' },
                 ],
                 interviewAnswer: 'An orchestrated pipeline validates data, builds features, trains, compares against the production model and registers the winner with full lineage. A feature store keeps one definition per feature for both training (point-in-time correct) and serving (low latency). New models roll out through shadow or canary releases, are monitored for drift, and are retrained on a schedule or on a trigger.',
                 followUps: [

@@ -18,7 +18,7 @@ import { lessonOutline } from '../lesson';
 const adapt = <T extends AnyTopic>(glossary: GlossarySource<T>): PracticeGlossary => ({
     terms: glossary.terms,
     getTerm: id => glossary.getTerm(id),
-    segmentText: text => glossary.segmentText(text),
+    segmentText: (text, topicId) => glossary.segmentText(text, topicId),
     termsIn: topic => glossary.termsInTopic(topic as T),
     newWordsIn: topic => glossary.newWordsForTopic(topic as T),
 });
@@ -49,8 +49,9 @@ describe('every lesson, step by step', () => {
             expect(learn.filter(c => !isTeaching(c)).map(c => c.id).sort(), topic.id).toEqual(quick.filter(c => !isTeaching(c)).map(c => c.id).sort());
             // Every part of the lesson is taught.
             expect(learn.filter(c => c.kind === 'read').length, topic.id).toBe(lessonOutline(topic).length);
-            // A guess first, then why it matters, before anything is asked.
-            expect(learn[0].kind, topic.id).toBe('guess');
+            // It opens with why the lesson matters, before anything is asked.
+            expect(learn[0].kind, topic.id).toBe('read');
+            expect(learn[0].kind === 'read' && learn[0].part.slot, topic.id).toBe('why');
             const firstQuestion = at(learn, c => !isTeaching(c));
             expect(at(learn, c => c.kind === 'read' && c.part.slot === 'why'), topic.id).toBeLessThan(firstQuestion);
             // Each check comes after the part it checks.

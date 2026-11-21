@@ -18,7 +18,7 @@ export const sqlPhase6: SqlPhase = {
             priority: 'must',
             definition: 'CREATE TABLE defines a new table — its name, its columns, their types and rules — and ALTER TABLE changes an existing table, for example by adding a column.',
             problem: 'Before data can be stored, the database needs to know its shape. Choosing the columns, types and keys well at the start saves painful fixes later, when the table holds millions of rows.',
-            idea: 'CREATE TABLE lists each column with its type and any rules (constraints): `name TEXT NOT NULL`. One column, or a group of columns, is the PRIMARY KEY. DEFAULT gives a value to use when an INSERT doesn\'t mention the column. ALTER TABLE changes the table afterwards: ADD COLUMN, RENAME COLUMN, DROP COLUMN. These commands change the structure (the schema), not the rows, and they belong to the part of SQL called DDL.',
+            idea: 'CREATE TABLE lists each column with its type and any rules (constraints): `name TEXT NOT NULL`. One column, or a group of columns, is the PRIMARY KEY. DEFAULT gives a value to use when an INSERT doesn\'t mention the column.\n\nALTER TABLE changes the table afterwards: ADD COLUMN, RENAME COLUMN, DROP COLUMN. These commands change the structure (the schema), not the rows, and they belong to the part of SQL called DDL.',
             analogy: 'Designing a paper form before printing it: you decide the boxes (columns), what may be written in each (types), which ones must be filled in (NOT NULL), and which are pre-filled (DEFAULT). ALTER TABLE is printing a new version of the form with an extra box.',
             breaks: 'A reprinted form doesn\'t change the forms already filled in. ALTER TABLE does: adding a column adds it to every existing row (with its default or NULL), and on a huge table that can take a long time or lock it.',
             syntax: code`
@@ -81,11 +81,14 @@ export const sqlPhase6: SqlPhase = {
                 'Adding a NOT NULL column without a DEFAULT to a table that already has rows — most databases refuse.',
                 'Storing several values in one column (\'Pen, Mug\'). Each column should hold one value — see normalisation.',
             ],
+            myths: [
+                { claim: 'A NOT NULL column with no DEFAULT can always be added to a table that already has rows.', truth: 'The existing rows would have no value for the new column, so most databases refuse. Give the column a DEFAULT, or add it without NOT NULL and fill it in first.' },
+            ],
             dialects: [
                 'Auto-numbered ids: PostgreSQL `id INTEGER GENERATED ALWAYS AS IDENTITY` (or SERIAL); MySQL `AUTO_INCREMENT`; SQL Server `IDENTITY(1,1)`; SQLite `INTEGER PRIMARY KEY` does it automatically.',
                 'SQLite\'s ALTER TABLE is limited (add, rename and drop column only). PostgreSQL can also change a column\'s type with `ALTER COLUMN … TYPE`.',
             ],
-            interviewAnswer: 'CREATE TABLE defines a table\'s columns, data types and constraints — a primary key, NOT NULL, defaults, foreign keys — and ALTER TABLE evolves it later, such as adding a column. I always give tables a primary key, choose types deliberately — DECIMAL for money, proper DATE types for dates — and treat schema changes on big tables carefully, because adding or changing columns can rewrite or lock the table.',
+            interviewAnswer: 'CREATE TABLE defines a table\'s columns, data types and constraints — a primary key, NOT NULL, defaults, foreign keys — and ALTER TABLE evolves it later, such as adding a column. I always give tables a primary key, and I choose types deliberately: DECIMAL for money, proper DATE types for dates. I treat schema changes on big tables carefully, because adding or changing columns can rewrite or lock the table.',
             followUps: [
                 { q: 'What is a schema?', a: 'The structure of the database: its tables, columns, types and constraints. Also, in PostgreSQL, a named group of tables inside a database.' },
                 { q: 'How do you add a NOT NULL column to a table that already has data?', a: 'Give it a DEFAULT, or add it as nullable, fill in the values with UPDATE, then add the NOT NULL rule.' },
@@ -109,7 +112,7 @@ export const sqlPhase6: SqlPhase = {
             priority: 'must',
             definition: 'Constraints are rules the database enforces on every write — PRIMARY KEY, FOREIGN KEY, UNIQUE, NOT NULL, CHECK and DEFAULT — so that rows which break them are refused instead of stored.',
             problem: 'Application code has bugs, and data arrives from many places. Tom could sign up twice because nothing said emails must be unique. A rule in the database is checked on every insert and update, from every program, every time.',
-            idea: 'NOT NULL: a value is required. UNIQUE: no two rows may share the value. PRIMARY KEY: unique and not NULL — the row\'s identity. FOREIGN KEY (REFERENCES): the value must exist in another table\'s key, and you choose what happens when that row is deleted (refuse, ON DELETE CASCADE, or ON DELETE SET NULL). CHECK: any condition, such as `price > 0` or `plan IN (\'free\', \'pro\')`. If a write breaks a rule, the whole statement fails with an error and nothing is changed.',
+            idea: 'NOT NULL: a value is required.\nUNIQUE: no two rows may share the value.\nPRIMARY KEY: unique and not NULL — the row\'s identity.\nFOREIGN KEY (REFERENCES): the value must exist in another table\'s key, and you choose what happens when that row is deleted (refuse, ON DELETE CASCADE, or ON DELETE SET NULL).\nCHECK: any condition, such as `price > 0` or `plan IN (\'free\', \'pro\')`.\n\nIf a write breaks a rule, the whole statement fails with an error and nothing is changed.',
             analogy: 'The rules at a passport desk. No photo, no passport (NOT NULL). One passport number per person (UNIQUE). The country you list must be a real country (FOREIGN KEY). Your age can\'t be negative (CHECK). The officer refuses the form; they don\'t "fix it later".',
             breaks: 'An officer might let a small mistake through. A constraint never does — which is the point, but it also means a bulk load can fail on row 9,999,999. Clean or check the data before loading, or load into a staging table first.',
             syntax: code`
@@ -175,11 +178,14 @@ export const sqlPhase6: SqlPhase = {
                 'Using ON DELETE CASCADE without thinking: deleting one customer silently deletes all their orders.',
                 'Expecting UNIQUE to stop two NULLs. In most databases it doesn\'t — NULL isn\'t equal to NULL.',
             ],
+            myths: [
+                { claim: 'A UNIQUE constraint stops a column from holding two NULLs.', truth: 'In most databases NULL is not equal to NULL, so UNIQUE lets several NULLs in. Add NOT NULL as well when the column must always be filled.' },
+            ],
             dialects: [
                 'SQLite checks foreign keys only after `PRAGMA foreign_keys = ON;`. MySQL ignored CHECK constraints before version 8.0.16.',
                 'Upsert syntax: PostgreSQL and SQLite `ON CONFLICT … DO NOTHING / DO UPDATE`; MySQL `ON DUPLICATE KEY UPDATE`; SQL Server `MERGE`.',
             ],
-            interviewAnswer: 'Constraints let the database enforce integrity on every write: NOT NULL for required values, UNIQUE and PRIMARY KEY for identity, FOREIGN KEY for valid references with a chosen delete behaviour, and CHECK for any rule on a row. I put these rules in the schema rather than only in application code, because the database sees every writer, and a violation fails the statement atomically instead of leaving bad data behind.',
+            interviewAnswer: 'Constraints let the database enforce integrity on every write. NOT NULL is for required values, UNIQUE and PRIMARY KEY for identity, FOREIGN KEY for valid references with a chosen delete behaviour, and CHECK for any rule on a row. I put these rules in the schema rather than only in application code, because the database sees every writer, and a violation fails the statement atomically instead of leaving bad data behind.',
             followUps: [
                 { q: 'Can a UNIQUE column hold NULLs?', a: 'Yes, in most databases, and usually more than one NULL, because NULLs aren\'t equal to each other. (SQL Server allows only one by default.)' },
                 { q: 'What does ON DELETE CASCADE do?', a: 'Deleting the parent row also deletes the child rows that reference it — handy for order_items when an order is deleted, dangerous elsewhere.' },
@@ -202,9 +208,9 @@ export const sqlPhase6: SqlPhase = {
             kind: 'lesson',
             name: 'INSERT, UPDATE and DELETE',
             priority: 'must',
-            definition: 'INSERT adds new rows, UPDATE changes values in existing rows, and DELETE removes rows — and both UPDATE and DELETE act on every row their WHERE matches, or on every row of the table if there is no WHERE.',
+            definition: 'INSERT adds new rows, UPDATE changes values in existing rows, and DELETE removes rows. UPDATE and DELETE act on every row their WHERE matches, and on every row of the table if there is no WHERE.',
             problem: 'A database is only useful if it can be kept up to date: new customers, price changes, cancelled orders. These three statements do all of that — and one missing WHERE can change or wipe every row, so they deserve care.',
-            idea: '`INSERT INTO table (columns) VALUES (…)` adds a row; list the columns so the order is clear. `INSERT … SELECT` copies rows from a query. `UPDATE table SET column = value WHERE condition` changes matching rows, and the new value can use the old one (`salary = salary + 5000`). `DELETE FROM table WHERE condition` removes matching rows. An upsert — `INSERT … ON CONFLICT DO UPDATE` — inserts a row, or updates it if the key already exists.',
+            idea: '`INSERT INTO table (columns) VALUES (…)` adds a row; list the columns so the order is clear.\n`INSERT … SELECT` copies rows from a query.\n`UPDATE table SET column = value WHERE condition` changes matching rows, and the new value can use the old one (`salary = salary + 5000`).\n`DELETE FROM table WHERE condition` removes matching rows.\nAn upsert — `INSERT … ON CONFLICT DO UPDATE` — inserts a row, or updates it if the key already exists.',
             analogy: 'Editing a spreadsheet. INSERT adds a new line at the bottom. UPDATE is find-and-replace — and WHERE is the "only in this selection" box. DELETE removes lines. Forgetting WHERE is "replace all" across the whole sheet.',
             breaks: 'A spreadsheet has Undo. The database doesn\'t: once a change is committed, it is permanent. That is why you run the WHERE as a SELECT first, and use transactions (next lesson) so you can roll back.',
             syntax: code`
@@ -284,15 +290,18 @@ export const sqlPhase6: SqlPhase = {
                 'An upsert inserts or updates in one atomic statement.',
             ],
             mistakes: [
-                'Forgetting WHERE on an UPDATE or DELETE.',
+                'Forgetting WHERE on an UPDATE or DELETE, so every row in the table is changed or removed.',
                 'Deleting parent rows that child rows still reference — the foreign key refuses, or cascades if set to.',
                 'Updating with a value computed from another table without checking the join returns one row per target row.',
+            ],
+            myths: [
+                { claim: 'An UPDATE with no WHERE changes only the first row of the table.', truth: 'With no WHERE, UPDATE changes every row. Run the WHERE as a SELECT first, and check how many rows it hits.' },
             ],
             dialects: [
                 'PostgreSQL and SQLite support `RETURNING` to see the rows you changed: `DELETE FROM t WHERE … RETURNING *`. SQL Server uses `OUTPUT`.',
                 'UPDATE with a join: PostgreSQL `UPDATE t SET … FROM other WHERE …`; MySQL `UPDATE t JOIN other ON … SET …`; SQL Server `UPDATE t SET … FROM t JOIN other …`.',
             ],
-            interviewAnswer: 'INSERT adds rows, ideally with an explicit column list; UPDATE changes columns in rows matched by WHERE, and DELETE removes matched rows. My safety habits are to run the WHERE as a SELECT first, wrap risky changes in a transaction so I can roll back, and use an upsert — insert on conflict do update — when a row may or may not exist, so it is a single atomic statement rather than a check-then-write race.',
+            interviewAnswer: 'INSERT adds rows, ideally with an explicit column list; UPDATE changes columns in rows matched by WHERE, and DELETE removes matched rows. I have three safety habits. I run the WHERE as a SELECT first. I wrap risky changes in a transaction, so I can roll back. And when a row may or may not exist, I use an upsert (insert, on conflict do update): one atomic statement instead of a check-then-write race.',
             followUps: [
                 { q: 'How would you safely delete a lot of rows?', a: 'Check the count with SELECT first, do it inside a transaction, and on very large tables delete in batches to avoid long locks.' },
                 { q: 'Why is "check if it exists, then insert" a problem?', a: 'Two requests can both check, both see nothing, and both insert. An upsert or a UNIQUE constraint makes it atomic.' },
@@ -314,9 +323,9 @@ export const sqlPhase6: SqlPhase = {
             kind: 'lesson',
             name: 'Transactions and ACID',
             priority: 'must',
-            definition: 'A transaction groups several statements into one all-or-nothing unit — BEGIN, then the changes, then COMMIT to keep them or ROLLBACK to undo them — and ACID names the four guarantees it gives: Atomic, Consistent, Isolated, Durable.',
+            definition: 'A transaction groups several statements into one all-or-nothing unit: BEGIN, then the changes, then COMMIT to keep them or ROLLBACK to undo them. ACID names the four guarantees it gives: Atomic, Consistent, Isolated, Durable.',
             problem: 'Moving money means taking £100 from one account and adding it to another. If the system crashes between the two, £100 vanishes. Transactions make sure either both changes happen or neither does — and that two people working at once don\'t corrupt each other\'s changes.',
-            idea: 'BEGIN starts a transaction. Changes made inside are visible to you but not yet permanent. COMMIT makes them all permanent at once; ROLLBACK throws them all away. ACID: Atomic — all or nothing. Consistent — the data moves from one valid state to another, never breaking a constraint. Isolated — transactions running at the same time don\'t see each other\'s half-finished work (how strictly depends on the isolation level). Durable — once committed, it survives a crash.',
+            idea: 'BEGIN starts a transaction. Changes made inside are visible to you but not yet permanent. COMMIT makes them all permanent at once; ROLLBACK throws them all away.\n\nACID: Atomic — all or nothing.\nConsistent — the data moves from one valid state to another, never breaking a constraint.\nIsolated — transactions running at the same time don\'t see each other\'s half-finished work (how strictly depends on the isolation level).\nDurable — once committed, it survives a crash.',
             analogy: 'A bank transfer slip that only counts when it is stamped. You can fill in both lines — take from here, add to there — but nothing happens until the stamp (COMMIT). Tear up the slip (ROLLBACK) and it is as if you never started.',
             breaks: 'A torn-up slip leaves no trace. Inside a database, a long open transaction holds locks that can make other people wait. Keep transactions short: never wait for user input inside one.',
             syntax: code`
@@ -373,11 +382,14 @@ export const sqlPhase6: SqlPhase = {
                 'Leaving a transaction open (forgetting COMMIT), which holds locks.',
                 'Assuming the default isolation level prevents every race. Two transactions can still both read a balance and both write it.',
             ],
+            myths: [
+                { claim: 'Default isolation level: it stops two transactions from overwriting each other\'s work.', truth: 'Under the usual default, two transactions can both read the same balance and both write it back, so one change is lost. Lock the row first, or use a stricter level.' },
+            ],
             dialects: [
                 'Default isolation: PostgreSQL, SQL Server and Oracle use READ COMMITTED; MySQL InnoDB uses REPEATABLE READ; SQLite is effectively SERIALIZABLE.',
                 'Most databases run each statement in its own transaction automatically (autocommit) unless you BEGIN one.',
             ],
-            interviewAnswer: 'A transaction groups statements into an atomic unit — BEGIN, changes, then COMMIT or ROLLBACK. ACID means atomicity, all or nothing; consistency, constraints hold before and after; isolation, concurrent transactions don\'t see each other\'s uncommitted work; and durability, committed changes survive crashes. Isolation is tunable — read committed, repeatable read, serializable — trading anomalies like non-repeatable or phantom reads against concurrency, so for something like a balance update I lock the row with SELECT FOR UPDATE or use serializable.',
+            interviewAnswer: 'A transaction groups statements into an atomic unit — BEGIN, changes, then COMMIT or ROLLBACK. ACID means atomicity, all or nothing; consistency, constraints hold before and after; isolation, concurrent transactions don\'t see each other\'s uncommitted work; and durability, committed changes survive crashes. Isolation is tunable: read committed, repeatable read, serializable. Each level trades anomalies, like non-repeatable or phantom reads, against concurrency. For something like a balance update, I lock the row with SELECT FOR UPDATE or use serializable.',
             followUps: [
                 { q: 'What is a dirty read?', a: 'Reading another transaction\'s changes before it commits. If it then rolls back, you read data that never existed. READ COMMITTED prevents it.' },
                 { q: 'What is a phantom read?', a: 'Running the same query twice in one transaction and getting new rows the second time because someone inserted them. SERIALIZABLE prevents it.' },
@@ -400,9 +412,9 @@ export const sqlPhase6: SqlPhase = {
             kind: 'lesson',
             name: 'Normalisation: designing tables that don\'t contradict themselves',
             priority: 'must',
-            definition: 'Normalisation is designing tables so each fact is stored in exactly one place — usually to third normal form (3NF): one value per cell, and every column depends on the key, the whole key, and nothing but the key.',
+            definition: 'Normalisation is designing tables so that each fact is stored in exactly one place. The usual target is third normal form (3NF): one value per cell, and every column depends on the key, the whole key, and nothing but the key.',
             problem: 'If every order row stored the customer\'s email, changing Priya\'s email means updating five rows — miss one and the database says two different things. That is an update anomaly. Normalisation designs it out, and it is a favourite interview question.',
-            idea: 'First normal form (1NF): one value per cell, no lists like \'Pen, Mug\', and no repeating columns like item1, item2. Second (2NF): in a table with a composite key, every column must depend on the whole key — the product name depends only on product_id, so it belongs in products, not in order_items. Third (3NF): no column depends on another non-key column — a customer\'s city name shouldn\'t carry the city\'s country too; that belongs in a cities table. The practice database is already normalised: customers, orders, order_items and products each hold one kind of fact. Denormalisation is copying data back on purpose, for read speed, accepting the risk.',
+            idea: 'First normal form (1NF): one value per cell, no lists like \'Pen, Mug\', and no repeating columns like item1, item2.\nSecond (2NF): in a table with a composite key, every column must depend on the whole key. The product name depends only on product_id, so it belongs in products, not in order_items.\nThird (3NF): no column depends on another non-key column — a customer\'s city name shouldn\'t carry the city\'s country too; that belongs in a cities table.\n\nThe practice database is already normalised: customers, orders, order_items and products each hold one kind of fact. Denormalisation is copying data back on purpose, for read speed, accepting the risk.',
             analogy: 'A school keeping each pupil\'s address in one office file, instead of writing it on every exercise book. When a family moves, one change updates everything — and no book can show an old address.',
             breaks: 'In a school, looking up the office file is quick. In a database, every split costs a join at read time. That is why analytics warehouses often denormalise on purpose: reads there matter more than updates.',
             howItWorks: [
@@ -457,10 +469,13 @@ export const sqlPhase6: SqlPhase = {
                 'Copying a value (like a price) into another table without deciding whether it should change when the source changes.',
                 'Normalising so far that simple questions need eight joins. 3NF is usually the right stop.',
             ],
+            myths: [
+                { claim: 'The further a design is normalised, the better it always is.', truth: 'Past third normal form, simple questions can need many joins. 3NF is usually the right place to stop.' },
+            ],
             dialects: [
                 'Real order systems often store unit_price in order_items on purpose: the price paid at the time must not change when the product\'s price changes later. That isn\'t a 2NF violation — it is a different fact.',
             ],
-            interviewAnswer: 'Normalisation organises tables so each fact is stored once, which prevents update, insert and delete anomalies. First normal form means atomic values with no repeating groups; second, no partial dependency on part of a composite key; third, no transitive dependency through a non-key column — every column depends on the key, the whole key and nothing but the key. I normalise transactional systems to about 3NF and denormalise deliberately for analytics or read-heavy paths.',
+            interviewAnswer: 'Normalisation organises tables so each fact is stored once, which prevents update, insert and delete anomalies. First normal form means atomic values with no repeating groups. Second: no partial dependency on part of a composite key. Third: no transitive dependency through a non-key column. In short, every column depends on the key, the whole key and nothing but the key. I normalise transactional systems to about 3NF and denormalise deliberately for analytics or read-heavy paths.',
             followUps: [
                 { q: 'What is an update anomaly?', a: 'When the same fact is stored in several rows and an update changes some but not all of them, so the data contradicts itself.' },
                 { q: 'When would you denormalise?', a: 'For read-heavy reporting or performance — for example a star schema in a data warehouse — accepting extra storage and the work of keeping copies in sync.' },
@@ -483,7 +498,7 @@ export const sqlPhase6: SqlPhase = {
             kind: 'lesson',
             name: 'Views: saved queries you can use like tables',
             priority: 'should',
-            definition: 'A view is a named, saved SELECT that you query like a table; it stores no data of its own, so it always shows the current data, while a materialised view stores the result and must be refreshed.',
+            definition: 'A view is a named, saved SELECT that you query like a table. It stores no data of its own, so it always shows the current data. A materialised view stores the result and must be refreshed.',
             problem: 'The same "customer totals" query gets copied into ten reports, and when the rule changes, nine get fixed. A view keeps one definition in the database that everyone uses. Views can also hide columns people shouldn\'t see.',
             idea: '`CREATE VIEW customer_totals AS SELECT …` saves the query under a name. `SELECT * FROM customer_totals` runs it. Because the view is only a query, a new order shows up the next time you read it. A materialised view (PostgreSQL, Oracle) is different: it saves the rows, so reading is fast, but the data is only as fresh as the last REFRESH.',
             analogy: 'A saved search in your email: "unread from my manager". It doesn\'t copy any emails; it runs the search every time you open it. A materialised view is a printed list of those emails — fast to read, but out of date as soon as a new one arrives.',
@@ -551,10 +566,13 @@ export const sqlPhase6: SqlPhase = {
                 'Stacking views on views until no one can tell what a query really does.',
                 'Forgetting to refresh a materialised view and reporting old numbers.',
             ],
+            myths: [
+                { claim: 'Saving a slow query as a view makes it run faster.', truth: 'A normal view stores no rows: its query runs again every time the view is used. Only a materialised view stores results, and it has to be refreshed.' },
+            ],
             dialects: [
                 'Materialised views: PostgreSQL `CREATE MATERIALIZED VIEW` + `REFRESH MATERIALIZED VIEW`; Oracle has them; SQL Server uses "indexed views"; MySQL and SQLite have none.',
             ],
-            interviewAnswer: 'A view is a stored query that behaves like a virtual table: it holds no data, so it is always current, and it is useful for sharing one definition of a metric or for restricting which columns people see. It doesn\'t make queries faster. When the query is expensive and slight staleness is fine, I use a materialised view, which stores the result and is refreshed on a schedule.',
+            interviewAnswer: 'A view is a stored query that behaves like a virtual table. It holds no data, so it is always current. It is useful for sharing one definition of a metric, or for restricting which columns people see. It doesn\'t make queries faster. When the query is expensive and slight staleness is fine, I use a materialised view, which stores the result and is refreshed on a schedule.',
             followUps: [
                 { q: 'View or materialised view?', a: 'A view runs its query on every read and is always fresh. A materialised view stores the result: fast to read, stale until refreshed.' },
                 { q: 'Can you INSERT into a view?', a: 'Into simple views over one table, often yes. Views with joins or aggregates generally can\'t be written to without extra rules or triggers.' },
@@ -576,9 +594,9 @@ export const sqlPhase6: SqlPhase = {
             kind: 'lesson',
             name: 'DDL, DML, DCL, TCL — and DELETE versus TRUNCATE versus DROP',
             priority: 'should',
-            definition: 'SQL commands fall into four families — DDL changes structure (CREATE, ALTER, DROP), DML changes data (INSERT, UPDATE, DELETE), DCL controls access (GRANT, REVOKE) and TCL controls transactions (COMMIT, ROLLBACK) — and DELETE, TRUNCATE and DROP remove rows, all rows, or the whole table.',
+            definition: 'SQL commands fall into four families: DDL changes structure (CREATE, ALTER, DROP), DML changes data (INSERT, UPDATE, DELETE), DCL controls access (GRANT, REVOKE) and TCL controls transactions (COMMIT, ROLLBACK). DELETE removes rows, TRUNCATE removes all rows, and DROP removes the whole table.',
             problem: '"What is the difference between DELETE, TRUNCATE and DROP?" is one of the most asked SQL theory questions. Knowing the four families answers it neatly, because the three belong to different families.',
-            idea: 'DDL (Data Definition Language) defines the shape: CREATE, ALTER, DROP, TRUNCATE. DML (Data Manipulation Language) works on rows: SELECT, INSERT, UPDATE, DELETE. DCL (Data Control Language) gives and takes permissions: GRANT, REVOKE. TCL (Transaction Control Language): BEGIN, COMMIT, ROLLBACK, SAVEPOINT. DELETE is DML: it removes rows one by one, can have a WHERE, fires triggers, and can be rolled back. TRUNCATE is DDL-like: it empties the whole table at once, very fast, with no WHERE. DROP removes the table itself — rows, structure, indexes and all.',
+            idea: 'DDL (Data Definition Language) defines the shape: CREATE, ALTER, DROP, TRUNCATE.\nDML (Data Manipulation Language) works on rows: SELECT, INSERT, UPDATE, DELETE.\nDCL (Data Control Language) gives and takes permissions: GRANT, REVOKE.\nTCL (Transaction Control Language): BEGIN, COMMIT, ROLLBACK, SAVEPOINT.\n\nDELETE is DML: it removes rows one by one, can have a WHERE, fires triggers, and can be rolled back. TRUNCATE is DDL-like: it empties the whole table at once, very fast, with no WHERE. DROP removes the table itself — rows, structure, indexes and all.',
             analogy: 'A filing cabinet. DELETE takes out chosen files one at a time. TRUNCATE tips the whole drawer into the bin. DROP throws away the cabinet.',
             breaks: 'Bins can be searched afterwards. Whether TRUNCATE can be undone depends on the database: PostgreSQL and SQL Server can roll it back inside a transaction; MySQL and Oracle commit it immediately.',
             syntax: code`
@@ -629,6 +647,9 @@ export const sqlPhase6: SqlPhase = {
                 'Using TRUNCATE when you meant to keep some rows — it has no WHERE.',
                 'Assuming TRUNCATE can always be rolled back — not in MySQL or Oracle.',
                 'Dropping a table that views or foreign keys still depend on.',
+            ],
+            myths: [
+                { claim: 'TRUNCATE can be undone with ROLLBACK in every database.', truth: 'In MySQL and Oracle, TRUNCATE takes effect at once and cannot be rolled back. DELETE is the one that can be undone inside a transaction everywhere.' },
             ],
             dialects: [
                 'SQLite has no TRUNCATE; `DELETE FROM t;` without WHERE is optimised to do the same thing.',

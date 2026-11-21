@@ -245,7 +245,7 @@ export const sqlGlossaryTerms: GlossaryTerm[] = [
     {
         id: 'string',
         term: 'string',
-        definition: 'A text value. In SQL it goes inside single quotes: \'London\'.',
+        definition: 'A piece of text, such as a name or a city. In SQL it goes inside single quotes: \'London\'.',
         taughtIn: 'sql0-t4',
         matches: ['string', 'strings'],
     },
@@ -906,7 +906,7 @@ export const sqlGlossaryTerms: GlossaryTerm[] = [
     {
         id: 'normal-forms',
         term: '1NF, 2NF, 3NF',
-        definition: 'Normal forms. 1NF: one value per cell. 2NF: no column depends on part of a composite key. 3NF: no column depends on another non-key column.',
+        definition: 'The first three normal forms: rules for tables that don\'t repeat or contradict themselves. 1NF: one value per cell. 2NF: no column depends on part of a composite key. 3NF: no column depends on another non-key column.',
         taughtIn: 'sql6-t5',
         matches: ['1NF', '2NF', '3NF', 'BCNF', 'third normal form'],
     },

@@ -2,26 +2,61 @@
 
 # AI Engineer Path
 
-### A free, step-by-step roadmap to becoming an AI engineer
+### Learn machine learning, SQL and system design, from zero to interview-ready. Free.
 
-Learn machine learning from the maths up, SQL from your first `SELECT`, and system design the way interviews ask it.<br>
-231 lessons that start from scratch and go all the way to interview questions.
+234 complete lessons, not a list of links. Every lesson has an animation, the idea step by step,<br>
+code that has been run, exercises with full answers, and a five-minute practice game.
 
-[![ML Foundations: 98 lessons](https://img.shields.io/badge/ML_Foundations-98_lessons-b39ddb?style=for-the-badge&labelColor=151921)](https://learn.hamropedia.com/foundations/)
+[![ML Foundations: 101 lessons](https://img.shields.io/badge/ML_Foundations-101_lessons-b39ddb?style=for-the-badge&labelColor=151921)](https://learn.hamropedia.com/foundations/)
 [![SQL: 61 lessons](https://img.shields.io/badge/SQL-61_lessons-b39ddb?style=for-the-badge&labelColor=151921)](https://learn.hamropedia.com/sql/)
 [![System Design: 72 lessons](https://img.shields.io/badge/System_Design-72_lessons-b39ddb?style=for-the-badge&labelColor=151921)](https://learn.hamropedia.com/system-design/)
+
+[![Tests and deploy](https://github.com/iammanoj807/ai-engineer-path/actions/workflows/deploy.yml/badge.svg)](https://github.com/iammanoj807/ai-engineer-path/actions/workflows/deploy.yml)
+[![GitHub stars](https://img.shields.io/github/stars/iammanoj807/ai-engineer-path?style=flat&logo=github&label=Stars)](https://github.com/iammanoj807/ai-engineer-path/stargazers)
+[![Contributions welcome](https://img.shields.io/badge/contributions-welcome-66bb6a?style=flat)](CONTRIBUTING.md)
+[![Code: MIT](https://img.shields.io/badge/code-MIT-blue?style=flat)](LICENSE)
+[![Lessons: CC BY-SA 4.0](https://img.shields.io/badge/lessons-CC_BY--SA_4.0-blue?style=flat)](LICENSE-CONTENT.md)
 
 ### [Start learning at learn.hamropedia.com →](https://learn.hamropedia.com)
 
 Free · No sign-up needed to read · Works on your phone
 
+If it helps you, a ⭐ helps the next learner find it.
+
 </div>
 
 <br>
 
-[![AI Engineer Path: learn ML, SQL and system design, one step at a time](docs/images/front-page.png)](https://learn.hamropedia.com)
+<p align="center">
+  <a href="https://learn.hamropedia.com/foundations/gradient-descent-and-the-learning-rate/"><img src="docs/images/lesson-animation.gif" width="640" alt="A lesson's animation: gradient descent steps down a curve with a good learning rate, then explodes with one that is too big"></a>
+  <br>
+  <sub>Every lesson has an animation you can step through. This one is <a href="https://learn.hamropedia.com/foundations/gradient-descent-and-the-learning-rate/">gradient descent</a>: a good learning rate, then one that is too big.</sub>
+</p>
+
+> **Prefer to read here?** Every lesson is also a Markdown page in this repository: **[browse all 234 lessons →](lessons/README.md)**
+
+## Why this path is different
+
+| Most roadmaps | AI Engineer Path |
+|---|---|
+| A list of links to other people's courses | Every lesson is written in full, here. The linked extras are optional. |
+| Text and static pictures | An animation you can play, pause and step through in every lesson |
+| "The exercise is left to the reader" | Four exercises in every lesson, each with a worked answer |
+| Symbols and jargon you have to look up | Tap any technical word or maths symbol (Σ, ∇, ᵀ, η) for a plain-English meaning |
+| The proof is "beyond the scope" | An optional **Go deeper** on the core lessons: the derivation, one small step at a time |
+| Code you hope still works | Every code example has been run, and a test runs every SQL query and checks the rows it returns |
+| You read it, then forget it | Practice from memory after each lesson, then reviews after 1, 3, 7, 14, 30 and 60 days |
+| Theory, or interview prep | Both: every course has interview questions with a spoken answer, the traps and the follow-ups |
+
+## Who it is for
+
+- **New to the field.** Each course starts from zero. Every technical word can be tapped for a plain-English meaning, and the next lesson is always marked **START**.
+- **Getting ready for interviews.** Learn the idea, then answer the questions interviewers ask about it, out loud, and compare with a model answer.
+- **Aiming at research or a PhD.** The checks go past "I read it": **Derive** the maths from memory, **Build** it from scratch, then **Break** it and explain why it fails. The core lessons add a **Go deeper** section with the full derivation.
 
 ## What you get
+
+[![AI Engineer Path: learn ML, SQL and system design, one step at a time](docs/images/front-page.png)](https://learn.hamropedia.com)
 
 - **One clear next step.** Each course is a path of units, with lessons in the order they are meant to be taken. The next lesson is always marked **START**.
 - **Every lesson in full.** An animation, the idea step by step, a worked example, and exercises with answers.
@@ -33,7 +68,7 @@ Free · No sign-up needed to read · Works on your phone
 
 | Course | Take it if you want to… | Size |
 |---|---|---|
-| **[ML Foundations](https://learn.hamropedia.com/foundations/)** | understand machine learning from the maths up, through deep learning and LLMs, and build it yourself | 8 units · 98 lessons |
+| **[ML Foundations](https://learn.hamropedia.com/foundations/)** | understand machine learning from the maths up, through deep learning and LLMs, and build it yourself | 8 units · 101 lessons |
 | **[SQL](https://learn.hamropedia.com/sql/)** | get answers from data, from your first `SELECT` to window functions and interview problems | 9 units · 61 lessons |
 | **[System Design](https://learn.hamropedia.com/system-design/)** | design real systems and answer high-level, low-level and AI/ML design interviews | 10 units · 72 lessons |
 
@@ -54,7 +89,7 @@ Each course is drawn as a winding path. Tap a lesson to read it or practise it. 
 Every lesson teaches one idea all the way through:
 
 1. **An animation** you can play, pause and step through.
-2. **The idea, step by step:** why it exists, how it works, and the mistakes people make.
+2. **The idea, step by step:** why it exists, how it works, and the mistakes people make. Each lesson ends that part with one or two statements that sound right and are wrong, each marked **Not true**, with what is true straight under it.
 3. **A worked example** with code that has been run.
 4. **Four checks with answers.** In ML Foundations they are Explain, Derive, Build and Break. Pass all four without notes and the lesson is mastered.
 
@@ -69,7 +104,7 @@ Every lesson teaches one idea all the way through:
 
 Tap any lesson on the path and choose:
 
-- **Learn it step by step** (about 15 minutes): the whole lesson inside practice. A quick guess first, then each part of the lesson (why it matters, the idea, how it works one step at a time, a worked example, what to remember, the common mistakes), each followed by a question that checks it.
+- **Learn it step by step** (about 15 minutes): the whole lesson inside practice. It teaches each part of the lesson (why it matters, the idea, how it works one step at a time, a worked example, what to remember, the common mistakes), and asks a question after each part. Nothing is asked before it has been taught.
 - **Quick practice** (5 minutes): for a lesson you have already learned.
 
 A 📖 button inside practice opens the lesson notes, with a link to the full lesson page. In both, the lesson's coach then asks quick questions made from the lesson itself, reading each one aloud:
@@ -77,7 +112,7 @@ A 📖 button inside practice opens the lesson notes, with a link to the full le
 - **Match the pairs:** each word to what it means.
 - **Fill the gap:** type the missing word, checked letter by letter, or choose it from four words if typing is hard.
 - **Put the steps in order:** how it works, step by step.
-- **Spot the mistake:** the one common mistake among true statements.
+- **Spot the mistake:** three true statements and one false one. "Which one is false?" The false one is written like the true ones, so you have to know the lesson to find it. The answer then says what is true.
 - **SQL:** predict how many rows a query returns, write a query that is checked against the answer's rows, and fix a query with one small bug.
 
 A right answer chimes. A wrong one costs a heart, and the card comes back at the end so it sticks. Finishing earns XP and keeps your streak. The voice and the sounds each have their own on/off button.
@@ -86,8 +121,8 @@ A right answer chimes. A wrong one costs a heart, and the card comes back at the
 
 The site follows what learning research shows works best:
 
-1. **Guess first.** Before a lesson, take a quick true-or-false guess. A guess, even a wrong one, makes the answer stick when you meet it (the *pretesting effect*).
-2. **Learn it.** An animation, the idea step by step, and a worked example.
+1. **Learn it first.** An animation, the idea step by step, and a worked example. You are never asked about something the lesson has not taught yet.
+2. **A question after each part.** Learning in small parts, with a question after each, works better than reading it all and testing at the end.
 3. **Practise from memory.** Answering from memory beats rereading. In one well-known study, students who tested themselves remembered 61% a week later, against 40% for rereading (Roediger and Karpicke, 2006).
 4. **Review just before you forget.** Each lesson you practise comes back for a five-minute mixed review after 1, 3, 7, 14, 30 and 60 days, with the cards you missed first. Spacing and mixing are what make learning last.
 5. **Harder each time.** Reviews move from recognising, to recalling from memory, to the interview question about the lesson. You go from beginner to interview level.
@@ -120,30 +155,31 @@ Every unit and lesson has its own page. Open a course's list to jump straight to
 
 ### ML Foundations
 
-Maths, machine learning, deep learning and LLMs, from scratch. **8 units · 98 lessons** · [Open the course →](https://learn.hamropedia.com/foundations/)
+Maths, machine learning, deep learning and LLMs, from scratch. **8 units · 101 lessons** · [Open the course →](https://learn.hamropedia.com/foundations/)
 
 | Unit | What you will learn | Lessons |
 |---|---|:-:|
-| [0 · Your toolkit](https://learn.hamropedia.com/foundations/unit/toolkit/) | Get fast with the tools you will use every day. This unit is short: do it alongside the start of Unit 1. | 6 |
+| [0 · Your toolkit](https://learn.hamropedia.com/foundations/unit/toolkit/) | Get fast with the tools you will use every day. This unit is short: do it alongside the start of Unit 1. | 7 |
 | [1 · Math foundations](https://learn.hamropedia.com/foundations/unit/math/) | The language of ML. You will see matrices as movements of space, gradients as directions, and loss functions as probabilities. | 16 |
 | [2 · Classical ML, built by you](https://learn.hamropedia.com/foundations/unit/classical-ml/) | Build every classic algorithm yourself in NumPy. After this unit, a library is only a shortcut for something you already understand. | 17 |
 | [3 · Deep learning foundations](https://learn.hamropedia.com/foundations/unit/deep-learning/) | Build neural networks from a single neuron up. Write backprop by hand first. | 16 |
 | [4 · Transformers and LLMs](https://learn.hamropedia.com/foundations/unit/llms/) | Build a small GPT from scratch: tokenizer, attention, training and fine-tuning. | 14 |
 | [5 · AI engineering](https://learn.hamropedia.com/foundations/unit/ai-engineering/) | Turn foundation models into real products: retrieval, evaluation, agents and deployment. | 16 |
 | [6 · Systems and scale](https://learn.hamropedia.com/foundations/unit/systems/) | Make models fast and cheap. Understand what limits speed and memory on a GPU, and how training works across many GPUs. | 9 |
-| [7 · Generative models and reinforcement learning](https://learn.hamropedia.com/foundations/unit/generative-rl/) | Models that create new data, and models that learn by trial and error. | 4 |
+| [7 · Generative models and reinforcement learning](https://learn.hamropedia.com/foundations/unit/generative-rl/) | Models that create new data, and models that learn by trial and error. | 6 |
 
 <details>
-<summary><b>All 98 ML Foundations lessons</b></summary>
+<summary><b>All 101 ML Foundations lessons</b></summary>
 
 **Unit 0 · [Your toolkit](https://learn.hamropedia.com/foundations/unit/toolkit/)**
 
 1. [Meet machine learning: the big picture](https://learn.hamropedia.com/foundations/meet-machine-learning-the-big-picture/)
-2. [NumPy arrays, shapes and indexing](https://learn.hamropedia.com/foundations/numpy-arrays-shapes-and-indexing/)
-3. [Broadcasting and vectorisation](https://learn.hamropedia.com/foundations/broadcasting-and-vectorisation/)
-4. [Plotting results with Matplotlib](https://learn.hamropedia.com/foundations/plotting-results-with-matplotlib/)
-5. [Git and GitHub for your projects](https://learn.hamropedia.com/foundations/git-and-github-for-your-projects/)
-6. [Testing numerical code (np.allclose, pytest)](https://learn.hamropedia.com/foundations/testing-numerical-code-np-allclose-pytest/)
+2. [Python basics: variables, lists, loops and functions](https://learn.hamropedia.com/foundations/python-basics-variables-lists-loops-and-functions/)
+3. [NumPy arrays, shapes and indexing](https://learn.hamropedia.com/foundations/numpy-arrays-shapes-and-indexing/)
+4. [Broadcasting and vectorisation](https://learn.hamropedia.com/foundations/broadcasting-and-vectorisation/)
+5. [Plotting results with Matplotlib](https://learn.hamropedia.com/foundations/plotting-results-with-matplotlib/)
+6. [Git and GitHub for your projects](https://learn.hamropedia.com/foundations/git-and-github-for-your-projects/)
+7. [Testing numerical code (np.allclose, pytest)](https://learn.hamropedia.com/foundations/testing-numerical-code-np-allclose-pytest/)
 
 **Unit 1 · [Math foundations](https://learn.hamropedia.com/foundations/unit/math/)**
 
@@ -254,9 +290,11 @@ Maths, machine learning, deep learning and LLMs, from scratch. **8 units · 98 l
 **Unit 7 · [Generative models and reinforcement learning](https://learn.hamropedia.com/foundations/unit/generative-rl/)**
 
 1. [Autoencoders and VAEs (the ELBO)](https://learn.hamropedia.com/foundations/autoencoders-and-vaes-the-elbo/)
-2. [Diffusion models](https://learn.hamropedia.com/foundations/diffusion-models/)
-3. [Reinforcement learning basics: states, actions, rewards, values](https://learn.hamropedia.com/foundations/reinforcement-learning-basics-states-actions-rewards-values/)
-4. [Policy gradients and PPO](https://learn.hamropedia.com/foundations/policy-gradients-and-ppo/)
+2. [GANs: a generator against a discriminator](https://learn.hamropedia.com/foundations/gans-a-generator-against-a-discriminator/)
+3. [Diffusion models](https://learn.hamropedia.com/foundations/diffusion-models/)
+4. [Reinforcement learning basics: states, actions, rewards, values](https://learn.hamropedia.com/foundations/reinforcement-learning-basics-states-actions-rewards-values/)
+5. [Deep Q-networks (DQN): Q-learning with a neural network](https://learn.hamropedia.com/foundations/deep-q-networks-dqn-q-learning-with-a-neural-network/)
+6. [Policy gradients and PPO](https://learn.hamropedia.com/foundations/policy-gradients-and-ppo/)
 
 </details>
 
@@ -499,7 +537,7 @@ The building blocks, then real designs, the way interviews ask them. **10 units 
 Yes. Every lesson is open to read, with no account and no paywall.
 
 **Do I need to know maths or coding first?**<br>
-No. ML Foundations teaches the maths it needs in Unit 1. Its code is in Python, so basic Python helps. SQL and System Design start from zero.
+No. ML Foundations teaches the maths it needs in Unit 1, and its second lesson teaches the Python it uses, in a free notebook with nothing to install. SQL and System Design start from zero.
 
 **Does it work on my phone?**<br>
 Yes. The lessons and the practice are made for phone screens too.
@@ -513,10 +551,24 @@ Only if you sign in: one welcome email. Weekly reminders are off unless you turn
 **I found a mistake in a lesson.**<br>
 Thank you! [Open an issue](https://github.com/iammanoj807/ai-engineer-path/issues/new/choose), or fix it yourself: see [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Help make it better
+
+The lessons are plain text files, so you can improve one without knowing the code.
+
+- **Tell us where a lesson lost you.** [Open an issue](https://github.com/iammanoj807/ai-engineer-path/issues/new/choose) and say which sentence. That is the most useful report there is.
+- **Fix a mistake**, a broken link or an unclear sentence, and open a pull request.
+- **Add a missing word** to a course's glossary, so the next learner can tap it.
+
+[CONTRIBUTING.md](CONTRIBUTING.md) shows where every lesson lives and the checks that run on each change.
+
 ## Support the project
 
 - **Star this repository** so other learners can find it.
 - **Share a lesson** with a friend who is learning too.
 - **[Buy me a coffee](https://buymeacoffee.com/manojthapa)** if the site helps you.
+
+## Licence
+
+The code is under the [MIT License](LICENSE). The lessons are under [CC BY-SA 4.0](LICENSE-CONTENT.md): share and adapt them freely, with credit, under the same licence.
 
 <sub>Running the site yourself or forking it? See the [developer notes](docs/DEVELOPMENT.md).</sub>

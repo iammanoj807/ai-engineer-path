@@ -24,7 +24,7 @@ export const foundationPhase3: FoundationPhase = {
         {
             id: 'f3-t1',
             name: 'The neuron and the multi-layer perceptron',
-            definition: 'A neuron computes a weighted sum of its inputs plus a bias and passes it through an activation, a = f(w·x + b); a multi-layer perceptron (MLP) stacks layers of these, each feeding the next.',
+            definition: 'A neuron computes a weighted sum of its inputs plus a bias, and passes it through an activation. A multi-layer perceptron (MLP) stacks layers of neurons, each layer feeding the next.',
             problem: 'Linear and logistic regression can only draw straight boundaries and fit straight trends. Real patterns — handwriting, speech, prices driven by many interacting factors — are curved and tangled. Stacking many simple neurons in layers lets a model build complicated functions out of simple pieces, and every modern network, transformers included, is built from this unit.',
             howItWorks: [
                 'One neuron takes inputs x, multiplies each by its weight, adds them up and adds a bias: z = w·x + b. For x = [0.5, −1, 2], w = [0.8, −0.4, 0.6] and b = −0.5, z = 0.4 + 0.4 + 1.2 − 0.5 = 1.5.',
@@ -48,6 +48,10 @@ export const foundationPhase3: FoundationPhase = {
                 'Getting the weight shape backwards: for x @ W, W must be (n_in, n_out).',
                 'Starting every weight at the same value: every neuron in a layer then stays identical forever.',
                 'Putting a ReLU on the final output, which stops the scores going negative.',
+            ],
+            myths: [
+                { claim: 'A network learns normally when its weights start at one shared value.', truth: 'Every neuron in a layer would then compute the same thing and receive the same update, so they stay identical for ever. Random starting weights break the tie.' },
+                { claim: 'Linear layers stacked with no activation between them: a more powerful network.', truth: 'Without an activation between them, several linear layers collapse into one linear layer. The non-linearity is what makes depth useful.' },
             ],
             followUps: [
                 { q: 'What does one neuron compute?', a: 'A weighted sum of its inputs plus a bias, passed through an activation: f(w·x + b).' },
@@ -106,6 +110,10 @@ export const foundationPhase3: FoundationPhase = {
                 'Forgetting the activation in a hand-written layer.',
                 'Putting ReLU on a regression output that should be able to go negative.',
             ],
+            myths: [
+                { claim: 'A ReLU on the last layer suits a regression output that can be negative.', truth: 'ReLU cannot output a negative number, so a target that can be negative could never be predicted. Leave the last layer of a regression without an activation.' },
+                { claim: 'Hidden layers of a deep network: sigmoid is a sound default.', truth: 'Sigmoid saturates: at its two ends the gradient is tiny, and through many layers it vanishes. ReLU is the default for hidden layers.' },
+            ],
             followUps: [
                 { q: 'Why does W2(W1x) gain nothing over a single layer?', a: 'It equals (W2W1)x, which is just another single matrix applied to x.' },
                 { q: 'What is ReLU(−3), and what is its slope there?', a: '0, and the slope is 0 too: no gradient flows through an inactive ReLU.' },
@@ -153,7 +161,7 @@ export const foundationPhase3: FoundationPhase = {
                 'Every node only needs its local derivative; the chain rule glues them together.',
                 'Gradients flowing into the same value from different paths are summed.',
                 'A forward pass saves activations, and the backward pass reuses them: that is why training needs more memory than inference.',
-                'Matrix form for y = xW: dL/dW = xᵀ·(dL/dy) and dL/dx = (dL/dy)·Wᵀ.',
+                'In matrix form, for a layer y = xW: the gradient for the weights is dL/dW = xᵀ·(dL/dy), and the gradient passed back is dL/dx = (dL/dy)·Wᵀ.',
                 'Always verify hand-written gradients with a numerical gradient check.',
                 'The cost of a backward pass is roughly twice a forward pass.',
             ],
@@ -162,6 +170,22 @@ export const foundationPhase3: FoundationPhase = {
                 'Missing a transpose in the matrix version: the shapes usually tell you.',
                 'Forgetting that the local derivative uses the values saved from the forward pass.',
             ],
+            myths: [
+                { claim: 'Backpropagation needs one separate forward pass for every weight in the network.', truth: 'One forward pass and one backward pass give the gradient for every weight at once. That is what makes training large networks possible.' },
+                { claim: 'When a value is used in two places, only the last gradient that reaches it counts.', truth: 'Gradients that reach the same value along different paths are added together. Overwriting instead of adding is a classic backprop bug.' },
+            ],
+            deeper: {
+                title: 'Backprop in matrix form: where the transposes come from',
+                steps: [
+                    'Set-up: a batch X (n rows, d columns) goes through weights W (d × k) to give Y = XW (n × k). Backprop has already produced G = dL/dY, a grid the same shape as Y. We want dL/dW and dL/dX.',
+                    'Write one entry of the product: Yᵢⱼ = Σₘ Xᵢₘ·Wₘⱼ. The weight Wₘⱼ appears only in column j of Y, once for each row i, and its local derivative there is ∂Yᵢⱼ/∂Wₘⱼ = Xᵢₘ.',
+                    'The chain rule adds up every path from Wₘⱼ to the loss: ∂L/∂Wₘⱼ = Σᵢ Gᵢⱼ·Xᵢₘ.',
+                    'That sum is entry (m, j) of the product Xᵀ·G, because row m of Xᵀ is column m of X. So dL/dW = Xᵀ·G.',
+                    'Do the same for an input. Xᵢₘ appears only in row i of Y, with local derivative Wₘⱼ. So ∂L/∂Xᵢₘ = Σⱼ Gᵢⱼ·Wₘⱼ, which is entry (i, m) of G·Wᵀ. So dL/dX = G·Wᵀ.',
+                    'Check the shapes. Xᵀ·G is (d × n)(n × k) = d × k, the shape of W. G·Wᵀ is (n × k)(k × d) = n × d, the shape of X. A gradient always has the shape of the thing it belongs to, and that rule alone tells you where the transposes go.',
+                ],
+                result: 'For Y = XW: dL/dW = Xᵀ·(dL/dY) and dL/dX = (dL/dY)·Wᵀ. Every layer of a network is this rule, plus the slope of its activation.',
+            },
             followUps: [
                 { q: 'In one sentence, what does each node do in the backward pass?', a: 'It multiplies the gradient arriving from above by its own local derivative and passes the result to its inputs.' },
                 { q: 'A value feeds two later operations. How do you combine the gradients coming back?', a: 'Add them: the total effect is the sum of its effects along each path.' },
@@ -187,7 +211,7 @@ export const foundationPhase3: FoundationPhase = {
             practice: {
                 explain: 'Explain backprop with the factory-fault picture, and say where the blame gets shared.',
                 derive: 'For y = w2 · relu(w1 · x), with x = 2, w1 = 0.5, w2 = −1, target 3 and loss (y − target)², compute every gradient by hand.',
-                build: 'Write the full backward pass for a 2-layer MLP with softmax and cross-entropy in NumPy. Check every gradient with your gradient checker.',
+                build: 'Write the full backward pass for a 2-layer MLP with softmax and cross-entropy in NumPy. Check every gradient with your gradient checker. One fact to use now and derive two lessons later: with softmax and cross-entropy together, the gradient of the loss with respect to the scores is (p − y)/n.',
                 break: 'Plant a bug on purpose: forget one transpose in the backward pass. Does your gradient checker catch it? How big is the error?',
             },
         },
@@ -218,6 +242,10 @@ export const foundationPhase3: FoundationPhase = {
                 'Evaluating without no_grad(), wasting memory on a graph you never use.',
                 'Calling .numpy() or .item() in the middle of a computation, which breaks the graph.',
                 'Changing a tensor in place that autograd still needs, which causes an error during backward.',
+            ],
+            myths: [
+                { claim: 'Gradients still flow through a value after .item() or .numpy() has been called on it.', truth: 'Those calls leave PyTorch and return plain numbers, so the graph is cut there and nothing before that point receives a gradient.' },
+                { claim: 'PyTorch clears the old gradients by itself before each backward pass.', truth: 'Gradients accumulate: each backward pass adds to .grad. Call optimizer.zero_grad() once per step, or the old gradients pile up.' },
             ],
             followUps: [
                 { q: 'What does loss.backward() do?', a: 'It walks the recorded graph from the loss backwards, applying the chain rule, and adds each gradient into the .grad of the tensors that need one.' },
@@ -252,7 +280,7 @@ export const foundationPhase3: FoundationPhase = {
         {
             id: 'f3-t5',
             name: 'Softmax and cross-entropy loss',
-            definition: 'Softmax turns a vector of raw scores (logits) into probabilities that sum to 1; cross-entropy loss is −log of the probability given to the correct class; together their gradient is simply p − y.',
+            definition: 'Softmax turns a vector of raw scores (logits) into probabilities that sum to 1. Cross-entropy loss is −log of the probability given to the correct class. Together, their gradient is simply p − y.',
             problem: 'A classifier\'s last layer outputs arbitrary numbers, but you want probabilities, and a loss that strongly punishes confident wrong answers. Softmax plus cross-entropy is the standard pairing for every multi-class classifier and every language model, which predicts the next token from a softmax over tens of thousands of options.',
             howItWorks: [
                 'Start with logits, one per class: z = [2, 1, 0.1].',
@@ -263,7 +291,7 @@ export const foundationPhase3: FoundationPhase = {
                 'The gradient with respect to the logits is p − y = [0.66 − 1, 0.24, 0.10] = [−0.34, 0.24, 0.10]: raise the right score, lower the others in proportion.',
             ],
             keyPoints: [
-                'softmax(z)ᵢ = exp(zᵢ) / Σⱼ exp(zⱼ).',
+                'Softmax turns scores into probabilities: softmax(z)ᵢ = exp(zᵢ) / Σⱼ exp(zⱼ). Each one is positive, and together they add up to 1.',
                 'Adding the same number to every logit doesn\'t change the softmax, so subtracting the max is free and safe.',
                 'Loss = −log p(correct class). Its gradient on the logits is p − one_hot(y).',
                 'In PyTorch, F.cross_entropy takes raw logits and applies log-softmax itself. Don\'t softmax first.',
@@ -274,6 +302,10 @@ export const foundationPhase3: FoundationPhase = {
                 'Applying softmax and then F.cross_entropy, which applies it again.',
                 'Computing exp of large logits without subtracting the max: overflow, inf, NaN.',
                 'Taking log(softmax) in two steps instead of using log-softmax, which loses precision.',
+            ],
+            myths: [
+                { claim: 'The model should apply softmax to its outputs before passing them to F.cross_entropy.', truth: 'F.cross_entropy applies log-softmax itself, so it expects raw logits. With a softmax in front, it is applied twice and the loss is wrong.' },
+                { claim: 'exp of the logits can be computed directly: large logits cause no trouble.', truth: 'exp of a large logit overflows to inf, and the result becomes NaN. Subtract the largest logit first: the softmax does not change, and nothing overflows.' },
             ],
             followUps: [
                 { q: 'Softmax of [1, 1, 1]?', a: '[1/3, 1/3, 1/3]: equal scores give equal probabilities.' },
@@ -308,7 +340,7 @@ export const foundationPhase3: FoundationPhase = {
         {
             id: 'f3-t6',
             name: 'Optimisers: SGD, momentum, Adam; learning-rate schedules',
-            definition: 'Optimisers decide how to turn gradients into weight updates: SGD steps straight down the gradient, momentum adds velocity, and Adam also adapts the step size for every weight; a learning-rate schedule changes the step size over training.',
+            definition: 'An optimiser turns gradients into weight updates. SGD steps straight down the gradient, momentum adds velocity, and Adam also adapts the step size for every weight. A learning-rate schedule changes the step size during training.',
             problem: 'Real loss surfaces have long narrow valleys, flat plateaus and noisy gradients from small batches. Plain SGD zig-zags across steep valleys and crawls along flat ones. Better optimisers converge in far fewer steps and are much less fussy about the learning rate, which saves days of compute on large models.',
             howItWorks: [
                 'SGD: w ← w − η·g, where g is the gradient on a mini-batch.',
@@ -332,6 +364,10 @@ export const foundationPhase3: FoundationPhase = {
                 'Leaving out warm-up for transformers, which often makes early training diverge.',
                 'Adding L2 to the loss with Adam and calling it weight decay. Use AdamW.',
                 'Comparing optimisers without tuning each one\'s learning rate.',
+            ],
+            myths: [
+                { claim: 'A learning rate that works for Adam works just as well for plain SGD.', truth: 'Adam rescales every step, so its usual rates (around 0.001) are far smaller than SGD\'s (around 0.1). Tune the learning rate separately for each optimiser.' },
+                { claim: 'With Adam, adding an L2 term to the loss is exactly the same as weight decay.', truth: 'Adam rescales every gradient, the L2 part included, so the weights are not shrunk evenly. AdamW shrinks the weights in a separate step, which is the correct weight decay.' },
             ],
             followUps: [
                 { q: 'What problem does momentum solve?', a: 'Zig-zagging in narrow valleys and noise from small batches: the velocity cancels side-to-side swings and builds speed in consistent directions.' },
@@ -368,7 +404,7 @@ export const foundationPhase3: FoundationPhase = {
             id: 'f3-t7',
             name: 'Weight initialisation; vanishing and exploding gradients',
             definition: 'Weight initialisation chooses the random starting weights so that signals and gradients keep roughly the same size from layer to layer, instead of vanishing towards zero or exploding towards infinity.',
-            problem: 'In a deep network the signal is multiplied by a weight matrix at every layer, and the gradient again on the way back. If each layer shrinks it a little, after 50 layers nothing is left; if each grows it a little, it overflows. Bad initialisation can make a network untrainable before it has seen a single example. Good initialisation, plus normalisation and residual connections, is what makes depth work.',
+            problem: 'In a deep network the signal is multiplied by a weight matrix at every layer, and the gradient again on the way back. If each layer shrinks it a little, after 50 layers nothing is left; if each grows it a little, it overflows.\n\nBad initialisation can make a network untrainable before it has seen a single example. Good initialisation, plus normalisation and residual connections, is what makes depth work.',
             howItWorks: [
                 'Picture one layer: each output is a sum of fan_in terms, each an input times a random weight.',
                 'Adding fan_in independent terms multiplies the variance: Var(out) ≈ fan_in × Var(w) × Var(in).',
@@ -382,7 +418,7 @@ export const foundationPhase3: FoundationPhase = {
                 'Vanishing: early layers get almost no gradient and barely learn. Exploding: NaN.',
                 'He (ReLU): std = √(2 / fan_in). Xavier (tanh): std = √(1 / fan_in), or √(2 / (fan_in + fan_out)).',
                 'PyTorch\'s default layer initialisation is already sensible; custom layers need care.',
-                'Biases usually start at 0.',
+                'Biases usually start at 0. Only the weights need random values, to make the neurons differ from each other.',
                 'Normalisation layers and residual connections make networks much less sensitive to initialisation.',
                 'Gradient clipping limits the damage when gradients do explode, especially in RNNs.',
             ],
@@ -390,6 +426,10 @@ export const foundationPhase3: FoundationPhase = {
                 'Starting every weight at 0, or at the same value: no symmetry breaking.',
                 'Using std = 1 for wide layers.',
                 'Blaming the optimiser when the real problem is initialisation.',
+            ],
+            myths: [
+                { claim: 'A standard deviation of 1 is a safe choice for the starting weights of a wide layer.', truth: 'With many inputs the sum grows at every layer and the signal explodes. He initialisation uses √(2 / fan_in), which gets smaller as the layer gets wider.' },
+                { claim: 'He initialisation: for tanh. Xavier initialisation: for ReLU.', truth: 'It is the other way round. He, with std = √(2 / fan_in), is for ReLU, which zeroes about half its inputs. Xavier is for tanh.' },
             ],
             followUps: [
                 { q: 'What is He initialisation, and when do you use it?', a: 'Normal weights with std = √(2 / fan_in), for layers followed by ReLU.' },
@@ -425,7 +465,7 @@ export const foundationPhase3: FoundationPhase = {
         {
             id: 'f3-t8',
             name: 'Batch norm and layer norm',
-            definition: 'Normalisation layers rescale activations to mean 0 and variance 1, then let the network re-scale and shift them with learned γ and β; batch norm normalises each feature across the batch, layer norm normalises each example across its features.',
+            definition: 'A normalisation layer rescales activations to mean 0 and variance 1, then lets the network scale and shift them again. Batch norm does this for each feature across the batch; layer norm does it for each example across its features.',
             problem: 'As earlier layers learn, the values reaching later layers keep changing scale, so each layer chases a moving target and training needs tiny learning rates. Normalisation keeps activations in a steady range, which allows bigger learning rates, makes deep networks far easier to train, and reduces sensitivity to initialisation. Every modern architecture uses one of these layers.',
             howItWorks: [
                 'Take a batch of activations with shape (batch, features).',
@@ -448,6 +488,10 @@ export const foundationPhase3: FoundationPhase = {
                 'Forgetting model.eval() with batch norm, so test predictions depend on the batch.',
                 'Using batch norm with a batch size of 1 or 2.',
                 'Normalising over the wrong axis: features versus batch.',
+            ],
+            myths: [
+                { claim: 'Layer norm needs a large batch to work well.', truth: 'Layer norm uses only the features of one example, so the batch size makes no difference. It is batch norm that needs a reasonable batch.' },
+                { claim: 'Batch norm behaves the same in training and at test time.', truth: 'In training it uses the statistics of the current batch. At test time it uses running averages saved during training: call model.eval() to switch.' },
             ],
             followUps: [
                 { q: 'For a batch of shape (32, 64), which axis does batch norm average over? Layer norm?', a: 'Batch norm averages over the 32 examples (per feature); layer norm averages over the 64 features (per example).' },
@@ -506,6 +550,10 @@ export const foundationPhase3: FoundationPhase = {
                 'Augmentations that change the meaning: flipping text, rotating digits too far.',
                 'Stopping on training loss instead of validation loss.',
             ],
+            myths: [
+                { claim: 'Validation set: augment it too, for a fairer estimate of the model.', truth: 'Validation and test data should look like the real inputs. Augment the training set only, or the score no longer measures real performance.' },
+                { claim: 'Dropout at evaluation time: leave it switched on.', truth: 'Dropout is for training only. At evaluation every neuron is kept: call model.eval(), or the predictions are noisy and worse.' },
+            ],
             followUps: [
                 { q: 'With dropout p = 0.2, what is a kept activation multiplied by during training?', a: '1 / (1 − 0.2) = 1.25, so the expected value stays the same.' },
                 { q: 'Why does dropout reduce overfitting?', a: 'No neuron can rely on any particular other neuron being present, so the network learns redundant, more general features. It is like averaging many thinned networks.' },
@@ -558,11 +606,15 @@ export const foundationPhase3: FoundationPhase = {
                 'Set random seeds to make runs reproducible.',
             ],
             mistakes: [
-                'Forgetting opt.zero_grad().',
-                'Forgetting model.eval() before validation.',
-                'Calling softmax before F.cross_entropy.',
+                'Forgetting opt.zero_grad(), so the gradients of earlier steps pile up on top of the new ones.',
+                'Forgetting model.eval() before validation, so dropout and batch norm still behave as they do in training.',
+                'Calling softmax before F.cross_entropy, which already applies it: the loss is then computed on the wrong numbers.',
                 'Model on the GPU, data on the CPU (or the other way round): a device-mismatch error.',
                 'Accumulating loss in a Python number without .item(), which keeps every graph alive and leaks memory.',
+            ],
+            myths: [
+                { claim: 'A model on the GPU can read a batch that is still on the CPU; it just runs more slowly.', truth: 'PyTorch raises a device-mismatch error: a model and its inputs must be on the same device. Move each batch with .to(device).' },
+                { claim: 'Adding up loss tensors over an epoch, without .item(), costs nothing extra.', truth: 'Each loss tensor keeps its whole graph alive, so memory grows all epoch. Add loss.item(), a plain number, instead.' },
             ],
             followUps: [
                 { q: 'List the five steps of a training iteration.', a: 'Forward pass, compute loss, zero_grad, backward, optimiser step.' },
@@ -597,14 +649,14 @@ export const foundationPhase3: FoundationPhase = {
         {
             id: 'f3-t11',
             name: 'Convolutional networks: convolution, pooling, receptive field',
-            definition: 'A convolutional layer slides small learned filters across an image, computing a dot product at every position, so the same pattern detector is reused everywhere; stacking layers builds up from edges to whole objects.',
+            definition: 'A convolutional layer slides small learned filters across an image, computing a dot product at every position, so the same pattern detector is reused everywhere. Stacking layers builds up from edges to whole objects.',
             problem: 'A fully connected layer on a 224 × 224 colour image would need about 150,000 weights per neuron, and would have to learn "cat" separately in every corner. Convolutions share a few weights across all positions, which saves enormous numbers of parameters and builds in the fact that a pattern means the same thing wherever it appears.',
             howItWorks: [
                 'A filter (kernel) is a small grid of weights, for example 3 × 3.',
                 'Place it on the top-left patch of the image, multiply matching numbers and add them up: one output value.',
                 'Slide it across and down (by the stride) to fill a feature map. Big values mean "this pattern is here".',
                 'A layer has many filters, each producing its own feature map, so the output has many channels.',
-                'Output size = (W − K + 2P)/S + 1. With padding P = 1, a 3 × 3 filter at stride 1 keeps the size the same.',
+                'Output size = (W − K + 2P)/S + 1, for an input W wide, a filter K wide, padding P and stride S. With padding P = 1, a 3 × 3 filter at stride 1 keeps the size the same.',
                 'Pooling (for example 2 × 2 max pooling) shrinks the maps by keeping the strongest response in each patch.',
                 'Deeper layers combine earlier maps, and each output sees a bigger patch of the original image: its receptive field grows from 3 × 3 to 5 × 5 to 7 × 7 …',
             ],
@@ -612,7 +664,7 @@ export const foundationPhase3: FoundationPhase = {
                 'Weight sharing: the same filter at every position, so far fewer parameters.',
                 'Shift equivariance: move the input and the feature map moves too.',
                 'Parameters of a conv layer = K × K × C_in × C_out + C_out, whatever the image size.',
-                'Output size = (W − K + 2P)/S + 1.',
+                'Output size = (W − K + 2P)/S + 1, for an input W wide, a filter K wide, padding P and stride S.',
                 'Receptive field grows with depth, stride and pooling.',
                 'Vision transformers (Unit 4) now rival CNNs, but convolutions remain everywhere in vision, audio and on-device models.',
             ],
@@ -620,6 +672,10 @@ export const foundationPhase3: FoundationPhase = {
                 'Getting the output size wrong, then hitting shape errors at the first linear layer.',
                 'Confusing channels-first (N, C, H, W, PyTorch) with channels-last (N, H, W, C).',
                 'Forgetting padding, so the feature maps shrink at every layer.',
+            ],
+            myths: [
+                { claim: 'Without padding, a 3 × 3 convolution keeps the feature map the same size.', truth: 'Without padding the map shrinks by 2 in each direction at every layer. A padding of 1 keeps the size for a 3 × 3 filter.' },
+                { claim: 'A convolutional layer needs more parameters when the image is larger.', truth: 'The same small filters slide over the whole image, so the count is K × K × C_in × C_out + C_out, whatever the image size.' },
             ],
             followUps: [
                 { q: 'A 28 × 28 image, a 5 × 5 filter, no padding, stride 1. Output size?', a: '(28 − 5)/1 + 1 = 24, so 24 × 24.' },
@@ -635,7 +691,7 @@ export const foundationPhase3: FoundationPhase = {
                 idea: 'A convolution slides a small filter, like 3×3, over the image and computes a dot product at each position. The same filter is used everywhere, so a cat is a cat in any corner. Pooling shrinks the image. The receptive field is how much of the original image one output can see, and it grows with depth.',
                 analogy: 'Scanning a page with a magnifying glass for one pattern, like an edge. Deeper layers look for patterns made of patterns: edges, then corners, then eyes, then faces.',
                 breaks: 'A magnifying glass is one tool. A CNN layer has many filters at once, and they are learned from data, not designed by hand.',
-                example: 'Output size = (W − K + 2P) / S + 1. A 32×32 image with a 3×3 filter, padding 1 and stride 1 stays 32×32.',
+                example: 'Output size = (W − K + 2P) / S + 1, where W is the input width, K the filter width, P the padding and S the stride. A 32×32 image with a 3×3 filter, padding 1 and stride 1 stays 32×32: (32 − 3 + 2·1)/1 + 1 = 32.',
             },
             resources: [
                 { kind: 'play', title: 'CNN Explainer', source: 'Georgia Tech Polo Club · interactive', url: 'https://poloclub.github.io/cnn-explainer/', recommended: 'Click any neuron of a real CNN and watch its filter slide across the image, step by step, with every number shown. The best way to see convolution happen.' },
@@ -653,7 +709,7 @@ export const foundationPhase3: FoundationPhase = {
         {
             id: 'f3-t12',
             name: 'Residual connections (ResNet)',
-            definition: 'A residual connection adds a block\'s input to its output, y = x + F(x), so the block only learns a change and gradients get a direct path back through the network.',
+            definition: 'A residual connection adds a block\'s input to its output. The block then only has to learn a change, and gradients get a direct path back through the network.',
             problem: 'Before residuals, making a network deeper often made it worse, even on training data: the signal and gradients degraded through many layers, and optimisation got stuck. Residual connections fixed this so well that every modern deep architecture, including every transformer, uses them. Without them, today\'s 100-layer models would not train.',
             howItWorks: [
                 'A normal block computes y = F(x), for example conv → norm → ReLU → conv.',
@@ -675,6 +731,10 @@ export const foundationPhase3: FoundationPhase = {
                 'Shape mismatch on the shortcut when the channels change.',
                 'Putting a ReLU after the addition in a way that blocks the identity path.',
                 'Thinking residuals add parameters. The shortcut itself is free.',
+            ],
+            myths: [
+                { claim: 'A residual connection adds extra weights that the network has to learn.', truth: 'The shortcut is a plain addition with no weights. Only when the shapes differ does it need a small projection, such as a 1 × 1 convolution.' },
+                { claim: 'x and F(x) can be added even when their shapes differ.', truth: 'Addition needs matching shapes. When F changes the number of channels or the size, the shortcut uses a projection, such as a 1 × 1 convolution, to match.' },
             ],
             followUps: [
                 { q: 'Why does y = x + F(x) help gradients?', a: 'Its derivative is 1 + F′(x), so the gradient always has a direct path of 1, even if F′(x) is tiny.' },
@@ -708,7 +768,7 @@ export const foundationPhase3: FoundationPhase = {
         {
             id: 'f3-t13',
             name: 'RNNs, and why long sequences are hard',
-            definition: 'A recurrent neural network reads a sequence one step at a time, updating a hidden state hₜ = tanh(W·hₜ₋₁ + U·xₜ + b) that acts as its memory, with the same weights at every step.',
+            definition: 'A recurrent neural network (RNN) reads a sequence one step at a time. It keeps a hidden state as its memory, updates it at every step, and uses the same weights each time.',
             problem: 'Text, audio and time series come in order, with any length. A fixed-size MLP can\'t handle that, and it can\'t share what it learns across positions. RNNs were the first neural answer to sequences, and understanding their limits — fading memory and vanishing gradients through time — explains why LSTMs and then transformers took over.',
             howItWorks: [
                 'Start with a hidden state h₀ = 0.',
@@ -731,6 +791,10 @@ export const foundationPhase3: FoundationPhase = {
                 'Expecting a plain RNN to remember things from hundreds of steps back.',
                 'Not clipping gradients, then getting NaN.',
                 'Forgetting to reset or detach the hidden state between unrelated sequences.',
+            ],
+            myths: [
+                { claim: 'A plain RNN easily remembers a word it read hundreds of steps earlier.', truth: 'Its gradient is multiplied by nearly the same factor at every step, so it vanishes or explodes over long distances. LSTMs and attention were invented for that.' },
+                { claim: 'Hidden state: carry it over from one unrelated sequence to the next.', truth: 'The hidden state is a summary of what was just read. Reset it (or detach it) between unrelated sequences, or one text leaks into the next.' },
             ],
             followUps: [
                 { q: 'What does the hidden state hold?', a: 'A fixed-size summary of the sequence read so far: the network\'s memory.' },
@@ -765,7 +829,7 @@ export const foundationPhase3: FoundationPhase = {
         {
             id: 'f3-t14',
             name: 'Embeddings: representing things as vectors',
-            definition: 'An embedding maps each discrete item — a word, a token, a user, a product — to a learned vector of numbers, stored as one row of a table, so that similar items end up close together.',
+            definition: 'An embedding gives each item, such as a word, a token, a user or a product, a learned vector of numbers, stored as one row of a table. Similar items end up with vectors that are close together.',
             problem: 'Networks need numbers, but words and ids are just labels. One-hot vectors are huge, sparse and treat every pair of items as equally different. Embeddings give each item a small dense vector that training shapes to be useful, so "cat" and "dog" end up close. They are the input layer of every language model and the basis of semantic search and recommendations.',
             howItWorks: [
                 'Create a table E with one row per item: vocabulary size × embedding size, for example 50,000 × 768. Start it random.',
@@ -781,13 +845,17 @@ export const foundationPhase3: FoundationPhase = {
                 'Lookup = one-hot × E, without building the one-hot.',
                 'Only the rows used in a batch get gradients.',
                 'Similar items → nearby vectors; compare them with cosine similarity.',
-                'Dimensions rarely have human-readable meanings.',
+                'A single dimension of an embedding rarely has a human-readable meaning: the meaning lies in directions and distances.',
                 'Pre-trained embeddings (from language models) power semantic search and RAG (Unit 5).',
             ],
             mistakes: [
                 'An id bigger than the table size: an index error.',
                 'An embedding size so small it can\'t separate items, or so large it overfits small data.',
                 'Comparing embeddings from two different models as if they shared a space.',
+            ],
+            myths: [
+                { claim: 'Embeddings from two different models can be compared directly, vector against vector.', truth: 'Each model learns its own space, with its own directions. Vectors can only be compared inside the model that produced them.' },
+                { claim: 'A bigger embedding size is always better.', truth: 'Too small and the vectors can\'t tell items apart; too large and they overfit small data and waste memory. Choose the size to fit the data.' },
             ],
             followUps: [
                 { q: 'What is an embedding table, concretely?', a: 'A matrix with one learnable row of numbers per item; embedding an item means reading its row.' },
@@ -848,6 +916,10 @@ export const foundationPhase3: FoundationPhase = {
                 'Changing several things between runs, so you can\'t tell what helped.',
                 'Comparing runs with different seeds and treating small differences as real.',
             ],
+            myths: [
+                { claim: 'A loss that keeps falling proves the model is learning the right thing.', truth: 'A loss can fall while the predictions are useless, for example when the labels leak into the inputs. Always look at real predictions as well.' },
+                { claim: 'Hyperparameter tuning is the first thing to try when a model won\'t learn.', truth: 'First check that the model can overfit one small batch. If it can\'t, there is a bug, and no hyperparameter will fix it.' },
+            ],
             followUps: [
                 { q: 'Your 10-class classifier starts at loss 15. What does that suggest?', a: 'The initial predictions are wildly over-confident: bad initialisation (outputs far too large) or a bug in the softmax or loss.' },
                 { q: 'Why overfit a single batch first?', a: 'A working model and pipeline can always memorise a tiny batch. If it can\'t, something is broken, and no tuning will fix it.' },
@@ -879,7 +951,7 @@ export const foundationPhase3: FoundationPhase = {
         {
             id: 'f3-t16',
             name: 'LSTMs and GRUs: gates for long memory',
-            definition: 'An LSTM is a recurrent cell with a separate memory line (the cell state) and three learned gates — forget, input and output — that decide what to erase, what to write and what to reveal; a GRU does the same job with two gates.',
+            definition: 'An LSTM is a recurrent cell with a separate memory line, the cell state, and three learned gates that decide what to erase, what to write and what to reveal. A GRU does the same job with two gates.',
             problem: 'Plain RNNs forget quickly, because the gradient is multiplied by the same factor at every step back in time. LSTMs add a memory path that is updated by adding rather than by repeated multiplication, so information and gradients can survive for hundreds of steps. They powered speech recognition and translation before transformers, and the gating idea lives on in many models.',
             howItWorks: [
                 'Inputs at each step: the previous hidden state h, the previous cell state c, and the new input x.',
@@ -902,6 +974,10 @@ export const foundationPhase3: FoundationPhase = {
                 'Mixing up which gates use sigmoid (f, i, o) and which uses tanh (g).',
                 'Mismatching the gate order when copying weights between implementations.',
             ],
+            myths: [
+                { claim: 'An LSTM carries information across thousands of steps without losing it.', truth: 'Its gates leak a little at every step, so very old information still fades. An LSTM remembers far longer than a plain RNN, not for ever.' },
+                { claim: 'The four parts of an LSTM (f, i, g and o) each use a sigmoid.', truth: 'The three gates f, i and o use a sigmoid, which gives values from 0 to 1. The candidate g uses tanh, which gives values from −1 to 1.' },
+            ],
             followUps: [
                 { q: 'What does the forget gate do?', a: 'For each memory slot, it outputs a number from 0 to 1 that says how much of the previous cell state to keep.' },
                 { q: 'Why do gradients survive better in an LSTM than in a plain RNN?', a: 'The cell state is updated by adding, and the direct path from c_prev to c is only multiplied by the forget gate, which can stay near 1.' },
@@ -916,7 +992,7 @@ export const foundationPhase3: FoundationPhase = {
                 idea: 'An LSTM adds a separate memory line, the cell state, plus three gates that decide what to forget, what to write and what to output. Because the cell state is updated by adding rather than by repeated multiplying, gradients survive over long sequences. A GRU is a simpler version with two gates.',
                 analogy: 'A notebook with a pencil and an eraser. Instead of rewriting the whole sticky note on every page, you erase a few lines (forget gate), write a few new ones (input gate), and read out what you need (output gate).',
                 breaks: 'You decide what to erase on purpose. The gates are learned numbers between 0 and 1, so the network \'half-erases\' things. And it still struggles with very long texts that transformers handle easily.',
-                example: 'One step with c_prev = 0.8: the forget gate f = 0.9 keeps 0.72; the input gate i = 0.5 lets in half of the new candidate g = 0.6, adding 0.30; the new cell state is c = 1.02. The output gate o = 0.7 then reveals h = 0.7 × tanh(1.02) ≈ 0.54.',
+                example: 'One step, starting from c_prev = 0.8. The forget gate f = 0.9 keeps 0.72. The input gate i = 0.5 lets in half of the new candidate g = 0.6, adding 0.30. The new cell state is c = 0.72 + 0.30 = 1.02. The output gate o = 0.7 then reveals h = 0.7 × tanh(1.02) ≈ 0.54.',
                 code: 'z = np.concatenate([h_prev, x])\nf = sigmoid(Wf @ z + bf)          # forget gate\ni = sigmoid(Wi @ z + bi)          # input gate\ng = np.tanh(Wg @ z + bg)          # candidate memory\no = sigmoid(Wo @ z + bo)          # output gate\nc = f * c_prev + i * g            # add, don\'t multiply: gradients survive\nh = o * np.tanh(c)',
                 codeLanguage: 'python',
             },

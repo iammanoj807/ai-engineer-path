@@ -28,7 +28,7 @@ export const LessonPartBody = ({
     return (
         <Stack spacing={2}>
             {part.text && (
-                <Typography sx={{ fontSize: { xs: '1.05rem', sm: '1.1rem' }, lineHeight: 1.65 }}>
+                <Typography sx={{ fontSize: { xs: '1.05rem', sm: '1.1rem' }, lineHeight: 1.65, whiteSpace: 'pre-line' }}>
                     <ProseText value={prose(part.text)} />
                 </Typography>
             )}

@@ -51,6 +51,9 @@ const LINE_HEIGHT = 1.7;
 
 export const px = (value: number) => `${value / 16}rem`;
 
+/** Hides a study page's full header on a phone while the slim lesson bar is shown instead. */
+export const hiddenOnPhone = (hide: boolean, shown: 'block' | 'flex' = 'block') => (hide ? { display: { xs: 'none', sm: shown } } : {});
+
 const isTextSize = (value: string | null): value is TextSize =>
     value === 'normal' || value === 'large' || value === 'xl';
 

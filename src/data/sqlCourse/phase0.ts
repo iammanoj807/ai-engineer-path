@@ -19,7 +19,7 @@ export const sqlPhase0: SqlPhase = {
             priority: 'must',
             definition: 'A relational database stores data in tables of rows and columns, and SQL (Structured Query Language) is the language you use to ask it questions and to change what it holds.',
             problem: 'A spreadsheet works for a few hundred rows and one person. An app with thousands of users needs data that many people can read and change at the same time, safely, without losing anything, and fast enough to answer in milliseconds. A database does that job, and SQL is how you talk to it.',
-            idea: 'A database is an organised store of data, run by a program called a DBMS (database management system), such as PostgreSQL, MySQL, SQL Server or SQLite. The data lives in tables. A table is like one sheet in a spreadsheet: each row is one thing (one employee, one order) and each column is one fact about it (name, salary). You never open the files yourself. You send the database a query — a request written in SQL — and it sends back rows.',
+            idea: 'A database is an organised store of data, run by a program called a DBMS (database management system), such as PostgreSQL, MySQL, SQL Server or SQLite.\n\nThe data lives in tables. A table is like one sheet in a spreadsheet: each row is one thing (one employee, one order) and each column is one fact about it (name, salary).\n\nYou never open the files yourself. You send the database a query — a request written in SQL — and it sends back rows.',
             analogy: 'A library with a librarian. The shelves are the tables, each book is a row, and the details on its catalogue card (title, author, year) are the columns. You don\'t walk the shelves yourself: you hand the librarian a request slip — "every book by this author, newest first" — and they bring back exactly those books.',
             breaks: 'A librarian fetches books one by one, in the order you asked. SQL is declarative: you describe what you want, not how to get it, and the database picks its own way. That is why the order you write a query in is not the order it runs in.',
             syntax: code`
@@ -68,6 +68,9 @@ export const sqlPhase0: SqlPhase = {
                 'Thinking a database is just a big spreadsheet. It also enforces rules, handles many users at once and survives crashes.',
                 'Forgetting the semicolon between two statements. One statement on its own usually runs without it.',
             ],
+            myths: [
+                { claim: 'A database is a big spreadsheet: it stores rows, and that is its whole job.', truth: 'A database also enforces rules on the data, serves many users at the same time and survives crashes. A spreadsheet does none of these.' },
+            ],
             dialects: [
                 'This page runs SQLite, a small database that lives inside one file — here, inside your browser. PostgreSQL, MySQL and SQL Server run as servers, but the SQL you learn here is the same for almost everything you will write.',
             ],
@@ -96,7 +99,7 @@ export const sqlPhase0: SqlPhase = {
             priority: 'must',
             definition: 'Six small tables — departments, employees, customers, orders, products and order_items — that every example and exercise in this course uses.',
             problem: 'Learning SQL on a different made-up table in every lesson means learning new data each time. With one small database you get to know the rows by heart, so you can check any result by eye. That habit is what catches wrong queries, at work and in interviews.',
-            idea: 'There are two small worlds. The company: departments, and employees who belong to a department and report to a manager. The shop: customers place orders, each order contains products, and order_items records which products are in which order, and how many. A few awkward cases are planted on purpose, because real data always has them: an employee with no department, a customer with no orders, two people on the same salary, and an order with no amount.',
+            idea: 'There are two small worlds. The company: departments, and employees who belong to a department and report to a manager. The shop: customers place orders, each order contains products, and order_items records which products are in which order, and how many.\n\nA few awkward cases are planted on purpose, because real data always has them. There is an employee with no department, a customer with no orders, two people on the same salary, and an order with no amount.',
             analogy: 'A training kitchen with a fixed pantry. Every recipe (query) uses the same ingredients, so you learn how each one behaves, and you notice straight away when a dish comes out wrong.',
             breaks: 'Real databases have hundreds of tables and millions of rows, so you can\'t check results by eye there. That is exactly why it pays to practise on data small enough that you can, and to build the habit of testing a query on a few known rows.',
             howItWorks: [
@@ -171,7 +174,7 @@ export const sqlPhase0: SqlPhase = {
             ],
             keyPoints: [
                 'employees.dept_id points at departments.dept_id; employees.manager_id points at employees.emp_id — the same table.',
-                'orders.customer_id points at customers.customer_id.',
+                'orders.customer_id points at customers.customer_id: it says which customer placed each order.',
                 'order_items links orders and products: one row per product in an order.',
                 'Dates are stored as text in YYYY-MM-DD form, so sorting them as text also sorts them by date.',
                 'Amounts and prices are whole pounds, to keep the sums easy to check by hand.',
@@ -181,7 +184,10 @@ export const sqlPhase0: SqlPhase = {
                 'Assuming ids are in date order. Here they happen to be; in real data, always sort by the date column.',
                 'Writing a query before knowing the grain of each table — what one row means.',
             ],
-            interviewAnswer: 'Before writing any SQL in an interview, I look at the tables: what one row means in each, which columns are keys, and how the tables join. Then I ask about the awkward cases — can this be NULL, can there be duplicates, can a customer have no orders — because those decide whether I need a LEFT JOIN, a DISTINCT or a COALESCE. Two minutes of that saves a wrong answer.',
+            myths: [
+                { claim: 'In the practice database, every employee belongs to a department and every customer has an order.', truth: 'Some don\'t: an employee can have no department, and a customer no orders. Those NULLs and missing rows are where most wrong answers come from.' },
+            ],
+            interviewAnswer: 'Before writing any SQL in an interview, I look at the tables: what one row means in each, which columns are keys, and how the tables join. Then I ask about the awkward cases: can this be NULL, can there be duplicates, can a customer have no orders? Those decide whether I need a LEFT JOIN, a DISTINCT or a COALESCE. Two minutes of that saves a wrong answer.',
             followUps: [
                 { q: 'Why look at the data before writing the query?', a: 'To learn the grain, the keys, and the awkward cases — NULLs, duplicates, missing matches — that change the answer.' },
                 { q: 'What is the grain of a table?', a: 'What one row represents. One row of orders is one order; one row of order_items is one product within one order. Mixing grains is how totals get counted twice.' },
@@ -202,11 +208,11 @@ export const sqlPhase0: SqlPhase = {
             kind: 'lesson',
             name: 'Keys and relationships: primary keys, foreign keys, one-to-many, many-to-many',
             priority: 'must',
-            definition: 'A primary key is a column whose value identifies exactly one row; a foreign key is a column that holds another table\'s primary key, and those links are how tables relate: one-to-many, many-to-many or one-to-one.',
+            definition: 'A primary key is a column whose value identifies exactly one row. A foreign key is a column that holds another table\'s primary key, and these links are how tables relate: one-to-many, many-to-many or one-to-one.',
             problem: 'If every order repeated the customer\'s name, email and city, changing an email would mean editing every one of their orders — and one missed row would leave two different emails. Splitting data into tables linked by keys stores each fact once. Keys are also what joins use to put the rows back together.',
-            idea: 'Every table has a primary key: a column, like emp_id, that is never empty and never repeats, so it points at exactly one row. A foreign key is a column in another table that stores those ids, like orders.customer_id: it says "this order belongs to customer 1". The database can enforce it, so you can\'t add an order for a customer who doesn\'t exist. Relationships come in three shapes. One-to-many: one customer, many orders — the foreign key sits on the "many" side. Many-to-many: an order has many products and a product is in many orders, so a link table (order_items) holds pairs of keys. One-to-one: one row matches at most one row, such as a user and their settings.',
+            idea: 'Every table has a primary key: a column, like emp_id, that is never empty and never repeats, so it points at exactly one row. A foreign key is a column in another table that stores those ids, like orders.customer_id: it says "this order belongs to customer 1". The database can enforce it, so you can\'t add an order for a customer who doesn\'t exist.\n\nRelationships come in three shapes. One-to-many: one customer, many orders — the foreign key sits on the "many" side. Many-to-many: an order has many products and a product is in many orders, so a link table (order_items) holds pairs of keys. One-to-one: one row matches at most one row, such as a user and their settings.',
             analogy: 'Passport numbers. Your passport number is your primary key: one per person, never shared. When a hotel writes your passport number on its booking, that is a foreign key: the booking doesn\'t copy your whole life story, it just points at you.',
-            breaks: 'A passport number means something in the real world. Good primary keys usually mean nothing at all — just a counter like 1, 2, 3, called a surrogate key — because real-world values like emails can change, and a key should never change.',
+            breaks: 'A passport number means something in the real world. Good primary keys usually mean nothing at all: just a counter like 1, 2, 3, called a surrogate key. Real-world values like emails can change, and a key should never change.',
             syntax: code`
                 CREATE TABLE orders (
                   order_id    INTEGER PRIMARY KEY,
@@ -266,6 +272,9 @@ export const sqlPhase0: SqlPhase = {
                 'Using a value that can change, like an email or a phone number, as the primary key.',
                 'Thinking a foreign key must always be filled in. It can be NULL unless it is also NOT NULL: employees.dept_id is NULL for Gus.',
             ],
+            myths: [
+                { claim: 'An email address makes a good primary key, because every person has a different one.', truth: 'People change their email address, and a primary key should never change: every row that points at it would have to change too. Use an id that carries no meaning.' },
+            ],
             dialects: [
                 'SQLite only checks foreign keys after `PRAGMA foreign_keys = ON;` (the practice database switches it on). PostgreSQL, MySQL (InnoDB) and SQL Server always check them.',
             ],
@@ -292,9 +301,9 @@ export const sqlPhase0: SqlPhase = {
             kind: 'lesson',
             name: 'Data types: numbers, text, dates and true/false',
             priority: 'should',
-            definition: 'Every column has a data type — such as INTEGER, a decimal number, TEXT, a date or a boolean — which decides what values it can hold and how they compare, sort and calculate.',
+            definition: 'Every column has a data type, such as INTEGER, a decimal number, TEXT, a date or a boolean. The type decides what values the column can hold, and how they compare, sort and calculate.',
             problem: 'The same value acts differently by type. The text \'10\' sorts before \'9\', because text compares letter by letter. Integer 7 divided by integer 2 gives 3, not 3.5. Knowing the types explains a whole class of "why is my answer wrong?" bugs.',
-            idea: 'Common types: INTEGER for whole numbers (counts, ids), DECIMAL or NUMERIC for exact money values, REAL or FLOAT for approximate numbers, TEXT or VARCHAR for words, DATE and TIMESTAMP for dates and times, and BOOLEAN for true or false. You can convert between types with CAST. NULL is not a type: it is the marker for "no value", and any column can hold it unless it is declared NOT NULL.',
+            idea: 'Common types: INTEGER for whole numbers (counts, ids), DECIMAL or NUMERIC for exact money values, REAL or FLOAT for approximate numbers, TEXT or VARCHAR for words, DATE and TIMESTAMP for dates and times, and BOOLEAN for true or false.\n\nYou can convert between types with CAST. NULL is not a type: it is the marker for "no value", and any column can hold it unless it is declared NOT NULL.',
             analogy: 'Containers in a kitchen. A measuring jug (a number column) lets you add and divide; a label maker (text) lets you join and cut words; a calendar (dates) lets you count days. Put the right thing in the right container, or the tools stop working properly.',
             breaks: 'In a kitchen, a jug simply refuses a label. SQLite is relaxed and lets almost any value into any column, while PostgreSQL rejects the wrong type outright. Don\'t lean on SQLite\'s flexibility — write SQL as if every database were strict.',
             syntax: code`
@@ -354,12 +363,15 @@ export const sqlPhase0: SqlPhase = {
                 'Storing numbers as text and getting \'10\' sorted before \'9\'.',
                 'Using double quotes for text values. In PostgreSQL, "London" means a column called London.',
             ],
+            myths: [
+                { claim: 'Numbers stored as text sort in the same order as real numbers.', truth: 'Text is compared character by character, so \'10\' comes before \'9\'. Store numbers in a number column.' },
+            ],
             dialects: [
                 'MySQL is the odd one out: `7 / 2` returns 3.5000, and `DIV` does whole division.',
                 'SQLite has no real DATE or BOOLEAN type: dates are text and true/false are 1 and 0. PostgreSQL has DATE, TIMESTAMP and BOOLEAN types.',
                 '`VARCHAR(50)` caps text at 50 characters in PostgreSQL, MySQL and SQL Server; SQLite ignores the limit.',
             ],
-            interviewAnswer: 'Data types decide how values compare and calculate. The classic traps are integer division — 7 / 2 is 3 in most databases, so for percentages I multiply by 100.0 first — and storing numbers or dates as text, which makes them sort wrongly. For money I use DECIMAL rather than FLOAT, because floating point can\'t represent most decimals exactly.',
+            interviewAnswer: 'Data types decide how values compare and calculate. There are two classic traps. One is integer division: 7 / 2 is 3 in most databases, so for percentages I multiply by 100.0 first. The other is storing numbers or dates as text, which makes them sort wrongly. For money I use DECIMAL rather than FLOAT, because floating point can\'t represent most decimals exactly.',
             followUps: [
                 { q: 'CHAR or VARCHAR?', a: '`CHAR(n)` is fixed length and pads with spaces; `VARCHAR(n)` stores only what you give it, up to n. VARCHAR is the usual choice.' },
                 { q: 'Why not FLOAT for money?', a: 'Floating point stores numbers in binary, so 0.1 + 0.2 is not exactly 0.3. DECIMAL stores exact decimal digits.' },

@@ -117,7 +117,7 @@ const Celebration = () => {
                             </Stack>
                         </Box>
                         <Typography variant="h5" sx={{ fontWeight: 800, mt: 1 }}>
-                            {shown.unitComplete && shown.unit ? `Unit ${shown.unit.number} complete!` : 'Topic mastered!'}
+                            {shown.unitComplete && shown.unit ? `Unit ${shown.unit.number} complete!` : 'Lesson mastered!'}
                         </Typography>
                         <Typography color="text.secondary" sx={{ mt: 0.5 }}>
                             {shown.unitComplete && shown.unit
@@ -149,7 +149,7 @@ const Celebration = () => {
                                 </Typography>
                             </Box>
                         ) : (
-                            <Typography sx={{ fontWeight: 700 }}>That was the last one: every {shown.course.title} topic is mastered.</Typography>
+                            <Typography sx={{ fontWeight: 700 }}>That was the last one: every {shown.course.title} lesson is mastered.</Typography>
                         )}
 
                         <Stack spacing={1} sx={{ mt: 3 }}>

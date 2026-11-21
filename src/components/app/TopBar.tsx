@@ -27,8 +27,10 @@ import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
 import MailOutlineRoundedIcon from '@mui/icons-material/MailOutlineRounded';
 import GoogleIcon from '@mui/icons-material/Google';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import StarBorderRoundedIcon from '@mui/icons-material/StarBorderRounded';
 import { COURSES } from '../../game/courses';
-import { coursePath, placeOf } from '../../game/addresses';
+import { REPO_URL, coursePath, placeOf } from '../../game/addresses';
 import { useGameStats } from '../../game/useProgress';
 import { signIn, signOut, useAccount, useTracksProgress } from '../../services/account';
 import { setEmailReminders } from '../../services/progress';
@@ -277,6 +279,31 @@ const TopBar = () => {
                             <Stat icon={<BoltRoundedIcon sx={{ color: XP_GOLD }} />} value={xp} colour={XP_GOLD} label="Total XP" />
                         </Box>
                     )}
+                    {/* A plain link: nothing is loaded from GitHub, so there is no live count. Phones have the footer link. */}
+                    <Tooltip title="Free and open source. A star helps other learners find it.">
+                        <Button
+                            component="a"
+                            href={REPO_URL}
+                            target="_blank"
+                            rel="noopener"
+                            size="small"
+                            aria-label="Star AI Engineer Path on GitHub"
+                            startIcon={<GitHubIcon />}
+                            endIcon={<StarBorderRoundedIcon sx={{ color: XP_GOLD }} />}
+                            sx={{
+                                display: { xs: 'none', sm: 'inline-flex' },
+                                minHeight: 40,
+                                px: 1.25,
+                                color: 'text.secondary',
+                                fontWeight: 700,
+                                whiteSpace: 'nowrap',
+                                border: '1px solid rgba(255,255,255,0.14)',
+                                '&:hover': { color: 'text.primary', borderColor: 'rgba(255,255,255,0.3)', bgcolor: 'rgba(255,255,255,0.05)' },
+                            }}
+                        >
+                            Star
+                        </Button>
+                    </Tooltip>
                     <AccountButton />
                     <EmailOptOut />
                 </Stack>

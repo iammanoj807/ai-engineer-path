@@ -1,5 +1,6 @@
 import { sqlGlossaryTerms } from '../data/sqlGlossary';
 import { allSqlTopics, SQL_CHECK_KEYS, type SqlTopic } from '../data/sql';
+import { mythTexts } from '../data/lessonMyth';
 import { createGlossary } from './glossaryEngine';
 
 // The SQL glossary: the same tap-to-explain engine as the other study pages,
@@ -13,6 +14,7 @@ const INLINE_CODE = /`[^`]*`/g;
 export const sqlTopicProse = (topic: SqlTopic): string[] => {
     const tail = [
         ...topic.mistakes,
+        ...mythTexts(topic.myths),
         ...SQL_CHECK_KEYS.map(key => topic.practice[key]),
         topic.interviewAnswer,
         ...topic.followUps.flatMap(followUp => [followUp.q, followUp.a]),

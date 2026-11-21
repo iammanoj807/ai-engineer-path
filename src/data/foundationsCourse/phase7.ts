@@ -21,7 +21,7 @@ export const foundationPhase7: FoundationPhase = {
         {
             id: 'f7-t1',
             name: 'Autoencoders and VAEs (the ELBO)',
-            definition: 'An autoencoder compresses data into a small code and rebuilds it; a variational autoencoder (VAE) makes the code a probability distribution pulled towards a simple bell curve, so you can sample new codes and decode them into new data.',
+            definition: 'An autoencoder squeezes data into a small code and rebuilds it. A variational autoencoder (VAE) makes the code a probability distribution, pulled towards a simple bell curve, so that you can sample new codes and decode them into new data.',
             problem: 'A plain autoencoder learns good compression, but its codes are scattered with gaps, so a random code decodes into nonsense and it can\'t generate anything new. VAEs fix that by shaping the code space, giving a principled generative model with a smooth latent space. The same encoder–decoder idea is inside modern image generators, which run diffusion in a VAE\'s compact latent space.',
             howItWorks: [
                 'Encoder: a network maps the input x to the mean μ and spread σ of a distribution over codes z.',
@@ -34,7 +34,7 @@ export const foundationPhase7: FoundationPhase = {
             ],
             keyPoints: [
                 'Autoencoder: compress and rebuild; VAE: also a generative model.',
-                'ELBO = reconstruction − KL(q(z | x) ‖ p(z)); training maximises it.',
+                'A VAE is trained by maximising the ELBO = reconstruction − KL(q(z | x) ‖ p(z)): rebuild the input well, and keep the codes close to the prior.',
                 'The reparameterisation trick makes sampling differentiable.',
                 'KL too weak → gaps; too strong → codes ignore the input ("posterior collapse").',
                 'VAE samples tend to be blurry; diffusion and other models give sharper images.',
@@ -44,6 +44,10 @@ export const foundationPhase7: FoundationPhase = {
                 'Sampling z directly without the reparameterisation trick, so gradients can\'t flow.',
                 'Letting the KL term dominate early, so the decoder learns to ignore z.',
                 'Expecting crisp, photo-quality samples from a basic VAE.',
+            ],
+            myths: [
+                { claim: 'Basic VAE samples: crisp and photo-quality.', truth: 'They tend to be blurry. The code is fuzzy on purpose (noise is added to it), so the decoder learns to draw an average of the images that fit. Diffusion models give sharper images.' },
+                { claim: 'Sampling z at random: gradients flow straight through that step.', truth: 'Sampling is not differentiable. The reparameterisation trick writes z = μ + σ·ε, with the randomness in ε, so gradients can reach μ and σ.' },
             ],
             followUps: [
                 { q: 'Why can\'t a plain autoencoder generate new data well?', a: 'Its codes are scattered with gaps; random codes fall where it has never been trained and decode into nonsense.' },
@@ -77,9 +81,70 @@ export const foundationPhase7: FoundationPhase = {
             },
         },
         {
+            id: 'f7-t5',
+            name: 'GANs: a generator against a discriminator',
+            definition: 'A generative adversarial network (GAN) trains two networks against each other: a generator that turns random noise into fake samples, and a discriminator that tries to tell fake from real. Each improves by beating the other.',
+            problem: 'A VAE learns to generate by rebuilding its inputs, and its samples come out blurry because its loss rewards safe averages. A GAN has no reconstruction loss at all. The only question it asks is "could this pass for real?", which pushes samples to be sharp.\n\nGANs produced the first photo-realistic generated faces. Diffusion has replaced them for most image generation, but the adversarial idea is still used inside image, audio and video models.',
+            howItWorks: [
+                'The generator G takes random noise z and outputs a fake sample G(z). At the start its outputs are rubbish: here, numbers near 0 when the real data sits around 4.',
+                'The discriminator D takes a sample and outputs the probability that it is real. Train it on a batch of real samples labelled 1 and a batch of fakes labelled 0, with binary cross-entropy.',
+                'Now train G with D held still: generate fakes, pass them through D, and change G so that D says "real". The gradient flows back through D into G, telling G which way to move its samples.',
+                'Alternate: one step for D, one step for G, again and again. A better D gives G a sharper signal, and a better G gives D a harder job.',
+                'The game is in balance when the fakes are distributed exactly like the real data. Then D can do no better than guess, and outputs 0.5 everywhere.',
+                'In the lesson\'s run the fakes first overshoot to a mean of 6.25, then settle. After 3,000 rounds they have mean 4.04 and spread 0.38, against 4 and 0.5 for the real data. D gives fakes 0.50 on average.',
+                'To generate afterwards, throw D away: sample z and compute G(z).',
+            ],
+            keyPoints: [
+                'Two networks, two losses: D learns to classify real against fake, and G learns to make D wrong.',
+                'The objective is a game: D maximises E[log D(x)] + E[log(1 − D(G(z)))], and G minimises it.',
+                'In practice G maximises log D(G(z)) instead, the non-saturating loss: it gives strong gradients early on, when D rejects every fake easily.',
+                'At the ideal balance D outputs 0.5 everywhere, and the generator\'s distribution equals the data\'s.',
+                'There is no likelihood and no reconstruction error, so the loss curves don\'t show progress. Look at the samples.',
+                'Mode collapse: G finds a few outputs that fool D and produces only those, ignoring the rest of the data.',
+            ],
+            mistakes: [
+                'Reading a falling generator loss as progress. The two losses chase each other; judge by the samples.',
+                'Letting the discriminator\'s training step change the generator. Detach the fakes for that step.',
+                'Training D far ahead of G. A discriminator that wins easily gives the generator little useful signal.',
+            ],
+            myths: [
+                { claim: 'A falling generator loss shows that a GAN\'s samples are getting better.', truth: 'The two losses depend on each other, so either can fall or rise while the samples improve or get worse. Judge a GAN by looking at its samples.' },
+                { claim: 'A discriminator that wins easily: the strongest training signal for the generator.', truth: 'When D wins easily, its feedback hardly changes whatever G does, so G learns little. The two networks have to stay roughly balanced.' },
+            ],
+            followUps: [
+                { q: 'What does the discriminator output when the generator is perfect?', a: '0.5 for every input. Real and fake look the same to it, so it can only guess.' },
+                { q: 'What is mode collapse?', a: 'The generator produces only a few kinds of sample that fool the discriminator, instead of covering the whole variety of the real data.' },
+                { q: 'Why is the non-saturating loss used for the generator?', a: 'Early in training D rejects fakes confidently, so log(1 − D(G(z))) is nearly flat and gives tiny gradients. Maximising log D(G(z)) is steep in exactly that case, so G keeps learning.' },
+                { q: 'Why can\'t you judge a GAN by its loss curves?', a: 'Each network\'s loss depends on how good the other one is. Both can stay flat while the samples improve, or fall while they get worse. Look at the samples, or use a separate quality score.' },
+            ],
+            diagram: {
+                code: 'flowchart LR\n  Z["random noise z"] --> G["generator G"] --> F["fake sample"] --> D["discriminator D"]\n  R["real sample"] --> D\n  D --> P["P(real)"]\n  P -.->|"gradient: be more convincing"| G',
+                caption: 'Real and fake samples both go into the discriminator. Its verdict trains itself to judge better and, along the dotted path, trains the generator to fool it.',
+            },
+            note: {
+                idea: 'A forger and a detective. The generator makes fakes from random noise; the discriminator tries to tell them from real data. Each one\'s mistakes are the other one\'s training signal. When the detective can only guess, the fakes are as good as real.',
+                analogy: 'A forger printing banknotes and a bank clerk checking them. Every note the clerk catches teaches the forger what gave it away; every fake that slips through teaches the clerk to look closer.',
+                breaks: 'A real forger wants the clerk to stay bad at the job. In a GAN the generator needs a good discriminator: a clerk who cannot tell the difference has nothing to teach.',
+                example: 'Real data: numbers from a bell curve with mean 4 and spread 0.5. The generator starts by turning noise into numbers near 0. After 3,000 rounds of the game its outputs have mean 4.04 and spread 0.38, and the discriminator gives them 0.50 on average: it can no longer tell.',
+                code: 'fake = G(torch.randn(64, 1)).detach()             # detach: this step must not change G\nloss_d = bce(D(real(64)), ones) + bce(D(fake), zeros)\nopt_d.zero_grad(); loss_d.backward(); opt_d.step()   # 1. D: real -> 1, fake -> 0\n\nloss_g = bce(D(G(torch.randn(64, 1))), ones)\nopt_g.zero_grad(); loss_g.backward(); opt_g.step()   # 2. G: make D say "real"',
+                codeLanguage: 'python',
+            },
+            resources: [
+                { kind: 'play', title: 'GAN Lab: play with GANs in your browser', source: 'Georgia Tech and Google · runs in the browser', url: 'https://poloclub.github.io/ganlab/', recommended: 'Watch a generator\'s samples slide towards the real data, while the discriminator\'s verdict is drawn underneath as a moving background. The game in this lesson, live.' },
+                { kind: 'paper', title: 'Generative Adversarial Networks', source: 'Goodfellow et al., 2014', url: 'https://arxiv.org/abs/1406.2661' },
+                { kind: 'read', title: 'Understanding Deep Learning, Ch 15 (generative adversarial networks)', source: 'Simon Prince · free', url: 'https://udlbook.github.io/udlbook/' },
+            ],
+            practice: {
+                explain: 'Explain a GAN with the forger-and-bank-clerk picture, and say what "balance" means.',
+                derive: 'For a fixed generator, show that the best discriminator is D*(x) = p_data(x) / (p_data(x) + p_g(x)). What does it output when the generator is perfect?',
+                build: 'Train the 1-D GAN from the lesson on numbers with mean 4 and spread 0.5. Every 500 rounds, print the mean and spread of the generated numbers and the discriminator\'s average output on them.',
+                break: 'Change the real data to two bumps: half the numbers near −2, half near +2. Does the same GAN cover both? Then give the discriminator 20 steps for every generator step, and train for three different seeds. What happens?',
+            },
+        },
+        {
             id: 'f7-t2',
             name: 'Diffusion models',
-            definition: 'A diffusion model generates data by learning to remove noise: it is trained to predict the noise added to real data, then generates by starting from pure noise and denoising step by step.',
+            definition: 'A diffusion model generates data by learning to remove noise. It is trained to predict the noise added to real data. Then it generates by starting from pure noise and denoising step by step.',
             problem: 'Generating high-quality images, audio and video is hard: GANs are unstable to train and VAEs are blurry. Diffusion models train with a simple, stable loss and produce state-of-the-art images (Stable Diffusion, DALL·E, Imagen) and video. Their main cost is slow generation, which much current research tries to cut.',
             howItWorks: [
                 'Forward process: take a real sample x₀ and add Gaussian noise. In one jump to step t: x_t = √ᾱ_t · x₀ + √(1 − ᾱ_t) · ε, where ᾱ_t falls from 1 (clean) to almost 0 (pure noise).',
@@ -101,6 +166,10 @@ export const foundationPhase7: FoundationPhase = {
                 'Thinking the model removes all the noise in one step.',
                 'Using far fewer sampling steps with a sampler not designed for it, and getting noisy images.',
                 'Forgetting to tell the network the noise level t.',
+            ],
+            myths: [
+                { claim: 'Denoising network: its input is the noisy image alone; the step t is not given.', truth: 'The right correction depends on the noise level, so the step t is given to the network as an input. Without it, the network cannot tell a lightly noised image from pure noise.' },
+                { claim: 'Fewer sampling steps: the same sampler gives equally clean images with a tenth of the steps.', truth: 'A sampler built for many small steps gives noisy images when it is cut to a few. Faster samplers are designed to work with fewer steps.' },
             ],
             followUps: [
                 { q: 'What is a diffusion model trained to predict?', a: 'The noise ε that was added to a clean sample, given the noisy sample and the noise level.' },
@@ -161,6 +230,22 @@ export const foundationPhase7: FoundationPhase = {
                 'γ = 0, so the agent ignores everything but the immediate reward.',
                 'Reward functions that can be "hacked": the agent maximises the number, not what you meant.',
             ],
+            myths: [
+                { claim: 'An agent will do what you meant, as long as its reward keeps going up.', truth: 'An agent maximises the number it is given, not your intention. A carelessly designed reward can be collected in ways you never wanted.' },
+                { claim: 'With γ = 0, an agent plans far into the future.', truth: 'γ = 0 makes every future reward count for nothing, so the agent cares only about the next one. A γ close to 1 makes it look far ahead.' },
+            ],
+            deeper: {
+                title: 'Why value iteration always converges',
+                steps: [
+                    'One sweep of value iteration replaces every value: new V(s) = the best over actions of [reward + γ × the average of V over the next states]. Call one sweep T, so the update is V ← T(V).',
+                    'Take any two tables of values, V and U, and let D be the largest difference between them over all states.',
+                    'Inside the brackets, V and U only enter through "γ × the average of the next values". Averages of numbers that differ by at most D differ by at most D, so for every action the two brackets differ by at most γD.',
+                    'Taking the best action on each side cannot widen the gap: two lists that differ by at most γD, entry by entry, have maxima that differ by at most γD. So T(V) and T(U) differ by at most γD.',
+                    'Now let U be the true optimal values V*, which a sweep leaves unchanged: T(V*) = V*. Then every sweep shrinks the distance to V* by the factor γ. After k sweeps the error is at most γᵏ times the starting error.',
+                    'With γ = 0.8 the error falls below 1% of its start in 21 sweeps. With γ = 0.99 it takes 459: caring about the far future makes planning slower.',
+                ],
+                result: 'A sweep of value iteration is a contraction: it shrinks the distance to the optimal values by γ every time. So it converges from any starting values, always to the same answer.',
+            },
             followUps: [
                 { q: 'What does the discount factor γ do?', a: 'It makes future rewards count less than immediate ones; γ near 1 plans far ahead, γ = 0 only cares about the next reward.' },
                 { q: 'What is the difference between V(s) and Q(s, a)?', a: 'V(s) is the expected return from a state; Q(s, a) is the expected return after taking a specific action in that state.' },
@@ -193,6 +278,68 @@ export const foundationPhase7: FoundationPhase = {
             },
         },
         {
+            id: 'f7-t6',
+            name: 'Deep Q-networks (DQN): Q-learning with a neural network',
+            definition: 'A deep Q-network replaces the Q-table of Q-learning with a neural network that takes a state and outputs a value for every action. It is trained on remembered experience, towards targets computed by a slowly updated copy of itself.',
+            problem: 'A Q-table needs one row for every state. A grid of 16 squares fits; a game screen, a robot\'s sensors or a conversation never will, because there are more possible states than could ever be stored. A network shares what it learns between similar states, so it can value states it has never seen.\n\nDQN was the first method to learn dozens of Atari games from the raw pixels. Its two tricks, a replay buffer and a target network, are still in almost every value-based method.',
+            howItWorks: [
+                'The network takes a state (here 16 numbers, with a 1 for the agent\'s square) and outputs four numbers: the estimated Q-value of moving up, down, left and right.',
+                'Act with ε-greedy: with probability ε take a random action, otherwise the action with the highest Q-value. Start with ε = 1, all random, and lower it to 0.05.',
+                'Store every move (s, a, r, s′, done) in a replay buffer: a list of the last 5,000 moves.',
+                'At every step, draw 32 random moves from the buffer. For each, build the target y = r + γ·max Q_target(s′, ·), or just y = r if that move ended the episode.',
+                'Train the network to bring Q(s, a) closer to y, with the squared error. Only the output for the action that was taken is trained.',
+                'Q_target is a frozen copy of the network, refreshed every 100 steps. Without it the target would move every time the network changed, like chasing your own shadow.',
+                'After 300 episodes, following the highest Q-value from the start reaches the goal in 6 moves, the fewest possible. The network values the start at 0.59 = 0.9⁵: one reward, discounted five times.',
+            ],
+            keyPoints: [
+                'A network Q(s, ·) replaces the table: one forward pass gives the value of every action.',
+                'Target y = r + γ·max Q_target(s′, ·), loss (Q(s, a) − y)². It is the Q-learning update written as a regression problem.',
+                'Replay buffer: train on random old moves. It reuses experience, and it stops a run of very similar moves from pulling the network one way and then another.',
+                'Target network: a frozen copy used only to compute y, refreshed now and then, so that the target holds still.',
+                'Exploration is not optional: the agent can only learn the value of what it has tried.',
+                'The max in the target tends to overestimate values. Double DQN reduces this: one network chooses the action and the other scores it.',
+            ],
+            mistakes: [
+                'Letting gradients flow through the target. Compute y with no gradient, from the target network.',
+                'Forgetting the last move of an episode: there is no next state, so the target is just r.',
+                'Dropping exploration too early, so the agent never finds the reward.',
+                'Using DQN where actions are continuous. The max needs a short list of actions; use policy gradients there.',
+            ],
+            myths: [
+                { claim: 'Continuous actions (a steering angle): DQN handles them as well as a short list of actions.', truth: 'DQN\'s target takes a max over the actions, which needs a short list of them. For continuous actions, use policy-gradient methods instead.' },
+                { claim: 'Last move of an episode: the target is still y = r + γ·max Q_target(s′, ·).', truth: 'After the last move there is no next state, so the target is just the reward r. Adding a value there teaches the network something false.' },
+            ],
+            followUps: [
+                { q: 'What does the Q-network take in, and what does it put out?', a: 'It takes a state and outputs one Q-value for each possible action, all in one forward pass.' },
+                { q: 'What is the replay buffer for?', a: 'It stores past moves so the network can train on random batches of them. That reuses experience and stops consecutive, very similar moves from dominating the updates.' },
+                { q: 'Why use a separate target network?', a: 'The target r + γ·max Q(s′, ·) depends on the network being trained. If it moved with every update, training would chase a moving goal and could become unstable. A frozen copy keeps the target still for a while.' },
+                { q: 'The start is 6 moves from the goal, the reward is 1 and γ = 0.9. What is the start worth?', a: '0.9⁵ ≈ 0.59. The reward arrives on the sixth move, so it is discounted five times.' },
+            ],
+            diagram: {
+                code: 'flowchart LR\n  S["state s"] --> N["Q-network"] --> A["ε-greedy action"] --> E["environment"]\n  E -->|"(s, a, r, s′)"| B["replay buffer"]\n  B -->|"random batch"| L["loss: (Q(s, a) − y)²"]\n  T["target network<br/>(frozen copy)"] -->|"y = r + γ·max Q(s′, ·)"| L\n  L -.->|"update"| N\n  N -.->|"copy every 100 steps"| T',
+                caption: 'Acting fills the replay buffer; learning draws random batches from it. The frozen target network supplies the value to aim at.',
+            },
+            note: {
+                idea: 'Keep Q-learning, but swap the table for a network that outputs a value for every action. Two additions keep the training stable: a replay buffer of past moves, learned from in random order, and a frozen copy of the network that computes the targets.',
+                analogy: 'A chess player who keeps a diary of her games. Each evening she studies random old positions, not just today\'s game, and grades every move against last week\'s notes, which stay the same while she studies.',
+                breaks: 'Her notes could come from a stronger player. The target network is only an older copy of the same learner, so early targets are as wrong as the learner is. The two improve together, and that is why the estimates can drift too high.',
+                example: 'A 4 × 4 grid: start in the top-left corner, goal in the bottom-right, reward 1 for reaching the goal, γ = 0.9. After 300 episodes the greedy path is 6 moves long, the shortest possible, and Q(start, best move) = 0.59, which matches the exact value 0.9⁵ ≈ 0.59.',
+                code: 'q_taken = q(S).gather(1, A[:, None]).squeeze(1)       # Q(s, a) for the moves that were taken\nwith torch.no_grad():                                 # the target is not trained\n    best_next = target(S2).max(dim=1).values\n    y = R + gamma * best_next * (1 - done)            # just r when the episode ended\nloss = nn.functional.mse_loss(q_taken, y)\nopt.zero_grad(); loss.backward(); opt.step()\nif steps % 100 == 0:\n    target.load_state_dict(q.state_dict())            # refresh the frozen copy',
+                codeLanguage: 'python',
+            },
+            resources: [
+                { kind: 'code', title: 'Reinforcement Learning (DQN) Tutorial', source: 'PyTorch', url: 'https://docs.pytorch.org/tutorials/intermediate/reinforcement_q_learning.html' },
+                { kind: 'read', title: 'Reinforcement Learning: An Introduction, Ch 6 and Ch 9', source: 'Sutton and Barto · free', url: 'http://incompleteideas.net/book/the-book-2nd.html' },
+                { kind: 'paper', title: 'Human-level control through deep reinforcement learning', source: 'Mnih et al., Nature 2015', url: 'https://www.nature.com/articles/nature14236' },
+            ],
+            practice: {
+                explain: 'Explain the replay buffer and the target network with the chess-diary picture.',
+                derive: 'A move gives reward 0 and lands on a square where the target network says Q(s′, ·) = [0.2, 0.7, 0.1, 0.5]. With γ = 0.9, compute the target y. The network currently says Q(s, a) = 0.4: what is the loss, and which way is Q(s, a) pushed? Then do the same for a move that reaches the goal with reward 1.',
+                build: 'Build the DQN from the lesson for the 4 × 4 grid: the environment, the network, ε-greedy actions, the replay buffer and the target network. Print the greedy path and Q(start, best move), and compare it with 0.9⁵.',
+                break: 'Set γ = 1 and train with five different seeds. Does the greedy path still reach the goal, and what is Q(start)? (No return can be more than 1.) Then put γ back to 0.9 and train with no exploration at all, ε = 0, for five seeds.',
+            },
+        },
+        {
             id: 'f7-t4',
             name: 'Policy gradients and PPO',
             definition: 'Policy-gradient methods train a policy network directly by making actions that led to better-than-expected returns more likely; PPO adds a clipped objective that keeps each update small and safe.',
@@ -208,15 +355,19 @@ export const foundationPhase7: FoundationPhase = {
             ],
             keyPoints: [
                 'Optimise the policy directly: ∇J ≈ E[∇log π(a | s) · A].',
-                'Advantages and baselines reduce variance.',
+                'Subtracting a baseline from the return, which gives the advantage, reduces the variance of the gradient without changing its average.',
                 'PPO\'s clip keeps the new policy close to the old one.',
                 'On-policy: data must come from (nearly) the current policy.',
                 'In RLHF, the "environment" is a reward model, and a KL penalty keeps the model near its starting point.',
             ],
             mistakes: [
-                'No baseline, so learning is extremely noisy.',
+                'Using no baseline, so the gradient estimate is extremely noisy and learning is slow.',
                 'Huge steps without clipping, so the policy collapses.',
                 'Reusing very old data with an on-policy method.',
+            ],
+            myths: [
+                { claim: 'An on-policy method such as PPO can keep learning from data collected by a much older policy.', truth: 'On-policy methods assume the data came from (nearly) the current policy. Very old data describes a different policy, so the updates it gives are wrong.' },
+                { claim: 'Baseline: subtracting it changes the direction of the policy gradient.', truth: 'A baseline changes only the noise, not the average direction. The gradient points the same way with far less variance, which is why the advantage is used.' },
             ],
             followUps: [
                 { q: 'What does a policy-gradient update do to an action with positive advantage?', a: 'It raises that action\'s probability in that state, in proportion to how much better than expected it was.' },

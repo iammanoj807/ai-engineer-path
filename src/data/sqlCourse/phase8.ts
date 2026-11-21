@@ -16,9 +16,9 @@ export const sqlPhase8: SqlPhase = {
             kind: 'lesson',
             name: 'How to answer any SQL interview question',
             priority: 'must',
-            definition: 'A repeatable method: restate the question, look at the tables and their grain, ask about edge cases, plan the steps out loud, write the query as small CTEs, then check the result against a few rows you can work out by hand.',
+            definition: 'A repeatable method: restate the question, look at the tables and their grain, ask about edge cases, and plan the steps out loud. Then write the query as small CTEs, and check the result against a few rows you can work out by hand.',
             problem: 'Under pressure, people jump straight into typing, write one giant query, and miss the NULLs or ties the interviewer planted. Interviewers grade the process as much as the answer: do you clarify, structure, and verify?',
-            idea: 'Step 1, clarify: say the question back in your own words, and ask about ties, NULLs, duplicates and what "per" means. Step 2, look at the data: what is one row of each table (the grain), what are the keys, how do they join? Step 3, plan out loud: "First I\'ll get delivered orders, then total them per customer, then join the city." Step 4, write it as CTEs, one step each, running each one if you can. Step 5, check: does the row count make sense? Does a total match a number you can work out by hand? Then say the edge cases and how your query handles them.',
+            idea: 'Step 1, clarify: say the question back in your own words, and ask about ties, NULLs, duplicates and what "per" means.\nStep 2, look at the data: what is one row of each table (the grain), what are the keys, how do they join?\nStep 3, plan out loud: "First I\'ll get delivered orders, then total them per customer, then join the city."\nStep 4, write it as CTEs, one step each, running each one if you can.\nStep 5, check: does the row count make sense? Does a total match a number you can work out by hand? Then say the edge cases and how your query handles them.',
             analogy: 'A pilot\'s checklist. Experienced pilots still run it every flight — not because they forget how to fly, but because the checklist catches the one thing that pressure makes you skip.',
             breaks: 'A checklist is the same every flight. Interviews vary: if the question is simple, go through the steps quickly; don\'t spend five minutes clarifying "count the rows".',
             syntax: code`
@@ -81,10 +81,13 @@ export const sqlPhase8: SqlPhase = {
                 'Not asking about ties, then using LIMIT 1 when two rows tie.',
                 'Stopping when the query runs, without checking that the answer is right.',
             ],
+            myths: [
+                { claim: 'Once the query runs without an error, the interview answer is finished.', truth: 'A query can run and still be wrong. Check it against a small example and against the edge cases (ties, NULLs, no rows) before you stop.' },
+            ],
             dialects: [
                 'If the interviewer doesn\'t name a database, say "I\'ll write PostgreSQL" — it is the most common choice, and it means DATE_TRUNC, ::date casts and FILTER are all available.',
             ],
-            interviewAnswer: 'I start by restating the question and asking about edge cases — ties, NULLs, duplicates, the time window. Then I look at the tables to understand the grain and how they join, explain my plan in steps, and write it as a chain of CTEs so each step is readable and testable. Finally I sanity-check the output — row counts and one number I can verify by hand — and walk through how the query handles the edge cases.',
+            interviewAnswer: 'I start by restating the question and asking about edge cases — ties, NULLs, duplicates, the time window. Then I look at the tables, to understand the grain and how they join. I explain my plan in steps, and write it as a chain of CTEs, so each step is readable and testable. Finally I sanity-check the output — row counts and one number I can verify by hand — and walk through how the query handles the edge cases.',
             followUps: [
                 { q: 'What do you do if you don\'t know the exact function name in their database?', a: 'Say so, write the closest version you know (for example DATE_TRUNC), and explain what it does. Interviewers care about the logic, not the exact spelling.' },
                 { q: 'How do you check a query when you can\'t run it?', a: 'Walk two or three rows through each step by hand, especially a NULL row and a tie.' },
@@ -146,6 +149,9 @@ export const sqlPhase8: SqlPhase = {
                 'Rambling for two minutes on a thirty-second question.',
                 'Giving only one side ("HAVING is for groups") without the contrast.',
                 'Memorising words without the reason, then freezing when the question is rephrased.',
+            ],
+            myths: [
+                { claim: 'For a quick theory question, a two-minute answer scores better than thirty seconds.', truth: 'Thirty seconds is enough: define both things, give the key difference, say when to use each, then stop. A long answer hides the point.' },
             ],
             interviewAnswer: 'For any "what\'s the difference" question I give a one-line definition of each, the difference that matters in practice, and when I would choose each. For example: WHERE filters rows before grouping and can\'t use aggregates; HAVING filters groups after GROUP BY and can — so row conditions go in WHERE and aggregate conditions in HAVING.',
             followUps: [
@@ -249,6 +255,9 @@ export const sqlPhase8: SqlPhase = {
                 'Using RANK: after a tie for first, there is no rank 2.',
                 'Returning an empty result when the question asked for NULL.',
             ],
+            myths: [
+                { claim: '`ORDER BY salary DESC LIMIT 1 OFFSET 1`: the second highest salary, ties or no ties.', truth: 'When two people tie for first place, the second row is the top salary again. Add DISTINCT, or use DENSE_RANK.' },
+            ],
             interviewAnswer: 'I first confirm that ties should collapse, so the second highest is the second different amount. Then I rank salaries with DENSE_RANK in descending order — dense so a tie doesn\'t skip a number — and take rank 2. I wrap it in MAX so that if there is no second salary I return a single NULL instead of no rows, and for the Nth highest I just change the 2.',
             followUps: [
                 { q: 'How would you return the employees who earn the second highest salary?', a: 'Keep the DENSE_RANK CTE with names in it and select every row `WHERE rnk = 2`.' },
@@ -324,7 +333,10 @@ export const sqlPhase8: SqlPhase = {
                 'Joining the wrong way round (`e.emp_id = m.manager_id`), which compares people with their reports.',
                 'Leaving columns unprefixed, so name and salary are ambiguous.',
             ],
-            interviewAnswer: 'manager_id references the same table, so I self-join employees as e and m, matching the manager alias\'s emp_id to the employee\'s manager_id, and filter where the employee\'s salary is greater than the manager\'s. An inner join is right here because someone without a manager can\'t out-earn one.',
+            myths: [
+                { claim: '`e.emp_id = m.manager_id` joins each employee e to their manager m.', truth: 'That condition makes e the manager of m. To join each employee e to their manager m, write `m.emp_id = e.manager_id`.' },
+            ],
+            interviewAnswer: 'manager_id references the same table, so I self-join employees as e and m, matching the manager alias\'s emp_id to the employee\'s manager_id. Then I filter where the employee\'s salary is greater than the manager\'s. An inner join is right here because someone without a manager can\'t out-earn one.',
             followUps: [
                 { q: 'How would you include the manager\'s manager?', a: 'Join employees a third time: `JOIN employees mm ON mm.emp_id = m.manager_id`, as a LEFT JOIN if the chain can end.' },
                 { q: 'How would you count, per manager, how many reports earn more than them?', a: 'Same self join and filter, then GROUP BY m.emp_id, m.name with `COUNT(*)`.' },
@@ -401,6 +413,9 @@ export const sqlPhase8: SqlPhase = {
                 '`LEFT JOIN … WHERE o.status <> \'delivered\'`: drops customers with no orders and keeps customers who also have delivered orders.',
                 '`WHERE customer_id NOT IN (SELECT customer_id FROM orders WHERE status = \'delivered\')` is fine here only because customer_id is NOT NULL in orders — say that out loud.',
                 'Starting from orders, which can never return customers who have no orders.',
+            ],
+            myths: [
+                { claim: 'Starting from orders: the query still finds customers who have no orders at all.', truth: 'A customer with no orders has no row in orders, so a query that starts there can never return them. Start from customers.' },
             ],
             interviewAnswer: 'This is an anti-join. I drive it from customers so customers with no orders are included, and keep those for which NOT EXISTS finds a delivered order. Equivalently, a LEFT JOIN with the status filter inside the ON clause and WHERE the order id IS NULL. The trap is putting the status filter in WHERE, which turns the left join into an inner join.',
             followUps: [
@@ -493,14 +508,17 @@ export const sqlPhase8: SqlPhase = {
                 'If the duplicate rows have orders, the foreign key blocks the delete — re-point those orders to the kept id first.',
             ],
             mistakes: [
-                'Using WHERE `COUNT(*) > 1` instead of HAVING.',
+                'Using WHERE `COUNT(*) > 1` instead of HAVING: WHERE runs before the groups exist, so it can\'t see a count.',
                 'Deleting without checking the rows first with a SELECT.',
                 'Fixing the data but not adding a UNIQUE constraint, so duplicates come straight back.',
+            ],
+            myths: [
+                { claim: 'After the delete: the duplicates are gone for good, so no constraint is needed.', truth: 'Without a rule in the database, the next double sign-up creates a duplicate again. Add a UNIQUE constraint on the email after cleaning up.' },
             ],
             dialects: [
                 'MySQL can\'t delete from a table while selecting from it in a subquery; wrap the subquery in another SELECT or use a DELETE … JOIN.',
             ],
-            interviewAnswer: 'To find duplicates I group by the column that should be unique and keep groups with HAVING COUNT star greater than one. To remove them I number the rows within each group with ROW_NUMBER — or take the minimum id per group — and delete every row that isn\'t the keeper, checking it as a SELECT first. Then I\'d add a unique constraint, and I\'d ask whether emails need normalising for case and spaces before comparing.',
+            interviewAnswer: 'To find duplicates I group by the column that should be unique and keep groups with HAVING COUNT star greater than one. To remove them, I number the rows within each group with ROW_NUMBER (or take the minimum id per group). Then I delete every row that isn\'t the keeper, checking it as a SELECT first. Then I\'d add a unique constraint, and I\'d ask whether emails need normalising for case and spaces before comparing.',
             followUps: [
                 { q: 'How would you keep the most recent sign-up instead?', a: 'Order the ROW_NUMBER by signup_date DESC (with customer_id as a tiebreaker), or keep `MAX(customer_id)` if ids grow over time.' },
                 { q: 'What if the duplicate customer has orders?', a: 'Update those orders to point at the kept customer_id first, in the same transaction, then delete.' },
@@ -580,6 +598,9 @@ export const sqlPhase8: SqlPhase = {
                 'Putting the window function in WHERE.',
                 '`GROUP BY dept_id` with `MAX(salary)` and `name` in SELECT — the name isn\'t guaranteed to belong to the max.',
                 'Using ROW_NUMBER when ties should all be returned.',
+            ],
+            myths: [
+                { claim: '`SELECT dept_id, name, MAX(salary) … GROUP BY dept_id` returns the name of each department\'s top earner.', truth: 'The name is not tied to the maximum: most databases reject the query, and the rest may show any name from the group. Rank the rows with a window function instead.' },
             ],
             interviewAnswer: 'This is top-N-per-group. I rank employees within each department with RANK partitioned by department and ordered by salary descending, in a CTE, then filter to rank one outside — window functions can\'t go in WHERE. I use RANK so tied top earners are all returned; if they wanted exactly one per department I\'d switch to ROW_NUMBER with a tiebreaker. For "top three salaries" I\'d use DENSE_RANK less than or equal to three.',
             followUps: [
@@ -662,6 +683,9 @@ export const sqlPhase8: SqlPhase = {
                 '`WHERE salary > AVG(salary)` — an aggregate in WHERE is not allowed, and it would be the company average anyway.',
                 'Comparing with the company average when the question says "their department".',
                 'Filtering on the window function in the same SELECT\'s WHERE.',
+            ],
+            myths: [
+                { claim: '`WHERE salary > AVG(salary)` compares each salary with the average of that person\'s department.', truth: 'An aggregate is not allowed in WHERE, and with no grouping it would be the company average anyway. Work out the department average with a window function or a grouped subquery.' },
             ],
             interviewAnswer: 'I need each employee\'s department average next to their row, so I compute AVG of salary over a window partitioned by department in a CTE, and keep rows where salary exceeds it. An equivalent approach joins employees to a grouped subquery of averages per department. I\'d mention the NULL-department case, since the two approaches treat it differently.',
             followUps: [
@@ -748,10 +772,13 @@ export const sqlPhase8: SqlPhase = {
                 '`(revenue - prev) / prev * 100` with whole numbers: integer division gives 0 or -1.',
                 'Grouping by order_date instead of the month.',
             ],
+            myths: [
+                { claim: 'Monthly growth: apply LAG to the single order rows, not to monthly totals.', truth: 'On order rows, LAG compares one order with the order before it. Add up the revenue of each month first, then apply LAG to the monthly totals.' },
+            ],
             dialects: [
                 'PostgreSQL: `DATE_TRUNC(\'month\', order_date)` for the month. MySQL: `DATE_FORMAT(order_date, \'%Y-%m\')`. SQL Server: `FORMAT(order_date, \'yyyy-MM\')` or `DATEFROMPARTS(YEAR(d), MONTH(d), 1)`.',
             ],
-            interviewAnswer: 'I aggregate to one row per month in a CTE, then use LAG over month order to bring the previous month\'s revenue alongside, and compute 100.0 times the difference divided by the previous value, rounded. I guard the division with NULLIF for zero months, note that the first month is NULL, and would fill in missing months with a calendar join if gaps are possible.',
+            interviewAnswer: 'I aggregate to one row per month in a CTE. Then I use LAG over month order to bring the previous month\'s revenue alongside. The growth is 100.0 times the difference, divided by the previous value, rounded. I guard the division with NULLIF for zero months, note that the first month is NULL, and would fill in missing months with a calendar join if gaps are possible.',
             followUps: [
                 { q: 'How would you do year-over-year growth on monthly data?', a: '`LAG(revenue, 12) OVER (ORDER BY month)` — twelve rows back — assuming every month is present.' },
                 { q: 'How would you compute it per product category?', a: 'Group by category and month, then `LAG(revenue) OVER (PARTITION BY category ORDER BY month)`.' },
@@ -837,11 +864,14 @@ export const sqlPhase8: SqlPhase = {
                 'Forgetting PARTITION BY, so only one order in the whole table gets number 1.',
                 'No tiebreaker in ROW_NUMBER, so the answer can change between runs.',
             ],
+            myths: [
+                { claim: '`MIN(order_date)` with `amount` in the same SELECT returns the amount of the first order.', truth: 'MIN finds the earliest date, but the amount beside it is not tied to that row. Number each customer\'s orders with ROW_NUMBER and keep number 1.' },
+            ],
             dialects: [
                 'PostgreSQL has a shortcut: `SELECT DISTINCT ON (customer_id) * FROM orders ORDER BY customer_id, order_date, order_id`.',
                 'Days between: PostgreSQL `order_date - signup_date` for DATE columns; MySQL `DATEDIFF(order_date, signup_date)`.',
             ],
-            interviewAnswer: 'For first-per-group I number rows with ROW_NUMBER partitioned by customer and ordered by date with the order id as a tiebreaker, keep row number one in an outer query, and join customers for the sign-up date to compute days to first order. I\'d confirm whether cancelled orders count, and mention that a MIN-date join can return duplicates on ties while ROW_NUMBER always returns exactly one.',
+            interviewAnswer: 'For first-per-group I number rows with ROW_NUMBER, partitioned by customer and ordered by date, with the order id as a tiebreaker. I keep row number one in an outer query. Then I join customers for the sign-up date, to compute the days to first order. I\'d confirm whether cancelled orders count, and mention that a MIN-date join can return duplicates on ties while ROW_NUMBER always returns exactly one.',
             followUps: [
                 { q: 'How would you get each customer\'s latest order instead?', a: 'Order the ROW_NUMBER by order_date DESC, order_id DESC and keep row 1.' },
                 { q: 'How would you find each customer\'s first delivered order?', a: 'Add `WHERE status = \'delivered\'` inside the CTE, before numbering.' },
@@ -938,14 +968,17 @@ export const sqlPhase8: SqlPhase = {
                 '"Longest streak per customer": wrap the result and keep the max length per customer, deciding how to break ties.',
             ],
             mistakes: [
-                'Forgetting DISTINCT on (customer, day).',
+                'Forgetting DISTINCT on (customer, day): two orders on the same day then break the streak.',
                 'Subtracting the row number from a date string instead of a day number.',
                 'Using LAG alone, which finds pairs of consecutive days but not whole streaks.',
+            ],
+            myths: [
+                { claim: 'Whole streaks: LAG by itself finds where each one starts and ends.', truth: 'LAG finds pairs of days that follow each other, not where a streak starts and ends. Subtracting a row number from the day number gives every day of one streak the same value.' },
             ],
             dialects: [
                 'PostgreSQL: `order_date - (ROW_NUMBER() OVER (…))::int` works directly on DATE values. SQL Server: `DATEADD(day, -ROW_NUMBER() OVER (…), order_date)`.',
             ],
-            interviewAnswer: 'This is gaps and islands. I first reduce to distinct customer-days, number each customer\'s days with ROW_NUMBER, and subtract that number from the date: within a run of consecutive days both go up by one, so the difference is constant and labels the island. Grouping by customer and that label gives each streak\'s start, end and length, and HAVING keeps the ones of two days or more.',
+            interviewAnswer: 'This is gaps and islands. I first reduce to distinct customer-days. Then I number each customer\'s days with ROW_NUMBER, and subtract that number from the date. Within a run of consecutive days both go up by one, so the difference is constant and labels the island. Grouping by customer and that label gives each streak\'s start, end and length, and HAVING keeps the ones of two days or more.',
             followUps: [
                 { q: 'How would you find each customer\'s longest streak?', a: 'Wrap the streak query and use `ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY days_in_a_row DESC) = 1`, or MAX per customer.' },
                 { q: 'How would you find gaps — periods with no orders?', a: 'Use `LEAD(order_date)` to get the next date, and keep rows where the next date is more than one day later; the gap runs between them.' },
@@ -1012,7 +1045,10 @@ export const sqlPhase8: SqlPhase = {
                 'Joining on product_id instead of order_id, which pairs a product with itself across orders.',
                 'Counting rows when an order could contain a pair more than once — use `COUNT(DISTINCT a.order_id)` if so.',
             ],
-            interviewAnswer: 'I self-join the order items table on order_id so every product is paired with every other product in the same order, filter with product a less than product b to drop self-pairs and mirrored duplicates, join product names, and count orders per pair. I\'d note that the number of pairs grows quadratically with basket size, so on big data I might limit to recent orders or popular products.',
+            myths: [
+                { claim: 'Joining the item rows with `a.product_id <> b.product_id` lists each pair of products once.', truth: '`<>` gives every pair twice: (Pen, Mug) and (Mug, Pen). Use `<` so that each pair appears only once.' },
+            ],
+            interviewAnswer: 'I self-join the order items table on order_id, so every product is paired with every other product in the same order. I filter with product a less than product b, to drop self-pairs and mirrored duplicates. Then I join the product names and count orders per pair. I\'d note that the number of pairs grows quadratically with basket size, so on big data I might limit to recent orders or popular products.',
             followUps: [
                 { q: 'Why `<` and not `<>`?', a: '`<>` removes self-pairs but keeps both A–B and B–A. `<` keeps exactly one ordering of each pair.' },
                 { q: 'How would you find triples bought together?', a: 'Join order_items three times on order_id with a < b < c, then group by all three.' },
@@ -1100,11 +1136,14 @@ export const sqlPhase8: SqlPhase = {
                 'Rounding: the rounded percentages may not add up to exactly 100.',
             ],
             mistakes: [
-                'Integer division: `revenue / SUM(revenue) OVER ()` is 0 without the 100.0.',
+                'Integer division: `revenue / SUM(revenue) OVER ()` gives 0 for every row unless you multiply by 100.0 first.',
                 'Leaving the frame as the default RANGE, so tied revenues get the same cumulative value.',
                 'Filtering `cumulative_pct <= 80`, which drops the product that crosses 80% — usually it should be included.',
             ],
-            interviewAnswer: 'I total revenue per product in a CTE, then divide each by SUM over an empty window for the share of total, and use a running SUM ordered by revenue descending with an explicit ROWS frame for the cumulative share. To list the products making up the first 80%, I keep those whose revenue before them is still under 80% of the total, which includes the product that crosses the line.',
+            myths: [
+                { claim: 'Filtering on `cumulative_pct <= 80` keeps the product that takes the running total past 80%.', truth: 'That product\'s own running share is already above 80, so the filter drops it. Usually it belongs in the answer: keep each product whose running total before it was still under 80%.' },
+            ],
+            interviewAnswer: 'I total revenue per product in a CTE, then divide each by SUM over an empty window for the share of total. For the cumulative share I use a running SUM, ordered by revenue descending, with an explicit ROWS frame. To list the products making up the first 80%, I keep those whose revenue before them is still under 80% of the total, which includes the product that crosses the line.',
             followUps: [
                 { q: 'How would you show each product\'s share within its own category?', a: 'Divide by `SUM(revenue) OVER (PARTITION BY category)` instead of `OVER ()`.' },
                 { q: 'Why ROWS UNBOUNDED PRECEDING rather than the default?', a: 'The default RANGE frame lumps tied values together; ROWS adds one product at a time.' },
@@ -1199,7 +1238,10 @@ export const sqlPhase8: SqlPhase = {
                 'Dividing whole numbers and getting 0.',
                 'Measuring from sign-up date when the question says first order (or the other way round).',
             ],
-            interviewAnswer: 'I anchor each customer on their first order with MIN per customer, join back to their orders, and flag whether any later order falls within 30 days, taking MAX of a CASE so each customer is one or zero. The retention rate is the sum of flags over the number of customers, times 100.0. I\'d raise two definitional points: whether a same-day second order counts, and excluding customers who haven\'t had a full 30 days yet.',
+            myths: [
+                { claim: 'A customer who places a second order counts as coming back, however long after the first.', truth: 'Only a second order placed within 30 days of the first one counts. The query has to compare the two dates, not just check that a second order exists.' },
+            ],
+            interviewAnswer: 'I anchor each customer on their first order, with MIN per customer, and join back to their orders. Then I flag whether any later order falls within 30 days, taking MAX of a CASE so that each customer is one or zero. The retention rate is the sum of flags over the number of customers, times 100.0. I\'d raise two definitional points: whether a same-day second order counts, and excluding customers who haven\'t had a full 30 days yet.',
             followUps: [
                 { q: 'How would you compute retention by sign-up month (a cohort table)?', a: 'Add the first-order month to the firsts CTE, group the flags by that month, and compute the rate per cohort.' },
                 { q: 'Why exclude recent customers from the denominator?', a: 'Someone who ordered yesterday hasn\'t had 30 days to come back; counting them as "not retained" makes the rate look worse than it is.' },
@@ -1283,10 +1325,13 @@ export const sqlPhase8: SqlPhase = {
                 'Taking only position n / 2, which is wrong for odd counts and only half the answer for even counts.',
                 'Decimal division in the position maths ((n + 1) / 2.0), which gives 4.5 and matches no row.',
             ],
+            myths: [
+                { claim: '`AVG(salary)` returns the median salary.', truth: 'AVG returns the mean: the total divided by the count. The median is the middle value once the rows are sorted, and one huge salary moves the mean far more than the median.' },
+            ],
             dialects: [
                 'PostgreSQL and Oracle: `PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY salary)` gives the median directly; SQL Server has PERCENTILE_CONT as a window function. MySQL and SQLite have no built-in median, so use this pattern.',
             ],
-            interviewAnswer: 'If the database has PERCENTILE_CONT, the median is PERCENTILE_CONT 0.5 within group ordered by salary. Otherwise I number the sorted values with ROW_NUMBER, get the count with COUNT over the same window, and average the values at positions n plus one over two and n plus two over two with integer division — that\'s the single middle row for odd n and the two middle rows for even n. Partitioning both window functions gives a median per group.',
+            interviewAnswer: 'If the database has PERCENTILE_CONT, the median is PERCENTILE_CONT 0.5 within group ordered by salary. Otherwise I number the sorted values with ROW_NUMBER, and get the count n with COUNT over the same window. Then I average the values at positions n plus one over two and n plus two over two, using integer division. That is the single middle row for odd n, and the two middle rows for even n. Partitioning both window functions gives a median per group.',
             followUps: [
                 { q: 'Median or mean — when does the difference matter?', a: 'When the data is skewed: one very high salary pulls the mean up but barely moves the median.' },
                 { q: 'How would you get the 90th percentile?', a: '`PERCENTILE_CONT(0.9) WITHIN GROUP (ORDER BY salary)` where available; otherwise the row at position `CEIL(0.9 × n)` with the same ROW_NUMBER pattern.' },
@@ -1374,6 +1419,9 @@ export const sqlPhase8: SqlPhase = {
                 '`COUNT(*)` instead of `COUNT(DISTINCT product_id)`, so two notebooks look like two different products.',
                 'Hard-coding the total (= 2) instead of counting the category.',
                 'Using IN (\'Pen\', \'Notebook\'), which finds customers who bought any of them, not all.',
+            ],
+            myths: [
+                { claim: '`IN (\'Pen\', \'Notebook\')` finds the customers who bought both products.', truth: 'IN is true when a row matches any value in the list, so it finds customers who bought at least one. To require all of them, count the different products each customer bought.' },
             ],
             interviewAnswer: 'This is relational division — "bought all of". I join each customer to the category\'s products they bought, group by customer, and keep those whose count of distinct products equals the category\'s product count from a subquery. An equivalent formulation is a double NOT EXISTS: there\'s no product in the category that the customer hasn\'t bought. I\'d mention the empty-category case, where the two versions disagree.',
             followUps: [

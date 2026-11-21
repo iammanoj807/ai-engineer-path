@@ -50,6 +50,7 @@ import {
     CONFIDENT,
     CYAN,
     TAP,
+    hiddenOnPhone,
     px,
     stepId,
     useTextSize,
@@ -60,6 +61,7 @@ import {
 import {
     LearningPageFrame,
     TextSizeControl,
+    LessonToolbar,
     SectionLabel,
     Tag,
     TopicResourceRow,
@@ -69,6 +71,7 @@ import {
     Callout,
     MUST_KNOW,
     MISTAKE,
+    MythCheck,
     Bullets,
     NumberedSteps,
     CodeBlock,
@@ -80,6 +83,7 @@ import { GlossaryProvider, GlossaryTopic, NewWordsBox, ProseText } from './learn
 import { GlossaryDrawer } from './learning/GlossaryDrawer';
 import { InterviewQuestionsView } from './learning/InterviewQuestions';
 import { sqlInterviewSet } from '../data/interviewPrep/sql';
+import { mythTexts } from '../data/lessonMyth';
 import { MermaidDiagram } from './learning/MermaidDiagram';
 import { AnimatedScene } from './learning/anim/AnimatedScene';
 import { useTopicAnimation } from './learning/anim/useTopicAnimation';
@@ -88,7 +92,6 @@ import { segmentSections, type Prose } from './learning/glossaryContext';
 import { AnswerQuery, ExampleBlock, ExampleOutcome, FloatingSqlBox, MONO, PracticeDatabase, SavedQueriesPanel, SqlRunBox } from './sql/SqlParts';
 import { roomForQuickBox } from './sql/quickBoxLayout';
 import QuickPracticePanel from './practice/QuickPracticePanel';
-import GuessFirst from './learning/GuessFirst';
 import { StudyStrip, ToolButton } from './learning/StudyStrip';
 import StorageRoundedIcon from '@mui/icons-material/StorageRounded';
 import BookmarkRoundedIcon from '@mui/icons-material/BookmarkRounded';
@@ -96,7 +99,7 @@ import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import { SqlQueriesContext, SqlTopicContext } from './sql/sqlContext';
 import PathLearn from './app/PathLearn';
 import { useTracksProgress } from '../services/account';
-import { useCourseNav } from '../game/useCourseNav';
+import { useCourseNav, useLessonOpen } from '../game/useCourseNav';
 import { courseById } from '../game/courses';
 
 const SQL_COURSE = courseById('sql');
@@ -143,7 +146,7 @@ const PRACTICE_HINTS: Partial<Record<SqlCheckKey, string>> = {
 type Section =
     | 'definition' | 'problem' | 'idea' | 'howItWorks' | 'analogy' | 'breaks' | 'exampleNotes' | 'keyPoints' | 'dialects'
     | 'spot' | 'approach' | 'solutionNotes' | 'edgeCases'
-    | 'mistakes' | 'practice' | 'interviewAnswer' | 'followUps' | 'answers';
+    | 'mistakes' | 'myths' | 'practice' | 'interviewAnswer' | 'followUps' | 'answers';
 
 /** Follow-ups as question, answer, question, answer… */
 const followUpTexts = (topic: SqlTopic) => topic.followUps.flatMap(followUp => [followUp.q, followUp.a]);
@@ -167,6 +170,7 @@ const learnSections = (topic: SqlTopic, answers: SqlTopicAnswers | undefined): [
             ['exampleNotes', topic.examples.map(example => example.note ?? '')],
             ['keyPoints', topic.keyPoints],
             ['mistakes', topic.mistakes],
+            ['myths', mythTexts(topic.myths)],
             ['dialects', topic.dialects ?? []],
         ] satisfies [Section, string[]][])
         : ([
@@ -176,6 +180,7 @@ const learnSections = (topic: SqlTopic, answers: SqlTopicAnswers | undefined): [
             ['solutionNotes', solutionNotes(topic)],
             ['edgeCases', topic.edgeCases],
             ['mistakes', topic.mistakes],
+            ['myths', mythTexts(topic.myths)],
             ['dialects', topic.dialects ?? []],
         ] satisfies [Section, string[]][])),
     ['practice', practiceTexts(topic)],
@@ -297,12 +302,12 @@ const TableNames = ({ names }: { names: string[] }) => (
 const LessonBody = ({ topic, accent, marked }: { topic: SqlLesson; accent: string; marked: Marked }) => (
     <>
         <Block title="Why you need it">
-            <Typography variant="body1"><ProseText value={marked('problem')[0]} /></Typography>
+            <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}><ProseText value={marked('problem')[0]} /></Typography>
         </Block>
         <TopicAnimation topicId={topic.id} accent={accent} />
         <PictureIt topic={topic} />
         <Block title="The idea">
-            <Typography variant="body1"><ProseText value={marked('idea')[0]} /></Typography>
+            <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}><ProseText value={marked('idea')[0]} /></Typography>
         </Block>
         {topic.syntax && (
             <Block title="The shape of it">
@@ -346,6 +351,7 @@ const LessonBody = ({ topic, accent, marked }: { topic: SqlLesson; accent: strin
         </Callout>
         <Callout kind="mistakes">
             <Bullets items={marked('mistakes')} marker={MISTAKE} />
+            <MythCheck myths={marked('myths')} />
         </Callout>
         {topic.dialects && topic.dialects.length > 0 && (
             <Block title="In other databases">
@@ -365,7 +371,7 @@ const ProblemBody = ({ topic, accent, marked }: { topic: SqlProblem; accent: str
                 <TableNames names={topic.tables} />
             </Block>
             <Block title="What it really tests">
-                <Typography variant="body1"><ProseText value={marked('problem')[0]} /></Typography>
+                <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}><ProseText value={marked('problem')[0]} /></Typography>
             </Block>
             <Block title={`The pattern: ${topic.pattern}`}>
                 <Typography variant="body1"><ProseText value={marked('spot')[0]} /></Typography>
@@ -402,6 +408,7 @@ const ProblemBody = ({ topic, accent, marked }: { topic: SqlProblem; accent: str
                     </Block>
                     <Callout kind="mistakes">
                         <Bullets items={marked('mistakes')} marker={MISTAKE} />
+                        <MythCheck myths={marked('myths')} />
                     </Callout>
                     {topic.dialects && topic.dialects.length > 0 && (
                         <Block title="In other databases">
@@ -456,7 +463,7 @@ const TopicCard = ({
     const steps = topic.kind === 'lesson' ? LESSON_STEPS : PROBLEM_STEPS;
     const answers = useLoaded(loadAnswers, expanded)?.[topic.id];
     const where = useMemo(() => ({ topicId: topic.id, topicName: topic.name }), [topic]);
-    const marked = useMemo(() => segmentSections(sqlGlossary, learnSections(topic, answers)), [topic, answers]);
+    const marked = useMemo(() => segmentSections(sqlGlossary, learnSections(topic, answers), topic.id), [topic, answers]);
 
     return (
         <Accordion
@@ -505,7 +512,6 @@ const TopicCard = ({
                         <SectionLabel color={accent} id={stepId(topic.id, 1)}>{steps[0].label}</SectionLabel>
                         <Stack spacing={3} sx={{ maxWidth: 760 }}>
                             {/* Problems already start with "solve it yourself first". */}
-                            {topic.kind === 'lesson' && <GuessFirst topic={topic} accent={accent} glossary={sqlGlossary} />}
                             <QuoteBox accent={accent}>
                                 <Typography variant="body1">
                                     <strong style={{ color: accent }}>{topic.kind === 'lesson' ? 'Definition.' : 'The question.'}</strong>{' '}
@@ -640,7 +646,7 @@ const TopicCard = ({
 // ============ REVISE MODE: THE COMPACT CARD ============
 
 const ReviseCard = ({ topic, accent, onOpen }: { topic: SqlTopic; accent: string; onOpen: () => void }) => {
-    const marked = useMemo(() => segmentSections(sqlGlossary, reviseSections(topic)), [topic]);
+    const marked = useMemo(() => segmentSections(sqlGlossary, reviseSections(topic), topic.id), [topic]);
     const example = topic.kind === 'lesson' ? topic.examples[0] : topic.solution;
     return (
         <GlossaryTopic topicId={topic.id}>
@@ -799,6 +805,10 @@ const SqlPage = () => {
     const [quickBoxOpen, setQuickBoxOpen] = useState(false);
 
     const { openTopic: showTopic } = useCourseNav(SQL_COURSE);
+    // With a lesson open, the page starts with the lesson, not with the course's introduction.
+    const lessonOpen = useLessonOpen();
+    // On a phone, an open lesson gets one slim row (text size, glossary) in place of the course header.
+    const slimHeader = lessonOpen && mode === 'learn';
     const openTopic = (topicId: string) => {
         changeMode('learn');
         showTopic(topicId);
@@ -838,7 +848,7 @@ const SqlPage = () => {
     const noMatches = (
         <Box sx={{ p: 2.5, borderRadius: 2, border: '1px dashed rgba(255,255,255,0.15)' }}>
             <Typography variant="body2" color="text.secondary">
-                No topics here match these filters.
+                No lessons here match these filters.
             </Typography>
             <Button onClick={clearFilters} sx={{ minHeight: TAP, mt: 1, px: 1, textTransform: 'none', fontWeight: 700 }}>
                 Clear filters
@@ -853,7 +863,8 @@ const SqlPage = () => {
                     {/* With the quick query box open on a wide screen, the page narrows beside it rather than under it. */}
                     <Box sx={{ width: '100%', maxWidth: 940, mx: 'auto', minWidth: 0, ...(quickBoxOpen && roomForQuickBox(940)) }}>
                         {/* ---- HEADER ---- */}
-                        <Box sx={{ mb: 3 }}>
+                        {slimHeader && <LessonToolbar textSize={textSize} onTextSize={changeTextSize} onGlossary={() => setGlossaryOpen(true)} />}
+                        <Box sx={{ mb: 3, ...hiddenOnPhone(slimHeader) }}>
                             <Stack
                                 direction={{ xs: 'column', sm: 'row' }}
                                 justifyContent="space-between"
@@ -871,20 +882,24 @@ const SqlPage = () => {
                                 </Box>
                                 <TextSizeControl value={textSize} onChange={changeTextSize} />
                             </Stack>
-                            <Typography
-                                variant="h2"
-                                fontWeight="bold"
-                                sx={{ color: 'text.primary', mb: 1, fontSize: { xs: `${2 * t.heading}rem`, sm: `${3 * t.heading}rem` } }}
-                            >
-                                Ask the data anything
-                            </Typography>
-                            <Typography variant="body1" color="text.secondary">
-                                SQL from your first SELECT to interview problems — one small step at a time, with every example runnable right here.
-                            </Typography>
+                            {!lessonOpen && (
+                                <>
+                                    <Typography
+                                        variant="h2"
+                                        fontWeight="bold"
+                                        sx={{ color: 'text.primary', mb: 1, fontSize: { xs: `${2 * t.heading}rem`, sm: `${3 * t.heading}rem` } }}
+                                    >
+                                        Ask the data anything
+                                    </Typography>
+                                    <Typography variant="body1" color="text.secondary">
+                                        SQL from your first SELECT to interview problems — one small step at a time, with every example runnable right here.
+                                    </Typography>
+                                </>
+                            )}
                         </Box>
 
                         {/* ---- MODE, AND THE GLOSSARY ---- */}
-                        <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mb: 3 }}>
+                        <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mb: 3, ...hiddenOnPhone(slimHeader, 'flex') }}>
                             <ToggleButtonGroup
                                 exclusive
                                 value={mode}
@@ -932,7 +947,7 @@ const SqlPage = () => {
                             {tracking && (
                             <Stack direction="row" spacing={4} sx={{ mb: 3 }} flexWrap="wrap" useFlexGap>
                                 {[
-                                    { value: confident, total: allSqlTopics.length, label: 'TOPICS CONFIDENT', color: CONFIDENT },
+                                    { value: confident, total: allSqlTopics.length, label: 'LESSONS CONFIDENT', color: CONFIDENT },
                                     { value: checksDone, total: allSqlTopics.length * SQL_CHECK_KEYS.length, label: 'CHECKS PASSED', color: CYAN },
                                     { value: mustConfident, total: mustTopics.length, label: 'MUST-KNOW CONFIDENT', color: MUST },
                                 ].map(stat => (
@@ -1037,7 +1052,7 @@ const SqlPage = () => {
                             {tracking && (
                             <Stack direction="row" spacing={4} sx={{ mb: 3 }} flexWrap="wrap" useFlexGap>
                                 {[
-                                    { value: confident, total: allSqlTopics.length, label: 'TOPICS CONFIDENT', color: CONFIDENT },
+                                    { value: confident, total: allSqlTopics.length, label: 'LESSONS CONFIDENT', color: CONFIDENT },
                                     { value: checksDone, total: allSqlTopics.length * SQL_CHECK_KEYS.length, label: 'CHECKS PASSED', color: CYAN },
                                     { value: mustConfident, total: mustTopics.length, label: 'MUST-KNOW CONFIDENT', color: MUST },
                                 ].map(stat => (
@@ -1133,10 +1148,10 @@ const SqlPage = () => {
                                     type="search"
                                     value={query}
                                     onChange={event => setQuery(event.target.value)}
-                                    placeholder="Search topics"
+                                    placeholder="Search lessons"
                                     sx={{ width: { xs: '100%', sm: 280 }, '& .MuiInputBase-root': { minHeight: TAP } }}
                                     slotProps={{
-                                        htmlInput: { 'aria-label': 'Search topics by name, definition or pattern' },
+                                        htmlInput: { 'aria-label': 'Search lessons by name, definition or pattern' },
                                         input: {
                                             startAdornment: (
                                                 <InputAdornment position="start">

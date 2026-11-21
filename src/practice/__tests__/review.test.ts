@@ -1,4 +1,4 @@
-// Guess first, and the cards of a review, built from the real lessons.
+// Learning before questions, and the cards of a review, built from the real lessons.
 
 import { describe, expect, it } from 'vitest';
 import { allFoundationTopics } from '../../data/foundations';
@@ -10,15 +10,15 @@ import { sqlGlossary } from '../../utils/sqlGlossary';
 import { systemDesignGlossary } from '../../utils/glossary';
 import type { GlossarySource } from '../../utils/glossaryEngine';
 import type { Course } from '../../services/progress';
-import { buildLearnSession, buildSession, guessCard, interviewCard, lessonText, type AnyTopic, type PracticeGlossary } from '../build';
-import { isTeaching, type MistakeCard, type PracticeCard } from '../cards';
+import { buildLearnSession, buildSession, interviewCard, lessonText, mistakeCards, sentencesOf, type AnyTopic, type PracticeGlossary } from '../build';
+import { isTeaching, type PracticeCard } from '../cards';
 import { CARDS_PER_LESSON, buildReview, pickForLesson } from '../review';
 import type { DueLesson } from '../../game/review';
 
 const adapt = <T extends AnyTopic>(glossary: GlossarySource<T>): PracticeGlossary => ({
     terms: glossary.terms,
     getTerm: id => glossary.getTerm(id),
-    segmentText: text => glossary.segmentText(text),
+    segmentText: (text, topicId) => glossary.segmentText(text, topicId),
     termsIn: topic => glossary.termsInTopic(topic as T),
     newWordsIn: topic => glossary.newWordsForTopic(topic as T),
 });
@@ -36,25 +36,43 @@ const cardsOf = ({ course, topic, glossary }: (typeof all)[number]): PracticeCar
     ...interviewCard(lessonText(topic)),
 ];
 
-describe('guess first', () => {
-    it('every lesson has a guess: true or false statements from the lesson, never the "spot the mistake" ones', () => {
+describe('learn first, then questions', () => {
+    it('never asks before it has taught: every session opens with teaching, and no card is a guess', () => {
         for (const { course, topic, glossary } of all) {
-            const lesson = lessonText(topic);
-            const [guess] = guessCard(lesson);
-            expect(guess, topic.id).toBeDefined();
-            const mistakeCard = buildSession(course, topic, { glossary, sqlAnswers }).find((c): c is MistakeCard => c.kind === 'mistake');
-            for (const statement of guess.statements) {
-                expect(statement.isTrue ? lesson.facts : lesson.mistakes, topic.id).toContain(statement.text);
-                expect(mistakeCard?.options.map(o => o.text) ?? [], topic.id).not.toContain(statement.text);
-            }
+            const learn = buildLearnSession(course, topic, { glossary, sqlAnswers });
+            const quick = buildSession(course, topic, { glossary, sqlAnswers });
+            expect(isTeaching(learn[0]), topic.id).toBe(true);
+            expect(quick[0].kind, topic.id).toBe('idea');
+            for (const card of [...learn, ...quick]) expect(card.kind, topic.id).not.toBe('guess');
+            // A lesson's mistakes are only asked about once its "Common mistakes" part has been read.
+            const taught = learn.findIndex(c => c.kind === 'read' && c.part.slot === 'mistakes');
+            learn.forEach((card, i) => {
+                if (card.kind === 'mistake') expect(i, topic.id).toBeGreaterThan(taught);
+            });
         }
         // Builds every lesson's practice: give slower machines (like GitHub's) time.
     }, 60_000);
 
-    it('comes first in "Learn it step by step", not in the quick practice', () => {
-        const { course, topic, glossary } = all[0];
-        expect(buildLearnSession(course, topic, { glossary, sqlAnswers })[0].kind).toBe('guess');
-        expect(buildSession(course, topic, { glossary, sqlAnswers })[0].kind).toBe('idea');
+    it('"spot the mistake" is one of the lesson\'s false statements among its real key points, and two cards never share a statement', () => {
+        let lessonsWithTwo = 0;
+        for (const { topic } of all) {
+            const lesson = lessonText(topic);
+            const cards = mistakeCards(lesson);
+            expect(cards.length, topic.id).toBeLessThanOrEqual(2);
+            if (cards.length === 2) lessonsWithTwo++;
+            const seen: string[] = [];
+            for (const card of cards) {
+                expect(card.options.filter(o => o.mistake).length, topic.id).toBe(1);
+                expect(card.options.length, topic.id).toBeGreaterThanOrEqual(3);
+                for (const option of card.options) {
+                    expect(option.mistake ? lesson.myths.map(myth => myth.claim) : [...lesson.facts, ...sentencesOf(lesson.definition)], topic.id).toContain(option.text);
+                    expect(seen, topic.id).not.toContain(option.text);
+                    seen.push(option.text);
+                }
+            }
+        }
+        // Most lessons have enough key points, and a second false statement, for a second card.
+        expect(lessonsWithTwo).toBeGreaterThan(all.length / 2);
     });
 });
 

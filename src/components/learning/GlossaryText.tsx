@@ -6,8 +6,10 @@ import { SITE_LINK, type GlossaryTerm, type TextSegment } from '../../utils/glos
 import { CYAN, TAP } from './learning';
 import {
     GlossaryActionsContext,
+    GlossaryQuietContext,
     GlossaryTopicContext,
     useGlossaryActions,
+    useGlossaryQuiet,
     useGlossaryTopic,
     type GlossaryActions,
     type GlossaryOpenHow,
@@ -212,6 +214,14 @@ export const GlossaryTopic = ({ topicId, children }: { topicId: string; children
     <GlossaryTopicContext.Provider value={topicId}>{children}</GlossaryTopicContext.Provider>
 );
 
+/**
+ * Wraps the text of an answer choice. A tap on a choice has one job, choosing
+ * it: a word inside must not also open its explanation over the other choices.
+ */
+export const GlossaryQuiet = ({ children }: { children: ReactNode }) => (
+    <GlossaryQuietContext.Provider value>{children}</GlossaryQuietContext.Provider>
+);
+
 // One shared style rather than an sx per word: a card can hold a hundred of them.
 const Word = styled('span')({
     cursor: 'help',
@@ -225,10 +235,37 @@ const Word = styled('span')({
     '&:focus-visible': { outline: `2px solid ${CYAN}`, outlineOffset: 2, textDecorationColor: CYAN },
 });
 
+/** A word inside an answer choice: underlined only where a mouse can hover over it. */
+const QuietWord = styled('span')({
+    '@media (hover: hover)': {
+        textDecorationLine: 'underline',
+        textDecorationStyle: 'dotted',
+        textDecorationThickness: '1.5px',
+        textDecorationColor: 'rgba(255,255,255,0.45)',
+        textUnderlineOffset: '0.22em',
+    },
+});
+
 const GlossaryWord = ({ text, termId }: { text: string; termId: string }) => {
     const actions = useGlossaryActions();
     const topicId = useGlossaryTopic();
+    const quiet = useGlossaryQuiet();
     if (!actions) return <>{text}</>;
+
+    if (quiet) {
+        return (
+            <QuietWord
+                onPointerEnter={event => {
+                    if (event.pointerType === 'mouse') actions.show(event.currentTarget, termId, topicId, 'hover');
+                }}
+                onPointerLeave={event => {
+                    if (event.pointerType === 'mouse') actions.leave();
+                }}
+            >
+                {text}
+            </QuietWord>
+        );
+    }
 
     const onKeyDown = (event: KeyboardEvent<HTMLSpanElement>) => {
         if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -354,7 +391,7 @@ export const NewWordsBox = ({ topicId, accent }: { topicId: string; accent: stri
                     '&:focus-visible': { outline: `2px solid ${accent}`, outlineOffset: 2 },
                 }}
             >
-                New words in this topic ({words.length})
+                New words in this lesson ({words.length})
             </Button>
             <Collapse in={open} id={listId}>
                 <Box sx={{ mt: 1.25, p: { xs: 1.75, sm: 2 }, borderRadius: 2, bgcolor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>

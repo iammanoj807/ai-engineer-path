@@ -8,12 +8,22 @@ How to run, build and deploy the site, for anyone working on it or forking it. T
 npm install
 npm run dev        # http://localhost:5173/
 npm test           # lesson, animation, glossary and answer checks
-npm run build      # regenerates the path index, type-checks, builds to dist/
+npm run build      # regenerates the path index and lessons/, type-checks, builds to dist/
 ```
 
 `src/game/pathIndex.json` is a small index of topic names that the home page uses, so the first visit doesn't download every lesson. `npm run build` regenerates it, and a test fails if it is out of date (`npm run path-index` to fix).
 
 Every lesson has its own address, such as `/sql/group-by-one-result-row-per-group/` (`src/game/addresses.ts`). The same `npm run path-index` gives each new lesson its address in `src/game/lessonSlugs.json`, made from its name the first time. Commit that file, and never edit an address in it: renaming a lesson keeps the old address, so links and search results keep working.
+
+## The lessons as Markdown
+
+Every lesson is also a Markdown page in [`lessons/`](../lessons/README.md), so the whole course can be read on GitHub. The pages are written from the lesson data, never by hand:
+
+```bash
+npm run lessons    # rewrites lessons/ from src/data (npm run build does this too)
+```
+
+A test fails when a page is out of date, so run it after changing a lesson and commit the result. The pages hold everything except what needs the site: the animation, the practice game and the tap-to-explain words. The code is in `src/game/lessonBook.ts`.
 
 ## Where progress is saved
 

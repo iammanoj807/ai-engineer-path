@@ -12,9 +12,9 @@ describe('what the guide says', () => {
 
     it('says how many statements are true, which is not always three', () => {
         const mistake = (facts: number) =>
-            cardLine({ kind: 'mistake', id: 'm', options: [{ text: 'x', mistake: true }, ...Array.from({ length: facts }, () => ({ text: 'y', mistake: false }))] });
-        expect(mistake(2)).toBe('Two of these are true. Which one is a common mistake?');
-        expect(mistake(3)).toBe('Three of these are true. Which one is a common mistake?');
+            cardLine({ kind: 'mistake', id: 'm', why: 'z', options: [{ text: 'x', mistake: true }, ...Array.from({ length: facts }, () => ({ text: 'y', mistake: false }))] });
+        expect(mistake(2)).toBe('Two of these are true. Which one is false?');
+        expect(mistake(3)).toBe('Three of these are true. Which one is false?');
     });
 
     it('has two lines for fill the gap: typing, and choosing', () => {

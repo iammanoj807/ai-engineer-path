@@ -83,6 +83,98 @@ export const phase7Answers: Record<string, TopicAnswers> = {
             answer: `You describe a face to a sketch artist using just a few numbers. The encoder writes the description (the latent code) and the decoder is the artist who draws from it. A plain autoencoder lets the descriptions be anything, so a random description gives nonsense. A VAE also forces the descriptions to be tidy: every face's code must look like it came from the same simple, rounded cloud of possible codes (the KL term), so any random code from that cloud still gives a sensible face. That is what makes it a generator.\n\nWhy the images are blurry: the description is fuzzy on purpose, because each image maps to a small cloud of codes, not one exact point. The decoder has to draw a picture that works for all codes in that cloud, and when it is unsure about a detail, say exactly where an edge is, the safest drawing under its loss is the average of the possibilities, which looks blurred. Sharp but wrong would cost more than blurry but close.`,
         },
     },
+    'f7-t5': {
+        derive: {
+            answer: `Fix the generator, so the fakes have some distribution p_g. The discriminator wants to maximise\n\nE_data[log D(x)] + E_g[log(1 − D(x))] = ∫ [ p_data(x)·log D(x) + p_g(x)·log(1 − D(x)) ] dx.\n\nD can choose its output separately for every x, so maximise the bracket at each x on its own. Write a = p_data(x), b = p_g(x) and y = D(x): maximise a·log y + b·log(1 − y).\n\nDifferentiate and set to zero: a/y − b/(1 − y) = 0, so a(1 − y) = b·y, and y = a / (a + b).\n\nSo D*(x) = p_data(x) / (p_data(x) + p_g(x)). Where only real data lives it says 1; where only fakes live it says 0.\n\nWhen the generator is perfect, p_g = p_data, so D*(x) = 1/2 everywhere: the best possible judge can only guess. Put D* back into the objective and it becomes −log 4 plus twice the Jensen–Shannon divergence between the data and the fakes, which is why training the generator against a good discriminator pulls the two distributions together.`,
+        },
+        build: {
+            answer: `Two small networks: G turns one random number into one output, and D turns one number into a score. Each round, D takes one step (real → 1, fake → 0) and G takes one step (make D say "real" for its fakes).\n\nThe run below shows the game. The fakes start near 0, overshoot to 6.25, come back, and then wobble around the data's mean of 4. The spread ends a little too small (0.38 against 0.5), which is typical: a GAN finds it easier to place samples where the data is densest. The discriminator's average output on fakes goes to 0.50: it can no longer tell them from real numbers.`,
+            code: py`
+                import torch
+                import torch.nn as nn
+
+                torch.manual_seed(0)
+                real = lambda n: 4 + 0.5 * torch.randn(n, 1)            # real data: mean 4, spread 0.5
+                G = nn.Sequential(nn.Linear(1, 16), nn.ReLU(), nn.Linear(16, 1))    # noise -> fake number
+                D = nn.Sequential(nn.Linear(1, 16), nn.ReLU(), nn.Linear(16, 1))    # number -> score ("real" if > 0)
+                opt_g = torch.optim.Adam(G.parameters(), lr=1e-3)
+                opt_d = torch.optim.Adam(D.parameters(), lr=1e-3)
+                bce = nn.BCEWithLogitsLoss()
+                ones, zeros = torch.ones(64, 1), torch.zeros(64, 1)
+
+                for step in range(3001):
+                    # 1. train the discriminator: real -> 1, fake -> 0
+                    fake = G(torch.randn(64, 1)).detach()               # detach: this step must not change G
+                    loss_d = bce(D(real(64)), ones) + bce(D(fake), zeros)
+                    opt_d.zero_grad(); loss_d.backward(); opt_d.step()
+
+                    # 2. train the generator: make D say "real" for fakes
+                    loss_g = bce(D(G(torch.randn(64, 1))), ones)
+                    opt_g.zero_grad(); loss_g.backward(); opt_g.step()
+
+                    if step % 500 == 0:
+                        with torch.no_grad():
+                            x = G(torch.randn(5000, 1))
+                            p = torch.sigmoid(D(x)).mean().item()
+                        print(f"step {step:4d}  fake mean {x.mean():5.2f}  spread {x.std():4.2f}  D(fake) {p:.2f}")
+                # step    0  fake mean  0.03  spread 0.28  D(fake) 0.53
+                # step  500  fake mean  6.25  spread 0.79  D(fake) 0.38
+                # step 1000  fake mean  4.27  spread 0.45  D(fake) 0.49
+                # step 1500  fake mean  4.31  spread 0.43  D(fake) 0.48
+                # step 2000  fake mean  3.86  spread 0.37  D(fake) 0.51
+                # step 2500  fake mean  4.19  spread 0.41  D(fake) 0.49
+                # step 3000  fake mean  4.04  spread 0.38  D(fake) 0.50
+            `,
+        },
+        break: {
+            answer: `Two bumps, one D step per G step: the GAN covers both. Over five seeds, between 46% and 58% of the fakes land on the left bump, close to the right answer of 50%. But only 77% to 89% of the fakes are near a bump at all: the rest fall in the empty gap between them. The generator is a smooth function of its noise, so to reach both bumps it has to pass through the space in between. Real GANs show the same thing as odd in-between images.\n\n20 D steps per G step: the discriminator stays ahead (its average output on fakes drops to about 0.35), and the generator gives up one bump. In two of three runs 100% of the fakes land on the left bump and none on the right; in the third, 81%. That is mode collapse: the fakes that remain look fine one by one, but half of the data's variety is gone.\n\nSo balance matters. Too weak a discriminator teaches nothing; one that runs far ahead can push the generator into a corner. Much of the practical work on GANs (other losses, limits on the discriminator, tricks that let it compare whole batches) is about keeping the two in step.`,
+            code: py`
+                import torch
+                import torch.nn as nn
+
+                def run(d_steps, seed, rounds):
+                    torch.manual_seed(seed)
+                    def real(n):                                         # two bumps: half near -2, half near +2
+                        side = torch.randint(0, 2, (n, 1)) * 4.0 - 2.0
+                        return side + 0.3 * torch.randn(n, 1)
+                    G = nn.Sequential(nn.Linear(1, 16), nn.ReLU(), nn.Linear(16, 1))
+                    D = nn.Sequential(nn.Linear(1, 16), nn.ReLU(), nn.Linear(16, 1))
+                    opt_g = torch.optim.Adam(G.parameters(), lr=1e-3)
+                    opt_d = torch.optim.Adam(D.parameters(), lr=1e-3)
+                    bce = nn.BCEWithLogitsLoss()
+                    ones, zeros = torch.ones(64, 1), torch.zeros(64, 1)
+                    for step in range(rounds):
+                        for _ in range(d_steps):
+                            fake = G(torch.randn(64, 1)).detach()
+                            loss_d = bce(D(real(64)), ones) + bce(D(fake), zeros)
+                            opt_d.zero_grad(); loss_d.backward(); opt_d.step()
+                        loss_g = bce(D(G(torch.randn(64, 1))), ones)
+                        opt_g.zero_grad(); loss_g.backward(); opt_g.step()
+                    with torch.no_grad():
+                        x = G(torch.randn(5000, 1))
+                        left = (x < 0).float().mean().item()
+                        near = ((x + 2).abs() < 0.9).float().mean().item() + ((x - 2).abs() < 0.9).float().mean().item()
+                        return left, near, torch.sigmoid(D(x)).mean().item()
+
+                for seed in range(5):
+                    print("1 D step  ", [round(v, 2) for v in run(1, seed, 3000)])
+                for seed in range(3):
+                    print("20 D steps", [round(v, 2) for v in run(20, seed, 1000)])
+                # (share on the left bump, share near a bump, D's average output on fakes)
+                # 1 D step   [0.53, 0.84, 0.49]
+                # 1 D step   [0.52, 0.84, 0.49]
+                # 1 D step   [0.58, 0.77, 0.48]
+                # 1 D step   [0.5, 0.89, 0.49]
+                # 1 D step   [0.46, 0.87, 0.48]
+                # 20 D steps [0.81, 0.8, 0.36]
+                # 20 D steps [1.0, 1.0, 0.35]
+                # 20 D steps [1.0, 0.98, 0.33]
+            `,
+        },
+        explain: {
+            answer: `A forger prints banknotes and a bank clerk checks them. At first the forger's notes are terrible and the clerk rejects them at a glance. But each rejection tells the forger something: which detail gave the note away. So the next batch is a little better. The clerk, seeing better fakes, has to look more closely, and learns finer details too.\n\nIn a GAN the forger is the generator: it turns random noise into samples. The clerk is the discriminator: it gives each sample a probability of being real. The discriminator learns from labelled examples (real ones and fakes). The generator never sees real data at all: it learns only from the discriminator's verdict, by following the gradient that makes "real" more likely.\n\nBalance is the point where the forger's notes are distributed exactly like real ones. The clerk can then do no better than toss a coin, and says 0.5 for everything. Nobody can improve by changing only their own behaviour, so the game stops there.`,
+        },
+    },
     'f7-t2': {
         derive: {
             answer: `One step of the forward process adds a little noise: x_t = √(1 − β_t) · x_{t−1} + √β_t · ε_t, with ε_t ~ N(0, I) fresh each step. Write α_t = 1 − β_t and ᾱ_t = α₁ · α₂ · … · α_t.\n\nClaim: x_t = √ᾱ_t · x₀ + √(1 − ᾱ_t) · ε, with a single ε ~ N(0, I).\n\nProof by induction. For t = 1 it is the definition. Suppose it holds for t − 1: x_{t−1} = √ᾱ_{t−1} · x₀ + √(1 − ᾱ_{t−1}) · ε′. Then\nx_t = √α_t · x_{t−1} + √(1 − α_t) · ε_t\n= √(α_t ᾱ_{t−1}) · x₀ + √α_t · √(1 − ᾱ_{t−1}) · ε′ + √(1 − α_t) · ε_t.\n\nThe first term is √ᾱ_t · x₀, since α_t ᾱ_{t−1} = ᾱ_t. The two noise terms are independent Gaussians with mean 0, so their sum is a Gaussian whose variance is the sum of their variances:\nα_t (1 − ᾱ_{t−1}) + (1 − α_t) = α_t − α_t ᾱ_{t−1} + 1 − α_t = 1 − ᾱ_t.\nSo they can be replaced by one Gaussian √(1 − ᾱ_t) · ε. Done.\n\nWhy it matters: in training you can jump straight to any step t in one line, without simulating the t steps before it, so every training example picks a random t.`,
@@ -232,6 +324,98 @@ export const phase7Answers: Record<string, TopicAnswers> = {
         },
         explain: {
             answer: `Training a dog with treats. Nobody shows the dog the right move; it tries things, and some lead to treats. The hard part is credit assignment: the dog sits, rolls over, barks, and then gets a treat. Which of those earned it? If the treat comes several actions later, the dog has to work out which earlier choices led there.\n\nReinforcement learning has the same problem, often much worse: in chess, the reward (win or lose) comes after dozens of moves, and the agent must figure out which moves deserved the credit. Value functions solve it by passing value backwards: a state is worth the reward it leads to, discounted by how far away it is, so good early moves gradually learn that they were good.`,
+        },
+    },
+    'f7-t6': {
+        derive: {
+            answer: `First move: reward 0, then the best the next square offers.\ny = r + γ·max Q_target(s′, ·) = 0 + 0.9 × 0.7 = 0.63.\nLoss = (Q(s, a) − y)² = (0.4 − 0.63)² = 0.0529.\nThe network's value is below the target, so the update pushes Q(s, a) up, towards 0.63.\n\nSecond move: it reaches the goal, so the episode is over and there is no next square to add.\ny = r = 1.\nLoss = (0.4 − 1)² = 0.36.\nAgain Q(s, a) is pushed up, towards 1.\n\nNotice what the first target is made of: another estimate. The network learns from its own guesses about the next square, and only the moves into the goal bring in a real number from the environment. That is how value spreads backwards from the goal, one square per round of learning, and it is why a wrong estimate can be copied from square to square.`,
+        },
+        build: {
+            answer: `The environment is a function step(s, a) that returns the next square, the reward and whether the episode has ended. The agent acts with ε-greedy, stores every move in the replay buffer, and after each move trains on 32 random moves from it. The targets come from the frozen copy, which is refreshed every 100 steps.\n\nAfter 300 episodes the greedy path from the start is [0, 4, 5, 6, 10, 11, 15]: 6 moves, the fewest possible on a 4 × 4 grid. The network values the start at 0.59, and the exact answer is 0.9⁵ = 0.59049, because the single reward arrives on the sixth move and is discounted five times.\n\nA table would solve this small grid just as well. The point of the network is that nothing in this code depends on the number of states: swap the 16 numbers for the pixels of a game screen and a bigger network, and it is the method that learned Atari games.`,
+            code: py`
+                import random
+                import torch
+                import torch.nn as nn
+
+                N, GOAL = 4, 15                                         # a 4 x 4 grid, goal in the bottom-right corner
+                MOVES = [(-1, 0), (1, 0), (0, -1), (0, 1)]              # up, down, left, right
+
+                def step(s, a):                                         # the environment: (next state, reward, done)
+                    r, c = divmod(s, N)
+                    r = min(N - 1, max(0, r + MOVES[a][0]))             # a move into a wall leaves you where you are
+                    c = min(N - 1, max(0, c + MOVES[a][1]))
+                    s2 = r * N + c
+                    return s2, float(s2 == GOAL), s2 == GOAL
+
+                one_hot = lambda s: torch.eye(N * N)[s]                 # a state as 16 numbers
+
+                def train(gamma=0.9, explore=True, seed=0):
+                    random.seed(seed); torch.manual_seed(seed)
+                    q = nn.Sequential(nn.Linear(N * N, 32), nn.ReLU(), nn.Linear(32, 4))       # Q(s, ·): one value per move
+                    target = nn.Sequential(nn.Linear(N * N, 32), nn.ReLU(), nn.Linear(32, 4))  # the frozen copy
+                    target.load_state_dict(q.state_dict())
+                    opt = torch.optim.Adam(q.parameters(), lr=1e-3)
+                    buffer, steps, wins = [], 0, 0
+                    for episode in range(300):
+                        s = 0
+                        eps = max(0.05, 1 - episode / 200) if explore else 0.0                 # explore less over time
+                        for _ in range(50):
+                            a = random.randrange(4) if random.random() < eps else q(one_hot(s)).argmax().item()
+                            s2, r, done = step(s, a)
+                            buffer.append((s, a, r, s2, done)); buffer[:] = buffer[-5000:]     # the replay buffer
+                            s, steps = s2, steps + 1
+
+                            batch = random.sample(buffer, min(32, len(buffer)))                # learn from random old moves
+                            S, A, R, S2, Dn = zip(*batch)
+                            S, S2 = torch.stack([one_hot(x) for x in S]), torch.stack([one_hot(x) for x in S2])
+                            A, R, Dn = torch.tensor(A), torch.tensor(R), torch.tensor(Dn, dtype=torch.float32)
+                            with torch.no_grad():                                              # the target is not trained
+                                y = R + gamma * target(S2).max(dim=1).values * (1 - Dn)       # just r when the episode ended
+                            loss = nn.functional.mse_loss(q(S).gather(1, A[:, None]).squeeze(1), y)
+                            opt.zero_grad(); loss.backward(); opt.step()
+                            if steps % 100 == 0:
+                                target.load_state_dict(q.state_dict())                         # refresh the frozen copy
+                            if done:
+                                wins += 1
+                                break
+
+                    s, path = 0, [0]                                    # follow the learned values from the start
+                    for _ in range(20):
+                        s, _, done = step(s, q(one_hot(s)).argmax().item()); path.append(s)
+                        if done: break
+                    return path, q(one_hot(0)).max().item(), wins
+
+                path, q_start, wins = train()
+                print("greedy path:", path, "in", len(path) - 1, "moves")
+                print("Q(start, best move):", round(q_start, 2), "| exact value 0.9 ** 5 =", round(0.9 ** 5, 2))
+                # greedy path: [0, 4, 5, 6, 10, 11, 15] in 6 moves
+                # Q(start, best move): 0.59 | exact value 0.9 ** 5 = 0.59
+            `,
+        },
+        break: {
+            answer: `γ = 1: in all five runs the greedy path fails to reach the goal within 20 moves, and Q(start) comes out between 1.22 and 1.51, although no return can be more than 1.\n\nTwo things go wrong together. With no discount, every square that can reach the goal is truly worth exactly 1, so the values no longer say "nearer is better": the agent has no reason to prefer a short route, or to stop wandering. And the max in the target picks the largest of four noisy estimates, which is too high on average. With γ below 1 each round of learning shrinks such errors; with γ = 1 nothing shrinks them, and they are copied from square to square. (The "Go deeper" of the previous lesson shows this shrinking factor is exactly γ.)\n\nε = 0, back with γ = 0.9: in two of five runs the agent never reaches the goal once in 300 episodes, and Q(start) stays at 0.00. It has never seen a reward, so there is nothing to learn from. The other three runs are lucky: their random starting weights happen to walk the agent to the goal, and two of them then learn the right value, 0.59.\n\nSo exploration is what turns "lucky or not" into "always". The agent can only learn the value of moves it has actually tried.`,
+            code: py`
+                # The same train() as in Build, called with different settings.
+                for seed in range(5):
+                    path, q_start, wins = train(gamma=1.0, seed=seed)
+                    print(f"gamma 1,   seed {seed}: reached the goal: {path[-1] == GOAL}, Q(start) = {q_start:.2f}")
+                for seed in range(5):
+                    path, q_start, wins = train(explore=False, seed=seed)
+                    print(f"epsilon 0, seed {seed}: goal reached in {wins} of 300 training episodes, Q(start) = {q_start:.2f}")
+                # gamma 1,   seed 0: reached the goal: False, Q(start) = 1.39
+                # gamma 1,   seed 1: reached the goal: False, Q(start) = 1.42
+                # gamma 1,   seed 2: reached the goal: False, Q(start) = 1.45
+                # gamma 1,   seed 3: reached the goal: False, Q(start) = 1.51
+                # gamma 1,   seed 4: reached the goal: False, Q(start) = 1.22
+                # epsilon 0, seed 0: goal reached in 50 of 300 training episodes, Q(start) = 0.06
+                # epsilon 0, seed 1: goal reached in 0 of 300 training episodes, Q(start) = 0.00
+                # epsilon 0, seed 2: goal reached in 245 of 300 training episodes, Q(start) = 0.59
+                # epsilon 0, seed 3: goal reached in 0 of 300 training episodes, Q(start) = 0.00
+                # epsilon 0, seed 4: goal reached in 279 of 300 training episodes, Q(start) = 0.59
+            `,
+        },
+        explain: {
+            answer: `A chess player keeps a diary of every position she has played and the move she made. That diary is the replay buffer. In the evening she doesn't only think about today's game: she opens the diary at random pages and studies old positions again. Random pages matter. If she only studied the last game, ten positions in a row would be nearly the same, and she would over-learn that one situation and forget the others.\n\nTo grade a move she needs a view of how good the resulting position was. She uses last week's notes for that, and doesn't rewrite them while she studies. Those notes are the target network: a frozen copy of what she knew a little while ago. If she graded against notes she was changing at the same moment, the standard would shift under her with every move she looked at, and her opinions could spiral instead of settling.\n\nEvery so often she replaces the old notes with her current understanding, and starts again. That is the copy every 100 steps.`,
         },
     },
     'f7-t4': {

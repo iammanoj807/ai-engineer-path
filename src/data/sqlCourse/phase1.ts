@@ -18,7 +18,7 @@ export const sqlPhase1: SqlPhase = {
             priority: 'must',
             definition: 'SELECT lists the columns (or calculations) you want in the result, and FROM names the table they come from.',
             problem: 'A table can have dozens of columns, and you usually need two or three. You also often need values that are not stored at all — a salary after a raise, a name and city joined into one label. SELECT lets you choose and calculate exactly the columns you need.',
-            idea: 'After SELECT you write a list, separated by commas. Each item can be a column name (`salary`), a calculation (`salary + 5000`), or a fixed value (`\'hello\'`). AS gives an item a new name in the result, called an alias. `SELECT *` means every column, in table order. The rows come from the table named after FROM, and every row of that table is used, because there is no filter yet.',
+            idea: 'After SELECT you write a list, separated by commas. Each item can be a column name (`salary`), a calculation (`salary + 5000`), or a fixed value (`\'hello\'`). AS gives an item a new name in the result, called an alias. `SELECT *` means every column, in table order.\n\nThe rows come from the table named after FROM, and every row of that table is used, because there is no filter yet.',
             analogy: 'Ordering a set menu but saying "just the starter and the dessert, please". FROM is the menu you are ordering from; SELECT is the courses you want on your plate, in the order you name them.',
             breaks: 'A waiter can only bring what is on the menu. SELECT can also bring things that don\'t exist in the table, because it can calculate new values from the columns on the fly.',
             syntax: code`
@@ -85,13 +85,16 @@ export const sqlPhase1: SqlPhase = {
                 'Using double quotes for text. \'London\' is text; "London" means a column called London in PostgreSQL.',
                 'Using an alias in WHERE in the same query. WHERE runs before SELECT, so the alias doesn\'t exist yet (Unit 2 explains why).',
             ],
+            myths: [
+                { claim: 'An alias defined in SELECT can be used in the WHERE of the same query.', truth: 'WHERE runs before SELECT, so the alias does not exist yet. Repeat the calculation in WHERE instead.' },
+            ],
             dialects: [
                 'Joining text: PostgreSQL and SQLite use `||`; MySQL uses `CONCAT(a, b)`; SQL Server uses `+` or `CONCAT`. `CONCAT` works almost everywhere.',
                 'AS is optional for column aliases in every major database (`salary + 5000 after_raise` works), but writing AS is clearer.',
             ],
-            interviewAnswer: 'SELECT defines the columns of the result — stored columns, expressions, or constants — and FROM names the source table. I alias every calculated column with AS so the output is readable, and I avoid SELECT star in production queries: naming columns is clearer, it reads less data, and the query doesn\'t silently change when someone adds a column.',
+            interviewAnswer: 'SELECT defines the columns of the result — stored columns, expressions, or constants — and FROM names the source table. I alias every calculated column with AS, so the output is readable. I avoid SELECT star in production queries: naming the columns is clearer, it reads less data, and the query doesn\'t silently change when someone adds a column.',
             followUps: [
-                { q: 'Why avoid SELECT * in production code?', a: 'It reads columns you don\'t need, can stop the database using a covering index, and the result changes shape when a column is added — which can break the code that reads it.' },
+                { q: 'Why avoid SELECT * in production code?', a: 'It reads columns you don\'t need, and it can stop the database using a covering index. The result also changes shape when a column is added, which can break the code that reads it.' },
                 { q: 'Can you SELECT without FROM?', a: 'Yes in SQLite, PostgreSQL, MySQL and SQL Server: `SELECT 2 + 3;` returns 5. Oracle needs `FROM dual`.' },
             ],
             practice: {
@@ -113,7 +116,7 @@ export const sqlPhase1: SqlPhase = {
             priority: 'must',
             definition: 'WHERE keeps only the rows for which a condition is true, using comparisons such as =, <>, <, > and the words AND, OR and NOT.',
             problem: 'Tables hold every row ever stored, and you almost always want a slice: one department, orders over £100, everyone hired this year. WHERE is how you say which rows count.',
-            idea: 'A condition is a statement about a row that is either true or false, like `salary > 60000`. The database checks it against every row and keeps the rows where it is true. You can combine conditions: AND needs both to be true, OR needs at least one, and NOT flips true and false. Comparisons are `=`, `<>` (not equal; `!=` also works), `<`, `<=`, `>` and `>=`. Text values go in single quotes.',
+            idea: 'A condition is a statement about a row that is either true or false, like `salary > 60000`. The database checks it against every row and keeps the rows where it is true.\n\nYou can combine conditions: AND needs both to be true, OR needs at least one, and NOT flips true and false. Comparisons are `=`, `<>` (not equal; `!=` also works), `<`, `<=`, `>` and `>=`. Text values go in single quotes.',
             analogy: 'A bouncer with a list of rules. Every row walks up to the door; if it passes the rules, it gets in. "Over 18 AND on the guest list" is stricter than "over 18 OR on the guest list".',
             breaks: 'A bouncer answers yes or no. SQL has a third answer, unknown, which comes from NULL — and WHERE treats unknown the same as no. The NULL lesson next in this unit shows why that matters.',
             syntax: code`
@@ -189,6 +192,9 @@ export const sqlPhase1: SqlPhase = {
                 'Writing `==`. SQL uses a single `=` for comparing.',
                 'Writing `WHERE dept_id = 2 OR 3`. Each side of OR must be a full condition: `dept_id = 2 OR dept_id = 3`, or better, `dept_id IN (2, 3)`.',
             ],
+            myths: [
+                { claim: '`WHERE dept_id = 2 OR 3` keeps the rows of departments 2 and 3.', truth: 'Each side of OR must be a full condition: `dept_id = 2 OR dept_id = 3`, or shorter, `dept_id IN (2, 3)`.' },
+            ],
             dialects: [
                 'Text comparison: PostgreSQL is case-sensitive (\'Sales\' ≠ \'sales\'); MySQL and SQL Server usually are not, depending on settings; in SQLite `=` is case-sensitive but LIKE is not.',
             ],
@@ -216,7 +222,7 @@ export const sqlPhase1: SqlPhase = {
             priority: 'must',
             definition: 'IN checks a value against a list, BETWEEN checks a range (both ends included), and LIKE matches text against a pattern with % (any number of characters) and _ (exactly one).',
             problem: '`status = \'shipped\' OR status = \'pending\' OR status = \'cancelled\'` is long and easy to get wrong. Questions like "names starting with P" or "orders in February" come up all the time. These three words make such conditions short and readable.',
-            idea: 'IN: `status IN (\'shipped\', \'pending\')` is true when status equals any value in the list. BETWEEN: `amount BETWEEN 50 AND 100` means `amount >= 50 AND amount <= 100`, ends included. LIKE: `product_name LIKE \'P%\'` matches text starting with P; `%` stands for any number of characters (even none) and `_` for exactly one. Put NOT in front of any of them to flip it: NOT IN, NOT BETWEEN, NOT LIKE.',
+            idea: 'IN: `status IN (\'shipped\', \'pending\')` is true when status equals any value in the list.\nBETWEEN: `amount BETWEEN 50 AND 100` means `amount >= 50 AND amount <= 100`, ends included.\nLIKE: `product_name LIKE \'P%\'` matches text starting with P; `%` stands for any number of characters (even none) and `_` for exactly one.\nPut NOT in front of any of them to flip it: NOT IN, NOT BETWEEN, NOT LIKE.',
             analogy: 'IN is a guest list: is your name on it? BETWEEN is a height limit at a fair ride: between 1.2 m and 1.9 m, both ends allowed. LIKE is a crossword clue with blanks: "P _ _" fits Pen.',
             breaks: 'A guest list doesn\'t care about missing names, but SQL does: if the list after NOT IN contains a NULL, nothing matches at all. Unit 4 shows this trap.',
             syntax: code`
@@ -291,11 +297,14 @@ export const sqlPhase1: SqlPhase = {
                 'Writing BETWEEN with the bigger value first: `BETWEEN 100 AND 50` returns nothing.',
                 'Forgetting the % in LIKE: `LIKE \'P\'` only matches the exact text P.',
             ],
+            myths: [
+                { claim: '`LIKE \'P\'` matches every value that starts with P.', truth: 'Without a wildcard, LIKE matches only the exact text P. Write `LIKE \'P%\'` for the values that start with P.' },
+            ],
             dialects: [
                 'Case: LIKE ignores case in SQLite and usually in MySQL and SQL Server, but is case-sensitive in PostgreSQL, which has ILIKE for case-insensitive matching.',
                 'SQL Server also allows `[abc]` sets in LIKE patterns; PostgreSQL has full regular expressions with `~`.',
             ],
-            interviewAnswer: 'IN tests membership in a list and is shorthand for several ORs; BETWEEN tests an inclusive range; LIKE matches text patterns, where percent is any sequence of characters and underscore is exactly one. Two cautions: for timestamps I use a half-open range — greater-or-equal the start and less-than the next day — rather than BETWEEN, and a leading-wildcard LIKE can\'t use a B-tree index.',
+            interviewAnswer: 'IN tests membership in a list, and is shorthand for several ORs. BETWEEN tests an inclusive range. LIKE matches text patterns, where percent is any sequence of characters and underscore is exactly one. Two cautions: for timestamps I use a half-open range — greater-or-equal the start and less-than the next day — rather than BETWEEN, and a leading-wildcard LIKE can\'t use a B-tree index.',
             followUps: [
                 { q: 'Is BETWEEN inclusive?', a: 'Yes, at both ends. `BETWEEN 1 AND 5` includes 1 and 5.' },
                 { q: 'How would you find names containing an actual % sign?', a: 'Escape it: `LIKE \'%!%%\' ESCAPE \'!\'`. The ESCAPE character says the next % is a real percent sign.' },
@@ -318,9 +327,9 @@ export const sqlPhase1: SqlPhase = {
             kind: 'lesson',
             name: 'NULL: the missing value',
             priority: 'must',
-            definition: 'NULL means "no value" or "unknown"; any comparison with it — even `NULL = NULL` — is unknown rather than true, so you test for it with IS NULL and replace it with COALESCE.',
+            definition: 'NULL means "no value" or "unknown". Any comparison with it, even `NULL = NULL`, is unknown rather than true. So you test for it with IS NULL, and replace it with COALESCE.',
             problem: 'Real data has gaps: an employee with no manager, an order with no amount. NULL causes more wrong answers than anything else in SQL, because it doesn\'t behave like a normal value. Rows quietly vanish from filters, and sums and averages change, without any error message.',
-            idea: 'NULL is not zero and not empty text; it means "we don\'t know". So SQL uses three-valued logic: a condition can be true, false or unknown. `manager_id = NULL` is unknown for every row — even a NULL one, because "is this unknown thing equal to that unknown thing?" is itself unknown. WHERE keeps only true, so the query returns nothing. To test for NULL, use IS NULL or IS NOT NULL. Any arithmetic with NULL gives NULL (`10 + NULL` is NULL). `COALESCE(a, b, …)` returns the first value that isn\'t NULL, which is how you put in a default.',
+            idea: 'NULL is not zero and not empty text; it means "we don\'t know". So SQL uses three-valued logic: a condition can be true, false or unknown. `manager_id = NULL` is unknown for every row — even a NULL one, because "is this unknown thing equal to that unknown thing?" is itself unknown. WHERE keeps only true, so the query returns nothing.\n\nTo test for NULL, use IS NULL or IS NOT NULL. Any arithmetic with NULL gives NULL (`10 + NULL` is NULL). `COALESCE(a, b, …)` returns the first value that isn\'t NULL, which is how you put in a default.',
             analogy: 'A form with a blank box for "age". Is a blank age over 30? You can\'t say yes, and you can\'t say no — you just don\'t know. Are two blank ages equal? You don\'t know that either.',
             breaks: 'A person looking at two blank boxes might say "they\'re both blank, so they match". SQL never does that with `=`. Only IS NULL, IS NOT DISTINCT FROM, and grouping (GROUP BY puts all NULLs together) treat NULLs as alike.',
             syntax: code`
@@ -401,6 +410,9 @@ export const sqlPhase1: SqlPhase = {
                 'Forgetting that `<>` drops NULL rows: "everyone not in Sales" silently loses people with no department.',
                 'Replacing NULL with 0 in an average, which changes the answer. Decide what the gap really means first.',
             ],
+            myths: [
+                { claim: 'Replacing NULL with 0 leaves an average as it was.', truth: 'AVG skips NULLs, but it counts zeros. Turning a missing value into 0 pulls the average down, so first decide what the gap really means.' },
+            ],
             dialects: [
                 'NULL-safe equality: PostgreSQL and SQLite have `a IS NOT DISTINCT FROM b` (true when both are NULL); MySQL has `a <=> b`.',
                 'COALESCE works everywhere. MySQL also has `IFNULL(a, b)`, SQL Server has `ISNULL(a, b)`, and Oracle has `NVL(a, b)` — all for two arguments.',
@@ -431,7 +443,7 @@ export const sqlPhase1: SqlPhase = {
             priority: 'must',
             definition: 'ORDER BY sorts the result by one or more columns (ASC for smallest first, DESC for largest first), and LIMIT keeps only the first n rows, with OFFSET to skip some first.',
             problem: '"The 3 highest salaries", "the newest orders first", "page 2 of the results" — order matters to people. And without ORDER BY, the database may return rows in any order it likes, which can change from one run to the next.',
-            idea: 'ORDER BY salary DESC sorts biggest first. Add more columns to break ties: `ORDER BY salary DESC, name` sorts by salary, and people with the same salary by name. ASC (smallest first) is the default. LIMIT 3 keeps the first 3 rows after sorting. OFFSET 3 skips 3 rows first, which is how page 2 works when there are 3 rows per page. Without an ORDER BY, LIMIT just takes whichever rows come first — an arbitrary choice.',
+            idea: 'ORDER BY salary DESC sorts biggest first. Add more columns to break ties: `ORDER BY salary DESC, name` sorts by salary, and people with the same salary by name. ASC (smallest first) is the default.\n\nLIMIT 3 keeps the first 3 rows after sorting. OFFSET 3 skips 3 rows first, which is how page 2 works when there are 3 rows per page. Without an ORDER BY, LIMIT just takes whichever rows come first — an arbitrary choice.',
             analogy: 'A race. ORDER BY lines the runners up by finishing time; LIMIT 3 hands out gold, silver and bronze. OFFSET 3 LIMIT 3 is "who came 4th, 5th and 6th?".',
             breaks: 'In a race, two runners on the same time share a place. LIMIT doesn\'t: it cuts at exactly n rows, so if 3rd and 4th place tie, one of them is dropped without warning. Unit 5 (RANK) handles ties properly.',
             syntax: code`
@@ -522,11 +534,14 @@ export const sqlPhase1: SqlPhase = {
                 'Writing `ORDER BY salary, name DESC` and expecting both to be descending. DESC applies only to the column right before it.',
                 'Answering "top 3 salaries" with LIMIT 3 when there are ties.',
             ],
+            myths: [
+                { claim: 'LIMIT 3 always returns all of the three highest salaries, even when several people earn the same.', truth: 'With a tie at the cut-off, LIMIT 3 keeps three rows and silently drops the others on the same salary. Ask how ties should count before you answer.' },
+            ],
             dialects: [
                 'SQL Server uses `SELECT TOP 3 …`, or `OFFSET 3 ROWS FETCH NEXT 3 ROWS ONLY`. Oracle and the SQL standard use `FETCH FIRST 3 ROWS ONLY`. PostgreSQL, MySQL and SQLite use LIMIT.',
                 'NULL position: PostgreSQL and Oracle put NULLs last for ASC; SQLite, MySQL and SQL Server put them first. PostgreSQL and SQLite accept NULLS FIRST / NULLS LAST.',
             ],
-            interviewAnswer: 'ORDER BY sorts the final result, with ASC or DESC per column, and I always add a tiebreaker column so the order is deterministic. LIMIT and OFFSET then cut the sorted result. I point out two caveats: LIMIT ignores ties, so "top 3" may need RANK instead; and large OFFSETs are slow, so for deep pagination I use keyset pagination — WHERE id greater than the last id seen.',
+            interviewAnswer: 'ORDER BY sorts the final result, with ASC or DESC per column, and I always add a tiebreaker column so the order is deterministic. LIMIT and OFFSET then cut the sorted result. I point out two caveats. LIMIT ignores ties, so "top 3" may need RANK instead. And large OFFSETs are slow, so for deep pagination I use keyset pagination: WHERE id greater than the last id seen.',
             followUps: [
                 { q: 'Is the order of rows guaranteed without ORDER BY?', a: 'No. The database returns rows in whatever order is cheapest, and it can change with indexes, data or version.' },
                 { q: 'What is keyset pagination?', a: 'Instead of OFFSET, remember the last value you showed and ask for `WHERE order_id > 106 ORDER BY order_id LIMIT 3`. It uses the index, so page 1000 is as fast as page 1.' },
@@ -618,10 +633,13 @@ export const sqlPhase1: SqlPhase = {
                 'Using DISTINCT to hide duplicates caused by a wrong join. Fix the join instead (Unit 3).',
                 'Using DISTINCT when you actually need a count per value. That is GROUP BY.',
             ],
+            myths: [
+                { claim: 'DISTINCT is the right fix when a join returns the same row several times.', truth: 'Duplicates from a join usually mean the join itself is wrong, and DISTINCT only hides that. Fix the join condition instead.' },
+            ],
             dialects: [
                 'PostgreSQL has `DISTINCT ON (column)`, which keeps the first row for each value of that column — handy for "latest order per customer". Elsewhere, use ROW_NUMBER (Unit 5).',
             ],
-            interviewAnswer: 'SELECT DISTINCT removes duplicate rows from the result, comparing all the selected columns together, with NULLs treated as equal. I use it for lists of unique values, but if I find myself adding DISTINCT to fix unexpected duplicates, I go back and check the join, because DISTINCT can hide a fan-out that also breaks sums and counts.',
+            interviewAnswer: 'SELECT DISTINCT removes duplicate rows from the result, comparing all the selected columns together, with NULLs treated as equal. I use it for lists of unique values. But if I find myself adding DISTINCT to fix unexpected duplicates, I go back and check the join, because DISTINCT can hide a fan-out that also breaks sums and counts.',
             followUps: [
                 { q: 'DISTINCT or GROUP BY?', a: 'For a plain list of unique values they give the same result. Use GROUP BY when you also need aggregates per value, such as counts.' },
                 { q: 'Does DISTINCT apply to one column or the whole row?', a: 'The whole row of selected columns, always.' },
@@ -645,7 +663,7 @@ export const sqlPhase1: SqlPhase = {
             priority: 'must',
             definition: 'CASE WHEN condition THEN value … ELSE value END returns a value chosen by the first condition that is true, so a query can label, group or tidy values row by row.',
             problem: 'Data often needs sorting into buckets — salary bands, "open" or "closed" orders, "new" or "returning" customers — and those labels aren\'t stored anywhere. CASE builds them inside the query. It is also the key to counting several things in one pass (Unit 2) and to pivoting.',
-            idea: 'CASE is SQL\'s if-else. For each row, it checks the WHEN conditions from top to bottom and returns the THEN value of the first one that is true. If none is true, it returns the ELSE value — or NULL if there is no ELSE. CASE is an expression, so it can go anywhere a value can: in SELECT, WHERE, ORDER BY, GROUP BY, or inside SUM and COUNT. The short form, `CASE status WHEN \'shipped\' THEN …`, compares one column with several values.',
+            idea: 'CASE is SQL\'s if-else. For each row, it checks the WHEN conditions from top to bottom and returns the THEN value of the first one that is true. If none is true, it returns the ELSE value — or NULL if there is no ELSE.\n\nCASE is an expression, so it can go anywhere a value can: in SELECT, WHERE, ORDER BY, GROUP BY, or inside SUM and COUNT. The short form, `CASE status WHEN \'shipped\' THEN …`, compares one column with several values.',
             analogy: 'Sorting post into pigeonholes. You read the address, check the first rule ("London?"), then the next ("Leeds?"), and drop the letter into the first hole that fits. Anything that fits no rule goes into "other" — that is ELSE.',
             breaks: 'A postal worker can put one letter in two holes by mistake. CASE never does: it stops at the first true WHEN, so the order of the WHENs matters. Put the strictest test first.',
             syntax: code`
@@ -732,10 +750,13 @@ export const sqlPhase1: SqlPhase = {
                 'Forgetting END, which gives a syntax error.',
                 'Writing `CASE status WHEN NULL THEN …`. The short form uses =, so it never matches NULL. Use `CASE WHEN status IS NULL THEN …`.',
             ],
+            myths: [
+                { claim: 'The order of the WHEN branches in a CASE makes no difference to the result.', truth: 'CASE stops at the first WHEN that is true. With `>= 50000` written before `>= 80000`, the second branch is never reached: put the strictest test first.' },
+            ],
             dialects: [
                 'MySQL and SQLite also have `IF(condition, a, b)` / `IIF(condition, a, b)`, and SQL Server has IIF. CASE works everywhere, so learn CASE.',
             ],
-            interviewAnswer: 'CASE is SQL\'s conditional expression: it evaluates WHEN conditions in order and returns the first matching THEN value, or the ELSE value, or NULL if there is no ELSE. Because it is an expression it works anywhere — I use it to bucket values, to sort in a custom order, and most of all inside aggregates, like SUM of CASE WHEN status equals delivered THEN 1, to count several categories in a single pass.',
+            interviewAnswer: 'CASE is SQL\'s conditional expression: it evaluates WHEN conditions in order and returns the first matching THEN value, or the ELSE value, or NULL if there is no ELSE. Because it is an expression, it works anywhere. I use it to bucket values and to sort in a custom order. Most of all I use it inside aggregates, like SUM of CASE WHEN status equals delivered THEN 1, to count several categories in a single pass.',
             followUps: [
                 { q: 'What happens when no WHEN matches and there is no ELSE?', a: 'CASE returns NULL.' },
                 { q: 'How would you sort orders with pending first, then shipped, then the rest?', a: '`ORDER BY CASE status WHEN \'pending\' THEN 1 WHEN \'shipped\' THEN 2 ELSE 3 END`.' },
@@ -759,7 +780,7 @@ export const sqlPhase1: SqlPhase = {
             priority: 'should',
             definition: 'Functions such as UPPER, LENGTH, SUBSTR, ROUND and the date functions transform a value inside a query — one value in, one value out, for each row.',
             problem: 'Data rarely arrives in the shape you need: names in mixed case, prices that need rounding, dates you want as "2024-03" or as "how many days ago". Functions do these small transformations inside the query.',
-            idea: 'A function takes values in brackets and returns one value. Text: UPPER and LOWER change case, LENGTH counts characters, `SUBSTR(text, start, length)` cuts out a piece (counting from 1), TRIM removes spaces at the ends, and REPLACE swaps text. Numbers: `ROUND(x, 2)` rounds to 2 decimal places, ABS removes the minus sign. Dates are where databases differ most: SQLite uses strftime and julianday; PostgreSQL uses DATE_TRUNC, EXTRACT and date subtraction. These run once per row — unlike aggregate functions, which turn many rows into one (Unit 2).',
+            idea: 'A function takes values in brackets and returns one value.\nText: UPPER and LOWER change case, LENGTH counts characters, `SUBSTR(text, start, length)` cuts out a piece (counting from 1), TRIM removes spaces at the ends, and REPLACE swaps text.\nNumbers: `ROUND(x, 2)` rounds to 2 decimal places, ABS removes the minus sign.\nDates are where databases differ most: SQLite uses strftime and julianday; PostgreSQL uses DATE_TRUNC, EXTRACT and date subtraction.\n\nThese run once per row — unlike aggregate functions, which turn many rows into one (Unit 2).',
             analogy: 'Kitchen tools. A peeler (TRIM), a slicer (SUBSTR), a measuring spoon (ROUND). Each one takes one ingredient and gives back a changed version of it.',
             breaks: 'Kitchen tools are the same in every kitchen. Date functions are not the same in every database — so in an interview, say which database you are assuming, and the interviewer will usually accept any reasonable syntax.',
             syntax: code`
@@ -835,13 +856,16 @@ export const sqlPhase1: SqlPhase = {
                 'Rounding before summing, which adds up rounding errors. Sum first, round at the end.',
                 'Comparing dates stored as \'06/01/2024\' text — they compare as text, not as dates.',
             ],
+            myths: [
+                { claim: 'Rounding each value first and then adding them gives the same total as adding first.', truth: 'Every rounding adds a small error, and the errors pile up. Add the exact values first, and round once at the end.' },
+            ],
             dialects: [
                 'Month of a date: PostgreSQL `DATE_TRUNC(\'month\', d)` or `TO_CHAR(d, \'YYYY-MM\')`; MySQL `DATE_FORMAT(d, \'%Y-%m\')`; SQL Server `FORMAT(d, \'yyyy-MM\')`; SQLite `strftime(\'%Y-%m\', d)`.',
                 'Days between: PostgreSQL `d2 - d1` (dates); MySQL `DATEDIFF(d2, d1)`; SQL Server `DATEDIFF(day, d1, d2)`; SQLite `julianday(d2) - julianday(d1)`.',
                 'Year of a date: `EXTRACT(YEAR FROM d)` in PostgreSQL and MySQL; `YEAR(d)` in MySQL and SQL Server; `strftime(\'%Y\', d)` in SQLite.',
                 'Text length is `LENGTH` in most databases but `LEN` in SQL Server.',
             ],
-            interviewAnswer: 'Scalar functions transform one value per row: string functions like UPPER, SUBSTRING and TRIM, numeric ones like ROUND, and date functions for truncating to a month or finding the days between two dates. Date syntax is the least portable part of SQL, so in an interview I name the dialect I am assuming — usually PostgreSQL, with DATE_TRUNC and date subtraction — and I avoid wrapping indexed columns in functions inside WHERE, because that blocks the index.',
+            interviewAnswer: 'Scalar functions transform one value per row. There are string functions like UPPER, SUBSTRING and TRIM, numeric ones like ROUND, and date functions for truncating to a month or finding the days between two dates. Date syntax is the least portable part of SQL, so in an interview I name the dialect I am assuming: usually PostgreSQL, with DATE_TRUNC and date subtraction. I also avoid wrapping indexed columns in functions inside WHERE, because that blocks the index.',
             followUps: [
                 { q: 'What is the difference between a scalar function and an aggregate function?', a: 'A scalar function returns one value per row (UPPER, ROUND). An aggregate returns one value per group of rows (SUM, COUNT).' },
                 { q: 'How do you group orders by month in PostgreSQL?', a: '`GROUP BY DATE_TRUNC(\'month\', order_date)`, which turns every date into the first day of its month.' },

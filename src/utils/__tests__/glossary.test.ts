@@ -56,6 +56,16 @@ describe('finding words in text', () => {
         expect(segmentText('manifest_url').some(s => s.termId === 'manifest')).toBe(false);
     });
 
+    it('keeps a word plain in a lesson that uses it in its everyday sense', () => {
+        const tries = 'The payment service tries, and the card is declined.';
+        const marked = (text: string, topicId?: string) => segmentText(text, topicId).map(s => s.termId).filter(Boolean);
+        expect(marked(tries, 'sd4-t2')).not.toContain('trie');
+        expect(marked('Version 4: tries split across servers.', 'sd8-t9')).toContain('trie');
+        expect(termsInTopic(topic('sd4-t2'))).not.toContain('trie');
+        expect(segmentFirstMentions([tries], undefined, 'sd4-t2').flat().some(s => s.termId === 'trie')).toBe(false);
+        for (const id of glossaryTerms.flatMap(term => term.plainIn ?? [])) expect(findSystemDesignTopic(id), id).toBeDefined();
+    });
+
     it('marks only the first mention across texts read together', () => {
         const [first, second] = segmentFirstMentions(['the cache is fast', 'a cache miss and the cache again']);
         expect(first.filter(s => s.termId === 'cache')).toHaveLength(1);

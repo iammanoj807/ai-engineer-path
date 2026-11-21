@@ -10,7 +10,7 @@ import { systemDesignGlossary } from '../../utils/glossary';
 import type { GlossarySource } from '../../utils/glossaryEngine';
 import { runOnPracticeDb } from '../../utils/sqlRunner';
 import type { Course } from '../../services/progress';
-import { buildSession, lessonText, sentencesOf, withFixCard, type AnyTopic, type PracticeGlossary } from '../build';
+import { buildSession, isNote, isSweeping, lessonText, sentencesOf, withFixCard, type AnyTopic, type PracticeGlossary } from '../build';
 import { isChecked, isTeaching, type PracticeCard } from '../cards';
 import { compareResults } from '../sql';
 import { isTypable, nextSlot, sameLetter, slotsFor } from '../typing';
@@ -23,7 +23,7 @@ beforeAll(async () => {
 const adapt = <T extends AnyTopic>(glossary: GlossarySource<T>): PracticeGlossary => ({
     terms: glossary.terms,
     getTerm: id => glossary.getTerm(id),
-    segmentText: text => glossary.segmentText(text),
+    segmentText: (text, topicId) => glossary.segmentText(text, topicId),
     termsIn: topic => glossary.termsInTopic(topic as T),
     newWordsIn: topic => glossary.newWordsForTopic(topic as T),
 });
@@ -44,7 +44,7 @@ const flat = (text: string) => text.replace(/\s+/g, ' ').trim();
 
 describe('a practice session for every lesson', () => {
     it('teaches first, then has enough exercises, with no card twice', () => {
-        expect(sessions).toHaveLength(231);
+        expect(sessions).toHaveLength(234);
         for (const { course, topic, cards } of sessions) {
             expect(cards[0].kind, topic.id).toBe('idea');
             const firstExercise = cards.findIndex(card => !isTeaching(card));
@@ -106,6 +106,26 @@ describe('cards come from the lesson, and are fair', () => {
         }
     });
 
+    it('splits sentences at their end, not at a dot inside a number or a name', () => {
+        expect(sentencesOf('An array of True/False values used to pick out items, like A[A > 0.5]. Masks make copies.')).toEqual([
+            'An array of True/False values used to pick out items, like A[A > 0.5].',
+            'Masks make copies.',
+        ]);
+        expect(sentencesOf('model.eval() switches dropout to its testing behaviour.')).toHaveLength(1);
+        expect(sentencesOf('Use a tolerance, e.g. 1e-6. Then compare. (Biases can start at 0.) Done!')).toEqual([
+            'Use a tolerance, e.g. 1e-6.',
+            'Then compare.',
+            '(Biases can start at 0.)',
+            'Done!',
+        ]);
+    });
+
+    it('a meaning or a clue is a whole sentence, never one cut short', () => {
+        const whole = (text: string) => text.length >= 12 && (text.match(/[([]/g) ?? []).length === (text.match(/[)\]]/g) ?? []).length;
+        for (const { topic, card } of cardsOf('match')) for (const pair of card.pairs) expect(whole(pair.meaning), `${topic.id}: "${pair.meaning}"`).toBe(true);
+        for (const { topic, card } of cardsOf('blank')) expect(whole(card.clue), `${topic.id}: "${card.clue}"`).toBe(true);
+    });
+
     it('fill the gap can be answered by choosing: the word among other words of the lesson, none containing it', () => {
         for (const { topic, card } of cardsOf('blank')) {
             expect(card.choices, topic.id).toContain(card.answer);
@@ -150,13 +170,53 @@ describe('cards come from the lesson, and are fair', () => {
         }
     });
 
-    it('spot the mistake: exactly one of the lesson\'s mistakes among its key points', () => {
+    it('spot the mistake: one false statement, written for the lesson, among true key points; the answer says what is true', () => {
         const all = cardsOf('mistake');
-        expect(all.length).toBeGreaterThanOrEqual(120);
+        const seen = new Map<string, number>();
         for (const { topic, card } of all) {
             const lesson = lessonText(topic);
-            expect(card.options.filter(option => option.mistake)).toHaveLength(1);
-            for (const option of card.options) expect(option.mistake ? lesson.mistakes : lesson.facts, topic.id).toContain(option.text);
+            const wrong = card.options.filter(option => option.mistake);
+            expect(wrong).toHaveLength(1);
+            // True statements are the lesson's key points, or sentences of its one-line definition.
+            for (const option of card.options) if (!option.mistake) expect([...lesson.facts, ...sentencesOf(lesson.definition)], topic.id).toContain(option.text);
+            // The lesson's first false statement on the first card, its second on the second: never a
+            // listed mistake ("Forgetting to…"), which could be picked out by its wording alone.
+            const nth = seen.get(topic.id) ?? 0;
+            seen.set(topic.id, nth + 1);
+            expect(lesson.myths[nth], `${topic.id} needs a false statement for card ${nth + 1}`).toBeDefined();
+            expect(wrong[0].text, topic.id).toBe(lesson.myths[nth].claim);
+            expect(card.why, topic.id).toBe(lesson.myths[nth].truth);
+        }
+        expect(seen.size, 'lessons whose practice asks for the false statement').toBe(sessions.length);
+    });
+
+    it('the false statement can\'t be found by its look: it is written like the true ones beside it', () => {
+        for (const { topic, card } of cardsOf('mistake')) {
+            const wrong = card.options.find(option => option.mistake)!.text;
+            const right = card.options.filter(option => !option.mistake).map(option => option.text);
+            // A note ("Cache: fast memory…", a formula) among notes, a plain sentence among plain sentences.
+            const alike = right.filter(text => isNote(text) === isNote(wrong)).length;
+            expect(alike, `${topic.id}: "${wrong}" is the only ${isNote(wrong) ? 'note' : 'plain sentence'} on its card`).toBeGreaterThanOrEqual(right.length >= 3 ? 2 : 1);
+            // "Always", "never", "every": if the false statement is sweeping, a true one beside it is too.
+            if (isSweeping(wrong)) expect(right.some(isSweeping), `${topic.id}: only the false statement is sweeping: "${wrong}"`).toBe(true);
+        }
+    });
+
+    it('every lesson has a false statement that reads like a key point, with the truth beside it', () => {
+        for (const { topic } of sessions) {
+            const lesson = lessonText(topic);
+            expect(lesson.myths.length, topic.id).toBeGreaterThanOrEqual(1);
+            for (const { claim, truth } of lesson.myths) {
+                // Short enough for a card, and a full sentence: a learner must not spot it by its shape.
+                expect(claim.length, `${topic.id}: ${claim}`).toBeGreaterThanOrEqual(20);
+                expect(claim.length, `${topic.id}: ${claim}`).toBeLessThanOrEqual(170);
+                expect(claim, topic.id).toMatch(/[.!?]$/);
+                expect(claim, `${topic.id} is an instruction, not a statement`).not.toMatch(/^(?:Not|Never|No|Don't|Do not)\b/);
+                expect([...lesson.facts, ...lesson.mistakes], topic.id).not.toContain(claim);
+                expect(truth.length, `${topic.id}: ${truth}`).toBeGreaterThanOrEqual(40);
+                expect(truth.length, `${topic.id}: ${truth}`).toBeLessThanOrEqual(230);
+            }
+            expect(new Set(lesson.myths.map(myth => myth.claim)).size, topic.id).toBe(lesson.myths.length);
         }
     });
 

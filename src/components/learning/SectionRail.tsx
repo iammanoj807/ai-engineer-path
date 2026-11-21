@@ -26,6 +26,7 @@ const MIN_SECTIONS = 3;
 const RAIL_WIDTH = 22;
 /** Every tick is the same size; the one you are reading is marked by colour. */
 const TICK_WIDTH = 12;
+const NARROW_TICK_WIDTH = 7;
 const TICK_HEIGHT = 3;
 const IDLE = 'rgba(255,255,255,0.3)';
 
@@ -84,7 +85,7 @@ export const SectionRail = () => {
     const [sections, setSections] = useState<Section[]>([]);
     const [active, setActive] = useState(-1);
     const [open, setOpen] = useState(false);
-    const [place, setPlace] = useState<{ left: number; height: number } | null>(null);
+    const [place, setPlace] = useState<{ left: number; height: number; narrow: boolean } | null>(null);
     const known = useRef<Section[]>([]);
     const closeTimer = useRef(0);
     // A mouse can hover to read the names; a finger taps the column to open them.
@@ -142,6 +143,8 @@ export const SectionRail = () => {
             setPlace({
                 left: Math.max(2, main.getBoundingClientRect().left + (padding - RAIL_WIDTH) / 2),
                 height: window.innerHeight,
+                // A phone's margin is narrower than the rail: shorter ticks keep clear of the text.
+                narrow: padding < RAIL_WIDTH,
             });
         };
         const observer = new ResizeObserver(measure);
@@ -193,7 +196,7 @@ export const SectionRail = () => {
                                 <Box
                                     sx={{
                                         height: TICK_HEIGHT,
-                                        width: TICK_WIDTH,
+                                        width: place.narrow ? NARROW_TICK_WIDTH : TICK_WIDTH,
                                         borderRadius: 1,
                                         bgcolor: current ? CYAN : IDLE,
                                         transition: 'background-color 150ms',

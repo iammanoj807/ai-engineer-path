@@ -7,6 +7,8 @@
 //     worked example (with code that has been run), must-know points and common
 //     mistakes,
 //   - a Mermaid picture, plus an animation (foundationsAnimations/),
+//   - on the core lessons, an optional "Go deeper": the derivation or proof behind
+//     the lesson, step by step,
 //   - quick questions WITH answers, to check you understood,
 //   - one practice exercise for each of the four checks, each with one good
 //     answer (foundationsAnswers/) that stays hidden until asked for,
@@ -16,6 +18,7 @@
 // Each phase lives in foundationsCourse/phaseN.ts. Everything here is fixed content. Ticked checks and finished mini-builds live
 // in services/progress.ts (this browser, or the learner's account).
 
+import type { LessonMyth } from './lessonMyth';
 import { foundationPhase0 } from './foundationsCourse/phase0';
 import { foundationPhase1 } from './foundationsCourse/phase1';
 import { foundationPhase2 } from './foundationsCourse/phase2';
@@ -53,7 +56,7 @@ export const CHECK_EXAMPLES: Record<CheckKey, string> = {
 };
 
 export const CONFIDENT_RULE =
-    'A topic is finished when you pass all four checks, not when you finish reading. ' +
+    'A lesson is finished when you pass all four checks, not when you finish reading. ' +
     'Be strict: if you needed your notes, it is not ticked yet.';
 
 export interface LoopStep {
@@ -66,14 +69,14 @@ export const topicLoop: LoopStep[] = [
     { step: 'UNDERSTAND', detail: 'The lesson: play the animation, then read the idea, the steps, the worked example and the common mistakes. It is written to be enough on its own.' },
     { step: 'GO FURTHER', detail: 'Optional. Free videos, visual explainers and readings for a second explanation. If one is marked "Worth it", that is the one to pick, and it says why.' },
     { step: 'PRACTISE', detail: 'The four exercises. Try each one yourself first, then tap "Show answer" to check yours against one good answer.' },
-    { step: 'PROVE', detail: 'Tick each check only when you can do it without notes. Re-test old topics every two weeks, and untick any you fail.' },
+    { step: 'PROVE', detail: 'Tick each check only when you can do it without notes. Re-test old lessons every two weeks, and untick any you fail.' },
 ];
 
 export const foundationRules: string[] = [
     'Go in order. Each unit assumes the ones before it.',
     'The lesson is the main resource. Extras are optional: if you want one, pick the one marked "Worth it". Collecting resources feels like progress, but it is not.',
     'Start building before you feel ready. Getting stuck while coding is where real learning happens.',
-    'Every two weeks, test yourself on old topics. If you fail a check, untick it. An honest tracker is worth more than a full one.',
+    'Every two weeks, test yourself on old lessons. If you fail a check, untick it. An honest tracker is worth more than a full one.',
     'Python, NumPy and PyTorch only. If a resource uses scikit-learn or TensorFlow in its exercises, do the exercise in NumPy or PyTorch instead.',
     'Papers are optional for now. They are marked so you can come back to them once the foundations are solid.',
 ];
@@ -150,6 +153,20 @@ export interface TopicFollowUp {
     a: string;
 }
 
+/**
+ * Optional, for readers who want the maths behind a lesson: one derivation or
+ * proof the lesson states but does not show, in small steps. Nothing else in
+ * the lesson depends on it.
+ */
+export interface TopicDeeper {
+    /** What is shown, as a heading: "Why the learning rate has a hard upper limit". */
+    title: string;
+    /** The derivation, one step per entry, in order. */
+    steps: string[];
+    /** The result, in a line to remember. */
+    result: string;
+}
+
 export interface FoundationTopic {
     /** Stable id, used as the Firestore key. Never renumber: ids need not match display order. */
     id: string;
@@ -165,6 +182,10 @@ export interface FoundationTopic {
     keyPoints: string[];
     /** Common mistakes and misunderstandings to avoid. */
     mistakes: string[];
+    /** Statements that sound right and are wrong, each with what is true instead (lessonMyth.ts). */
+    myths?: LessonMyth[];
+    /** The derivation behind the lesson, for those who want it. Optional. */
+    deeper?: TopicDeeper;
     /** Questions to check you understood, with answers (hidden until asked for). */
     followUps: TopicFollowUp[];
     diagram: TopicDiagram;

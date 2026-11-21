@@ -171,7 +171,7 @@ const TrackProgressCard = () => {
                 </Typography>
             </Stack>
             <Typography sx={{ fontWeight: 700, mb: 0.5 }}>
-                Sign in to tick off topics, keep a streak, set a daily goal and earn XP.
+                Sign in to tick off lessons, keep a streak, set a daily goal and earn XP.
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                 Reading every lesson is free without an account.
@@ -214,7 +214,7 @@ const CoursePicker = ({ stats, selected, tracking, onSelect }: { stats: CourseSt
                 >
                     <Stack direction="row" justifyContent="space-between" alignItems="baseline">
                         <Typography sx={{ fontWeight: 800, color: active ? course.colour : 'text.primary' }}>{course.title}</Typography>
-                        <Typography variant="body2" color="text.secondary">{tracking ? `${mastered}/${total}` : `${total} topics`}</Typography>
+                        <Typography variant="body2" color="text.secondary">{tracking ? `${mastered}/${total}` : `${total} lessons`}</Typography>
                     </Stack>
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 1.25, minHeight: { sm: 40 } }}>
                         {course.tagline}

@@ -1,6 +1,6 @@
-// A practice session for one lesson, the way a Duolingo lesson runs: a guess
-// first (when opened from the path), then the idea and its words, then a short
-// mix of cards. Each answer is checked at once; a miss costs a heart and the
+// A practice session for one lesson, the way a Duolingo lesson runs: the idea
+// and its words first, then a short mix of cards. (Opened from the path as
+// "Learn it step by step", it teaches the whole lesson, part by part.) Each answer is checked at once; a miss costs a heart and the
 // card comes back at the end. Finishing earns XP and keeps the streak, and the
 // lesson is booked for its first review. Cards: src/practice/build.ts.
 //
@@ -48,15 +48,15 @@ import { Body, Footer } from './parts';
 import { PANEL, RIGHT, WRONG, bigButton } from './style';
 import { playComplete, playOut, setSoundOn, useSoundOn } from './sound';
 import { canSpeak, prefetchLines, say, setVoiceOn, stopSpeaking, useVoiceOn } from './voice';
-import { GuessCardView, IdeaCardView, ReadCardView, WordsCardView } from './cards/TeachCards';
+import { IdeaCardView, ReadCardView, WordsCardView } from './cards/TeachCards';
 import LessonNotes from './LessonNotes';
+import { REPO_URL } from '../../game/addresses';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import { MatchCardView, MistakeCardView, OrderCardView, RecallCardView } from './cards/ChoiceCards';
 import { BlankCardView } from './cards/BlankCard';
 import { FixCardView, PredictCardView, WriteCardView } from './cards/SqlCards';
 
 export const HEARTS = 5;
-const REPO = 'https://github.com/iammanoj807/ai-engineer-path';
 
 /** XP: 2 for each card right first time, 1 for a recalled answer or a fixed mistake, 5 for finishing, 5 more with every heart left. */
 const xpFor = (cards: PracticeCard[], outcomes: Record<string, CardOutcome>, fixed: number, hearts: number) =>
@@ -70,7 +70,6 @@ const scoreFor = (cards: PracticeCard[], outcomes: Record<string, CardOutcome>) 
 
 const CardView = ({ card, accent, onDone }: { card: PracticeCard; accent: string; onDone: (outcome: CardOutcome) => void }) => {
     switch (card.kind) {
-        case 'guess': return <GuessCardView card={card} accent={accent} onDone={onDone} />;
         case 'read': return <ReadCardView card={card} accent={accent} onDone={onDone} />;
         case 'idea': return <IdeaCardView card={card} accent={accent} onDone={onDone} />;
         case 'words': return <WordsCardView card={card} accent={accent} onDone={onDone} />;
@@ -269,7 +268,7 @@ const Summary = ({
                 )}
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 3, textAlign: 'center' }}>
                     Enjoying {GUIDE_NAMES[guideFor(topicId)]} and the lessons?{' '}
-                    <Link href={REPO} target="_blank" rel="noopener" sx={{ fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 0.25, verticalAlign: 'bottom' }}>
+                    <Link href={REPO_URL} target="_blank" rel="noopener" sx={{ fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 0.25, verticalAlign: 'bottom' }}>
                         <StarRoundedIcon sx={{ fontSize: 18, color: XP_GOLD }} /> Star the project on GitHub
                     </Link>
                 </Typography>
@@ -508,8 +507,8 @@ const PracticeSession = ({
     };
 
     const restart = () => {
-        // Again: the quick practice this time (no guess, no lesson parts), they have just learned it.
-        setCards(previous => previous?.filter(card => card.kind !== 'guess' && card.kind !== 'read') ?? previous);
+        // Again: the quick practice this time (no lesson parts), they have just learned it.
+        setCards(previous => previous?.filter(card => card.kind !== 'read') ?? previous);
         setRound(r => r + 1);
         setPhase('play');
         setIndex(0);
@@ -555,7 +554,7 @@ const PracticeSession = ({
     const currentTopic = (current && topicOf[current.id]) || topicId;
     const guide = guideFor(currentTopic);
     const setting = useMemo(
-        () => ({ course, topicId: currentTopic, guide: guideFor(currentTopic), prose: (text: string) => (sources ? sources.glossary.segmentText(text) : text) }),
+        () => ({ course, topicId: currentTopic, guide: guideFor(currentTopic), prose: (text: string) => (sources ? sources.glossary.segmentText(text, currentTopic) : text) }),
         [course, currentTopic, sources]
     );
 

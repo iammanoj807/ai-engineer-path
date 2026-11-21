@@ -25,6 +25,18 @@ describe('foundations lessons', () => {
         expect(problems).toEqual([]);
     });
 
+    it('writes every "Go deeper" as a real derivation: a title, small steps and a result', () => {
+        const deeper = lessons.filter(topic => topic.deeper);
+        expect(deeper.length).toBeGreaterThanOrEqual(10);
+        for (const { id, deeper: d } of deeper) {
+            expect(d!.title.trim().length, id).toBeGreaterThan(15);
+            expect(d!.steps.length, id).toBeGreaterThanOrEqual(4);
+            expect(d!.steps.length, id).toBeLessThanOrEqual(7);
+            for (const step of d!.steps) expect(step.trim().length, id).toBeGreaterThan(30);
+            expect(d!.result.trim().length, id).toBeGreaterThan(30);
+        }
+    });
+
     it('gives every practice exercise one good answer, and none to topics that do not exist', () => {
         const ids = new Set(allFoundationTopics.map(t => t.id));
         const missing = allFoundationTopics.flatMap(topic =>

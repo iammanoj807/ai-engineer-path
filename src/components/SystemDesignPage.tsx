@@ -50,6 +50,7 @@ import {
     CONFIDENT,
     CYAN,
     TAP,
+    hiddenOnPhone,
     px,
     stepId,
     useTextSize,
@@ -60,6 +61,7 @@ import {
 import {
     LearningPageFrame,
     TextSizeControl,
+    LessonToolbar,
     SectionLabel,
     Tag,
     TopicResourceRow,
@@ -69,6 +71,7 @@ import {
     Callout,
     MUST_KNOW,
     MISTAKE,
+    MythCheck,
     Bullets,
     NumberedSteps,
     CodeBlock,
@@ -80,6 +83,7 @@ import { GlossaryProvider, GlossaryTopic, NewWordsBox, ProseText } from './learn
 import { GlossaryDrawer } from './learning/GlossaryDrawer';
 import { InterviewQuestionsView } from './learning/InterviewQuestions';
 import { systemDesignInterviewSet } from '../data/interviewPrep/systemDesign';
+import { mythTexts } from '../data/lessonMyth';
 import { MermaidDiagram } from './learning/MermaidDiagram';
 import { AnimatedScene } from './learning/anim/AnimatedScene';
 import { useTopicAnimation } from './learning/anim/useTopicAnimation';
@@ -87,10 +91,9 @@ import { useLoaded } from './learning/useLoaded';
 import { segmentSections, type Prose } from './learning/glossaryContext';
 import PathLearn from './app/PathLearn';
 import QuickPracticePanel from './practice/QuickPracticePanel';
-import GuessFirst from './learning/GuessFirst';
 import { StudyStrip } from './learning/StudyStrip';
 import { useTracksProgress } from '../services/account';
-import { useCourseNav } from '../game/useCourseNav';
+import { useCourseNav, useLessonOpen } from '../game/useCourseNav';
 import { courseById } from '../game/courses';
 
 const SD_COURSE = courseById('system_design');
@@ -136,7 +139,7 @@ const PRACTICE_ORDER: { key: SDCheckKey; hint?: string }[] = [
 type Section =
     | 'definition' | 'problem' | 'idea' | 'howItWorks' | 'analogy' | 'breaks' | 'example' | 'keyPoints' | 'tradeOffs'
     | 'functional' | 'nonFunctional' | 'estimates' | 'dataModel' | 'classes' | 'patterns' | 'evolution' | 'design' | 'deepDives'
-    | 'mistakes' | 'practice' | 'interviewAnswer' | 'followUps' | 'answers';
+    | 'mistakes' | 'myths' | 'practice' | 'interviewAnswer' | 'followUps' | 'answers';
 
 /** Follow-ups as question, answer, question, answer… */
 const followUpTexts = (topic: SDTopic) => topic.followUps.flatMap(followUp => [followUp.q, followUp.a]);
@@ -158,6 +161,7 @@ const learnSections = (topic: SDTopic, answers: SDTopicAnswers | undefined): [Se
             ['example', [topic.example]],
             ['keyPoints', topic.keyPoints],
             ['mistakes', topic.mistakes],
+            ['myths', mythTexts(topic.myths)],
             ['tradeOffs', topic.tradeOffs ?? []],
         ] satisfies [Section, string[]][])
         : ([
@@ -171,6 +175,7 @@ const learnSections = (topic: SDTopic, answers: SDTopicAnswers | undefined): [Se
             ['design', topic.design],
             ['deepDives', topic.deepDives],
             ['mistakes', topic.mistakes],
+            ['myths', mythTexts(topic.myths)],
         ] satisfies [Section, string[]][])),
     ['practice', PRACTICE_ORDER.map(({ key }) => topic.practice[key])],
     ['interviewAnswer', [topic.interviewAnswer]],
@@ -267,12 +272,12 @@ const PictureIt = ({ topic }: { topic: SDTopic }) => (
 const ConceptLesson = ({ topic, accent, marked }: { topic: Extract<SDTopic, { kind: 'concept' }>; accent: string; marked: Marked }) => (
     <>
         <Block title="The problem it solves">
-            <Typography variant="body1"><ProseText value={marked('problem')[0]} /></Typography>
+            <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}><ProseText value={marked('problem')[0]} /></Typography>
         </Block>
         <TopicAnimation topicId={topic.id} accent={accent} />
         <PictureIt topic={topic} />
         <Block title="The idea">
-            <Typography variant="body1"><ProseText value={marked('idea')[0]} /></Typography>
+            <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}><ProseText value={marked('idea')[0]} /></Typography>
         </Block>
         <Block title="How it works, step by step">
             <NumberedSteps items={marked('howItWorks')} accent={accent} />
@@ -291,6 +296,7 @@ const ConceptLesson = ({ topic, accent, marked }: { topic: Extract<SDTopic, { ki
         </Callout>
         <Callout kind="mistakes">
             <Bullets items={marked('mistakes')} marker={MISTAKE} />
+            <MythCheck myths={marked('myths')} />
         </Callout>
         {topic.tradeOffs && topic.tradeOffs.length > 0 && (
             <Block title="Trade-offs">
@@ -303,7 +309,7 @@ const ConceptLesson = ({ topic, accent, marked }: { topic: Extract<SDTopic, { ki
 const DesignLesson = ({ topic, accent, marked }: { topic: SDDesign; accent: string; marked: Marked }) => (
     <>
         <Block title="Why interviewers ask this">
-            <Typography variant="body1"><ProseText value={marked('problem')[0]} /></Typography>
+            <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}><ProseText value={marked('problem')[0]} /></Typography>
         </Block>
         <TopicAnimation topicId={topic.id} accent={accent} />
         <Block title="Requirements">
@@ -359,6 +365,7 @@ const DesignLesson = ({ topic, accent, marked }: { topic: SDDesign; accent: stri
         </Block>
         <Callout kind="mistakes">
             <Bullets items={marked('mistakes')} marker={MISTAKE} />
+            <MythCheck myths={marked('myths')} />
         </Callout>
     </>
 );
@@ -391,7 +398,7 @@ const TopicCard = ({
     const core = sorted.filter(resource => resource.kind !== 'paper');
     const papers = sorted.filter(resource => resource.kind === 'paper');
     const answers = useLoaded(loadAnswers, expanded)?.[topic.id];
-    const marked = useMemo(() => segmentSections(systemDesignGlossary, learnSections(topic, answers)), [topic, answers]);
+    const marked = useMemo(() => segmentSections(systemDesignGlossary, learnSections(topic, answers), topic.id), [topic, answers]);
 
     return (
         <Accordion
@@ -438,7 +445,6 @@ const TopicCard = ({
                     {/* ---- STEP 1 ---- the main lesson */}
                     <SectionLabel color={accent} id={stepId(topic.id, 1)}>{STEPS[0].label}</SectionLabel>
                     <Stack spacing={3} sx={{ maxWidth: 760 }}>
-                        <GuessFirst topic={topic} accent={accent} glossary={systemDesignGlossary} />
                         <QuoteBox accent={accent}>
                             <Typography variant="body1">
                                 <strong style={{ color: accent }}>Definition.</strong> <ProseText value={marked('definition')[0]} />
@@ -561,7 +567,7 @@ const TopicCard = ({
 // ============ REVISE MODE: THE COMPACT CARD ============
 
 const ReviseCard = ({ topic, accent, onOpen }: { topic: SDTopic; accent: string; onOpen: () => void }) => {
-    const marked = useMemo(() => segmentSections(systemDesignGlossary, reviseSections(topic)), [topic]);
+    const marked = useMemo(() => segmentSections(systemDesignGlossary, reviseSections(topic), topic.id), [topic]);
     return (
         <GlossaryTopic topicId={topic.id}>
             <Box
@@ -664,6 +670,10 @@ const SystemDesignPage = () => {
     const [glossaryOpen, setGlossaryOpen] = useState(false);
 
     const { openTopic: showTopic } = useCourseNav(SD_COURSE);
+    // With a lesson open, the page starts with the lesson, not with the course's introduction.
+    const lessonOpen = useLessonOpen();
+    // On a phone, an open lesson gets one slim row (text size, glossary) in place of the course header.
+    const slimHeader = lessonOpen && mode === 'learn';
     const openTopic = (topicId: string) => {
         changeMode('learn');
         showTopic(topicId);
@@ -702,7 +712,7 @@ const SystemDesignPage = () => {
     const noMatches = (
         <Box sx={{ p: 2.5, borderRadius: 2, border: '1px dashed rgba(255,255,255,0.15)' }}>
             <Typography variant="body2" color="text.secondary">
-                No topics here match these filters.
+                No lessons here match these filters.
             </Typography>
             <Button onClick={clearFilters} sx={{ minHeight: TAP, mt: 1, px: 1, textTransform: 'none', fontWeight: 700 }}>
                 Clear filters
@@ -715,7 +725,8 @@ const SystemDesignPage = () => {
             <GlossaryProvider source={systemDesignGlossary} openTopic={openTopic}>
                 <Box sx={{ width: '100%', maxWidth: 940, mx: 'auto', minWidth: 0 }}>
                     {/* ---- HEADER ---- */}
-                    <Box sx={{ mb: 3 }}>
+                    {slimHeader && <LessonToolbar textSize={textSize} onTextSize={changeTextSize} onGlossary={() => setGlossaryOpen(true)} />}
+                    <Box sx={{ mb: 3, ...hiddenOnPhone(slimHeader) }}>
                         <Stack
                             direction={{ xs: 'column', sm: 'row' }}
                             justifyContent="space-between"
@@ -733,20 +744,24 @@ const SystemDesignPage = () => {
                             </Box>
                             <TextSizeControl value={textSize} onChange={changeTextSize} />
                         </Stack>
-                        <Typography
-                            variant="h2"
-                            fontWeight="bold"
-                            sx={{ color: 'text.primary', mb: 1, fontSize: { xs: `${2 * t.heading}rem`, sm: `${3 * t.heading}rem` } }}
-                        >
-                            Design it, explain it, defend it
-                        </Typography>
-                        <Typography variant="body1" color="text.secondary">
-                            High-level design, low-level design and AI/ML system design — from the basics to interview-ready.
-                        </Typography>
+                        {!lessonOpen && (
+                            <>
+                                <Typography
+                                    variant="h2"
+                                    fontWeight="bold"
+                                    sx={{ color: 'text.primary', mb: 1, fontSize: { xs: `${2 * t.heading}rem`, sm: `${3 * t.heading}rem` } }}
+                                >
+                                    Design it, explain it, defend it
+                                </Typography>
+                                <Typography variant="body1" color="text.secondary">
+                                    High-level design, low-level design and AI/ML system design — from the basics to interview-ready.
+                                </Typography>
+                            </>
+                        )}
                     </Box>
 
                     {/* ---- MODE, AND THE GLOSSARY ---- */}
-                    <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mb: 3 }}>
+                    <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mb: 3, ...hiddenOnPhone(slimHeader, 'flex') }}>
                         <ToggleButtonGroup
                             exclusive
                             value={mode}
@@ -794,7 +809,7 @@ const SystemDesignPage = () => {
                         {tracking && (
                         <Stack direction="row" spacing={4} sx={{ mb: 3 }} flexWrap="wrap" useFlexGap>
                             {[
-                                { value: confident, total: allSystemDesignTopics.length, label: 'TOPICS CONFIDENT', color: CONFIDENT },
+                                { value: confident, total: allSystemDesignTopics.length, label: 'LESSONS CONFIDENT', color: CONFIDENT },
                                 { value: checksDone, total: allSystemDesignTopics.length * SD_CHECK_KEYS.length, label: 'CHECKS PASSED', color: CYAN },
                                 { value: mustConfident, total: mustTopics.length, label: 'MUST-KNOW CONFIDENT', color: MUST },
                             ].map(stat => (
@@ -887,7 +902,7 @@ const SystemDesignPage = () => {
                         {tracking && (
                         <Stack direction="row" spacing={4} sx={{ mb: 3 }} flexWrap="wrap" useFlexGap>
                             {[
-                                { value: confident, total: allSystemDesignTopics.length, label: 'TOPICS CONFIDENT', color: CONFIDENT },
+                                { value: confident, total: allSystemDesignTopics.length, label: 'LESSONS CONFIDENT', color: CONFIDENT },
                                 { value: checksDone, total: allSystemDesignTopics.length * SD_CHECK_KEYS.length, label: 'CHECKS PASSED', color: CYAN },
                                 { value: mustConfident, total: mustTopics.length, label: 'MUST-KNOW CONFIDENT', color: MUST },
                             ].map(stat => (
@@ -971,10 +986,10 @@ const SystemDesignPage = () => {
                                 type="search"
                                 value={query}
                                 onChange={event => setQuery(event.target.value)}
-                                placeholder="Search topics"
+                                placeholder="Search lessons"
                                 sx={{ width: { xs: '100%', sm: 280 }, '& .MuiInputBase-root': { minHeight: TAP } }}
                                 slotProps={{
-                                    htmlInput: { 'aria-label': 'Search topics by name or definition' },
+                                    htmlInput: { 'aria-label': 'Search lessons by name or definition' },
                                     input: {
                                         startAdornment: (
                                             <InputAdornment position="start">

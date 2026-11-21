@@ -7,17 +7,22 @@ import {
     axisLines,
     bars,
     box,
+    cellAt,
+    cells,
     circle,
     dot,
     fnPath,
     frame,
     gaussian,
     line,
+    lit,
     pt,
     px,
+    py,
     rect,
     round,
     seeded,
+    text,
     tint,
 } from '../../components/learning/anim/kit';
 import { label, panel } from './common';
@@ -56,6 +61,47 @@ const vae = (): AnimationSpec => {
     return {
         title: 'Variational autoencoders: a tidy latent space you can sample from',
         variants: [{ label: 'Encoder, code, decoder', frames }],
+    };
+};
+
+// ============ f7-t5 · GANs ============
+
+const gan = (): AnimationSpec => {
+    const a = axes(40, 46, 330, 140, -2, 8, 0, 1);
+    const bell = (m: number, s: number) => (x: number) => Math.exp(-((x - m) ** 2) / (2 * s * s)) / (s * Math.sqrt(2 * Math.PI));
+    const realData = bell(4, 0.5);
+    /** One moment of the game: the fakes have mean m and spread s. The dashed line is the best possible discriminator for them. */
+    const scene = (m: number, s: number) => {
+        const fake = bell(m, s);
+        const best = (x: number) => realData(x) / (realData(x) + fake(x));
+        // Drawn only where there are samples to judge.
+        const from = Math.max(a.xMin, Math.min(m, 4) - 2.5 * Math.max(s, 0.5));
+        const to = Math.min(a.xMax, Math.max(m, 4) + 2.5 * Math.max(s, 0.5));
+        return [
+            axisLines('ax', a, 'value'),
+            line('half', a.x, py(a, 0.5), a.x + a.w, py(a, 0.5), { stroke: C.faint, sw: 1, dash: '3 4' }),
+            text('halfl', a.x - 6, py(a, 0.5), '0.5', { size: 11, fill: C.dim, anchor: 'end' }),
+            text('onel', a.x - 6, py(a, 1), '1', { size: 11, fill: C.dim, anchor: 'end' }),
+            [0, 2, 4, 6].map(v => text(`xt${v}`, px(a, v), a.y + a.h + 14, String(v), { size: 11, fill: C.dim })),
+            fnPath('real', a, x => 0.7 * realData(x), { stroke: C.green, sw: 3 }),
+            fnPath('fake', a, x => 0.7 * fake(x), { stroke: C.pink, sw: 3 }),
+            fnPath('judge', a, best, { stroke: C.amber, sw: 2.5, dash: '6 4', from, to, n: 60 }),
+            label('lr', 44, 18, 'real data', C.green, { size: 11, mono: false }),
+            label('lf', 122, 18, 'generated', C.pink, { size: 11, mono: false }),
+            label('lj', 208, 18, 'best discriminator: P(real)', C.amber, { size: 11, mono: false }),
+        ];
+    };
+    // The means and spreads of the middle frames are the ones the lesson's run printed.
+    const frames: Frame[] = [
+        frame('The real data sits around 4. The untrained generator turns noise into numbers near 0. A discriminator tells them apart easily: "fake" near 0, "real" near 4.', scene(0.03, 0.28)),
+        frame('The generator follows the discriminator\'s gradient, which says "further right looks more real". Its samples move towards the data.', scene(2, 0.5)),
+        frame('It can overshoot. After 500 rounds the fakes are centred on 6.25, and the discriminator now says "fake" on the right. The two networks chase each other.', scene(6.25, 0.79)),
+        frame('After 1,000 rounds the fakes have mean 4.27 and spread 0.45. Where the two curves overlap, the discriminator is unsure: its output is near 0.5.', scene(4.27, 0.45)),
+        frame('Balance: the fakes are distributed exactly like the data, and the best possible discriminator says 0.5 everywhere. The lesson\'s run ends close to this, with mean 4.04 and spread 0.38.', scene(4, 0.5)),
+    ];
+    return {
+        title: 'GANs: the generator moves until the discriminator can only guess',
+        variants: [{ label: 'Generator against discriminator', frames }],
     };
 };
 
@@ -174,6 +220,64 @@ const rlBasics = (): AnimationSpec => {
     };
 };
 
+// ============ f7-t6 · Deep Q-networks ============
+
+const dqn = (): AnimationSpec => {
+    const N = 4;
+    const SIZE = 40;
+    const X0 = 18;
+    const Y0 = 36;
+    const GOAL = 15;
+    /** The route the lesson's trained network takes. */
+    const ROUTE = [0, 4, 5, 6, 10, 11, 15];
+    const at = (s: number) => cellAt(X0, Y0, SIZE, Math.floor(s / N), s % N);
+    /** The true value of a square's best move: one reward, discounted once for every extra move. */
+    const worth = (s: number) => {
+        const moves = N - 1 - Math.floor(s / N) + (N - 1 - (s % N));
+        return moves === 0 ? 0 : 0.9 ** (moves - 1);
+    };
+    const grid = (mode: 'empty' | 'values' | 'route') =>
+        cells(
+            'g', X0, Y0, N, N, SIZE,
+            (r, c) => (r * N + c === GOAL ? 'goal' : mode === 'empty' ? '' : String(round(worth(r * N + c), 2))),
+            (r, c) => {
+                const s = r * N + c;
+                if (s === GOAL) return tint(C.green, 0.55);
+                if (mode === 'route' && ROUTE.includes(s)) return tint(C.amber, 0.5);
+                return mode === 'empty' ? tint(C.grey, 0.1) : tint(C.cyan, 0.1 + 0.4 * worth(s));
+            },
+            { textSize: 11 },
+        );
+    const agent = (s: number) => circle('agent', at(s).cx, at(s).cy, 9, { fill: C.yellow, stroke: C.bg, sw: 2 });
+    const machine = (on: 'net' | 'buffer' | 'target' | 'none') => {
+        const net = box('net', 212, 36, 176, 32, 'Q-network: Q(s, ·)', C.cyan, { size: 12 });
+        const buffer = box('buf', 212, 86, 176, 32, 'replay buffer', C.amber, { size: 12 });
+        const target = box('tgt', 212, 136, 176, 32, 'target network (frozen)', C.violet, { size: 12 });
+        return [
+            label('gl', X0, 20, 'reward 1 at the goal, γ = 0.9', C.grey, { size: 11, mono: false }),
+            on === 'net' ? lit(net, C.cyan) : net,
+            arrow('n2b', 300, 68, 300, 84, { stroke: C.grey }),
+            on === 'buffer' ? lit(buffer, C.amber) : buffer,
+            on === 'target' ? lit(target, C.violet) : target,
+            arrow('t2y', 300, 168, 300, 182, { stroke: C.grey }),
+            text('y', 300, 196, 'y = r + γ·max Q(s′, ·)', { size: 11, mono: true, fill: on === 'target' ? C.violet : C.grey, weight: 700 }),
+            text('aim', 300, 216, 'train Q(s, a) towards y', { size: 11, fill: C.grey }),
+        ];
+    };
+    const frames: Frame[] = [
+        frame('A 4 × 4 grid: start in the top-left corner; reaching the goal gives reward 1. A table could hold 16 states, but the method here also works when there are far too many states for any table.', [grid('empty'), agent(0), machine('none')]),
+        frame('The Q-network takes the state and outputs a value for each of the four moves. The agent usually takes the best one, and sometimes a random one, to explore.', [grid('empty'), agent(4), machine('net')]),
+        frame('Every move is stored in the replay buffer. Training draws random old moves from it, so the network learns from all its experience, not just the last few steps.', [grid('empty'), agent(5), machine('buffer')]),
+        frame('For each stored move the target is y = r + γ·max Q(s′, ·), computed by a frozen copy of the network. The network is nudged so that Q(s, a) moves towards y.', [grid('empty'), agent(6), machine('target')]),
+        frame('Value spreads backwards from the goal: the move into it is worth 1, the square before that 0.9, then 0.81. Each square shows the value of its best move.', [grid('values'), machine('none')]),
+        frame('Following the best move from the start now takes the shortest route: 6 moves. The start is worth 0.9⁵ ≈ 0.59, one reward discounted five times.', [grid('route'), machine('net')]),
+    ];
+    return {
+        title: 'Deep Q-networks: a network learns the value of every move',
+        variants: [{ label: 'Act, remember, learn', frames }],
+    };
+};
+
 // ============ f7-t4 · Policy gradients and PPO ============
 
 const policyGradient = (): AnimationSpec => {
@@ -217,8 +321,10 @@ const policyGradient = (): AnimationSpec => {
 
 export const phase7Animations: Record<string, () => AnimationSpec> = {
     'f7-t1': vae,
+    'f7-t5': gan,
     'f7-t2': diffusion,
     'f7-t3': rlBasics,
+    'f7-t6': dqn,
     'f7-t4': policyGradient,
 };
 

@@ -10,6 +10,12 @@ export interface GlossaryTerm {
     taughtIn?: string;
     /** Exact spellings to look for (plurals and capitalised forms included). */
     matches: string[];
+    /**
+     * Lessons where these spellings are everyday words, or mean something else,
+     * so they are left unmarked there: "tomorrow's temperature" is not the
+     * sampling temperature, and "git init" is not weight initialisation.
+     */
+    plainIn?: string[];
 }
 
 /** A piece of text. `termId` is set when the piece is a glossary word. */
@@ -32,11 +38,14 @@ export interface GlossaryTopicRef {
 export interface GlossarySource<T extends GlossaryTopicRef = GlossaryTopicRef> {
     terms: GlossaryTerm[];
     getTerm: (id: string) => GlossaryTerm | undefined;
-    /** Split text into plain pieces and glossary words, in order. */
-    segmentText: (text: string) => TextSegment[];
+    /**
+     * Split text into plain pieces and glossary words, in order. Give the lesson
+     * the text belongs to, so a word that is plain there (`plainIn`) stays plain.
+     */
+    segmentText: (text: string, topicId?: string) => TextSegment[];
     /** Like segmentText over several texts read together, marking only each word's first mention. */
-    segmentFirstMentions: (texts: string[], alreadyMarked?: ReadonlySet<string>) => TextSegment[][];
-    termsInText: (text: string) => string[];
+    segmentFirstMentions: (texts: string[], alreadyMarked?: ReadonlySet<string>, topicId?: string) => TextSegment[][];
+    termsInText: (text: string, topicId?: string) => string[];
     termsInTopic: (topic: T) => string[];
     /** Words appearing for the first time in this topic (reading in order), except the word it teaches. */
     newWordsForTopic: (topic: T) => GlossaryTerm[];
@@ -71,13 +80,31 @@ export const createGlossary = <T extends GlossaryTopicRef>(
     }
 
     // Longest spellings first, so "load balancer" wins over "load" and "network partition"
-    // over "partition". The look-arounds stop matches inside longer words and identifiers
-    // ("server" inside "observer", "manifest" in "manifest_url"). Case-sensitive on purpose.
+    // over "partition". Word edges stop matches inside longer words and identifiers
+    // ("server" inside "observer", "manifest" in "manifest_url"). A spelling that starts or
+    // ends with a symbol has no word edge on that side, so maths notation is found inside
+    // a formula: the ∂ in "∂L/∂w", the ᵀ in "Xᵀy". Case-sensitive on purpose.
+    const EDGE_BEFORE = '(?<![A-Za-z0-9_])';
+    const EDGE_AFTER = '(?![A-Za-z0-9_])';
+    const isWordChar = (char: string) => /[A-Za-z0-9_]/.test(char);
+    const endsInWord = (spelling: string) => isWordChar(spelling[spelling.length - 1]);
+    const spellings = [...termIdBySpelling.keys()].sort((a, b) => b.length - a.length);
+    const symbols = spellings.filter(spelling => !isWordChar(spelling[0]));
+    const words = spellings.filter(spelling => isWordChar(spelling[0]));
+    // Nearly every word ends in a letter or digit, and those share one edge check after
+    // the group, which keeps matching fast. The few that end in a symbol ("model.eval()"),
+    // and any longer word starting with one of them, are tried first with their own check.
+    const special = words.filter(spelling => !endsInWord(spelling));
+    const first = words.filter(spelling => special.some(start => spelling.startsWith(start)));
+    const rest = words.filter(spelling => !first.includes(spelling));
+    const withOwnEdge = (group: string[]) => group.map(spelling => `${escapeRegExp(spelling)}${endsInWord(spelling) ? EDGE_AFTER : ''}`).join('|');
     const pattern = new RegExp(
-        `(?<![A-Za-z0-9_])(?:${[...termIdBySpelling.keys()]
-            .sort((a, b) => b.length - a.length)
-            .map(escapeRegExp)
-            .join('|')})(?![A-Za-z0-9_])`,
+        [
+            `${EDGE_BEFORE}(?:${[first.length ? `(?:${withOwnEdge(first)})` : '', rest.length ? `(?:${rest.map(escapeRegExp).join('|')})${EDGE_AFTER}` : ''].filter(Boolean).join('|')})`,
+            symbols.length ? `(?:${withOwnEdge(symbols)})` : '',
+        ]
+            .filter(Boolean)
+            .join('|'),
         'g'
     );
 
@@ -86,7 +113,7 @@ export const createGlossary = <T extends GlossaryTopicRef>(
             [...text.matchAll(skip)].map((m): [number, number] => [m.index ?? 0, (m.index ?? 0) + m[0].length])
         );
 
-    const segmentText = (text: string): TextSegment[] => {
+    const segmentText = (text: string, topicId?: string): TextSegment[] => {
         const segments: TextSegment[] = [];
         const skipped = skippedRanges(text);
         let last = 0;
@@ -94,18 +121,21 @@ export const createGlossary = <T extends GlossaryTopicRef>(
             const start = match.index ?? 0;
             // A word inside a skipped span stays part of the plain text around it.
             if (skipped.some(([from, to]) => start >= from && start < to)) continue;
+            const termId = termIdBySpelling.get(match[0]);
+            // In this lesson the word is an everyday word, not the term.
+            if (topicId && termId && termsById.get(termId)?.plainIn?.includes(topicId)) continue;
             if (start > last) segments.push({ text: text.slice(last, start) });
-            segments.push({ text: match[0], termId: termIdBySpelling.get(match[0]) });
+            segments.push({ text: match[0], termId });
             last = start + match[0].length;
         }
         if (last < text.length) segments.push({ text: text.slice(last) });
         return segments;
     };
 
-    const segmentFirstMentions = (texts: string[], alreadyMarked: ReadonlySet<string> = new Set()): TextSegment[][] => {
+    const segmentFirstMentions = (texts: string[], alreadyMarked: ReadonlySet<string> = new Set(), topicId?: string): TextSegment[][] => {
         const seen = new Set(alreadyMarked);
         return texts.map(text =>
-            segmentText(text).map(segment => {
+            segmentText(text, topicId).map(segment => {
                 if (!segment.termId) return segment;
                 if (seen.has(segment.termId)) return { text: segment.text };
                 seen.add(segment.termId);
@@ -114,9 +144,9 @@ export const createGlossary = <T extends GlossaryTopicRef>(
         );
     };
 
-    const termsInText = (text: string): string[] => {
+    const termsInText = (text: string, topicId?: string): string[] => {
         const ids: string[] = [];
-        for (const segment of segmentText(text)) {
+        for (const segment of segmentText(text, topicId)) {
             if (segment.termId && !ids.includes(segment.termId)) ids.push(segment.termId);
         }
         return ids;
@@ -125,7 +155,7 @@ export const createGlossary = <T extends GlossaryTopicRef>(
     const termsInTopic = (topic: T): string[] => {
         const ids: string[] = [];
         for (const text of proseOf(topic)) {
-            for (const id of termsInText(text)) if (!ids.includes(id)) ids.push(id);
+            for (const id of termsInText(text, topic.id)) if (!ids.includes(id)) ids.push(id);
         }
         return ids;
     };

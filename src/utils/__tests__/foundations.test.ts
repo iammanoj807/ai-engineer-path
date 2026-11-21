@@ -50,9 +50,9 @@ describe('foundations content', () => {
         expect(new Set(buildIds).size).toBe(buildIds.length);
     });
 
-    it('has the full roadmap: 8 phases, 98 topics, 30 mini-builds', () => {
+    it('has the full roadmap: 8 phases, 101 topics, 30 mini-builds', () => {
         expect(foundationPhases).toHaveLength(8);
-        expect(allFoundationTopics).toHaveLength(98);
+        expect(allFoundationTopics).toHaveLength(101);
         expect(allMiniBuilds).toHaveLength(30);
         foundationPhases.forEach((phase, index) => {
             expect(phase.number).toBe(index);

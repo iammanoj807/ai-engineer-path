@@ -20,6 +20,7 @@
 // Fixed content only. Ticked checks live in services/progress.ts.
 
 import type { SqlCell } from './sqlPracticeDb';
+import type { LessonMyth } from './lessonMyth';
 import { sqlPhase0 } from './sqlCourse/phase0';
 import { sqlPhase1 } from './sqlCourse/phase1';
 import { sqlPhase2 } from './sqlCourse/phase2';
@@ -52,7 +53,7 @@ export const SQL_CHECK_MEANINGS: Record<SqlCheckKey, string> = {
 };
 
 export const SQL_CONFIDENT_RULE =
-    'A topic is finished when you pass all four checks, not when you have read it. ' +
+    'A lesson is finished when you pass all four checks, not when you have read it. ' +
     'Be strict: if you had to look at the notes, it is not ticked yet.';
 
 export type SqlPriority = 'must' | 'should' | 'bonus';
@@ -77,9 +78,9 @@ export const sqlHowToStudy: string[] = [
     'Open "The practice database" once and look at the six tables. Every example uses them, so you will soon know the rows by heart — that is what lets you check answers by eye.',
     'Type every example yourself before you look at the result. Press "Try it", change something small, and run it again. Reading SQL is not the same as writing it.',
     'Before you run any query, say out loud what you expect it to return. That is the Predict check, and it is the fastest way to find gaps.',
-    'The notes on every topic are enough on their own. The free resources are a second explanation and extra practice.',
+    'The notes on every lesson are enough on their own. The free resources are a second explanation and extra practice.',
     'Units 0–3 are the core: most real work and most interview questions use only these. Units 4–5 (subqueries, CTEs, window functions) are what separates a pass from a strong pass.',
-    'Interview soon? Learn every "Must know" topic, then do Unit 8 twice: once with the hints, once from a blank page. Use Revise mode the night before.',
+    'Interview soon? Learn every "Must know" lesson, then do Unit 8 twice: once with the hints, once from a blank page. Use Revise mode the night before.',
 ];
 
 export type SqlResourceKind = 'watch' | 'read' | 'practice';
@@ -139,6 +140,8 @@ interface SqlTopicBase {
     diagram: SqlDiagram;
     /** Common mistakes and misunderstandings to avoid. */
     mistakes: string[];
+    /** Statements that sound right and are wrong, each with what is true instead (lessonMyth.ts). */
+    myths?: LessonMyth[];
     /** A 20–40 second spoken answer for the interview. */
     interviewAnswer: string;
     /** Likely follow-up questions, with short answers for revision. */

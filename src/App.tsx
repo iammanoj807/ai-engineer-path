@@ -6,6 +6,7 @@ import TopBar from './components/app/TopBar';
 import Celebration from './components/app/Celebration';
 import SignInNeeded from './components/app/SignInNeeded';
 import { absoluteUrl, metaFor } from './game/seo';
+import { REPO_URL } from './game/addresses';
 import { prerenderedFor } from './game/prerendered';
 
 // Each course carries every lesson, animation and answer, so each loads as its
@@ -73,7 +74,7 @@ const App = () => (
             >
                 <Typography variant="body2" color="text.secondary">
                     Free and open source.{' '}
-                    <Link href="https://github.com/iammanoj807/ai-engineer-path" target="_blank" rel="noreferrer" color="inherit">
+                    <Link href={REPO_URL} target="_blank" rel="noreferrer" color="inherit">
                         Star it on GitHub
                     </Link>
                 </Typography>

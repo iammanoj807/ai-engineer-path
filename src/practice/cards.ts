@@ -1,5 +1,6 @@
 // The cards of a practice session, for every course. A session teaches first
-// (the idea, then its new words), then practises with a mix of exercises. Every
+// (the idea, then its new words), then practises with a mix of exercises:
+// nothing is asked before it has been taught. Every
 // card is made from what a lesson already has (src/practice/build.ts): nothing
 // here is written twice, and nothing is invented.
 
@@ -8,17 +9,6 @@ import type { PredictCard, RowOrder, WriteCard } from './sql';
 import type { LessonPart } from './lesson';
 
 export type { PredictCard, WriteCard } from './sql';
-
-/**
- * Before learning: one or two statements from the lesson to guess true or
- * false. A guess, even a wrong one, makes the answer stick when the lesson
- * shows it (the pretesting effect). No hearts or XP depend on it.
- */
-export interface GuessCard {
-    kind: 'guess';
-    id: string;
-    statements: { text: string; isTrue: boolean }[];
-}
 
 /** Teaching, in "Learn it step by step": one part of the lesson (src/practice/lesson.ts). */
 export interface ReadCard {
@@ -76,11 +66,13 @@ export interface OrderCard {
     shown: number[];
 }
 
-/** One common mistake among true key points: find the mistake. */
+/** One false statement (a lesson's myth) among true key points: find it. */
 export interface MistakeCard {
     kind: 'mistake';
     id: string;
     options: { text: string; mistake: boolean }[];
+    /** What is true instead of the false statement. Shown once the card is answered. */
+    why: string;
 }
 
 /** A follow-up question: think, see the answer, say honestly whether you knew it. */
@@ -106,16 +98,15 @@ export interface FixCard {
     hint: string;
 }
 
-export type PracticeCard = GuessCard | ReadCard | IdeaCard | WordsCard | MatchCard | BlankCard | OrderCard | MistakeCard | RecallCard | PredictCard | WriteCard | FixCard;
+export type PracticeCard = ReadCard | IdeaCard | WordsCard | MatchCard | BlankCard | OrderCard | MistakeCard | RecallCard | PredictCard | WriteCard | FixCard;
 
-/** Cards that teach rather than ask: they can't be got wrong (a guess is only a guess). */
-export const isTeaching = (card: PracticeCard) => card.kind === 'idea' || card.kind === 'words' || card.kind === 'guess' || card.kind === 'read';
+/** Cards that teach rather than ask: they can't be got wrong. */
+export const isTeaching = (card: PracticeCard) => card.kind === 'idea' || card.kind === 'words' || card.kind === 'read';
 
 /** Cards that ask and are checked: these cost a heart when missed, and come back once at the end. */
 export const isChecked = (card: PracticeCard) => !isTeaching(card) && card.kind !== 'recall';
 
 export const CARD_TITLES: Record<PracticeCard['kind'], string> = {
-    guess: 'Take a guess',
     read: 'Learn',
     idea: 'New idea',
     words: 'New words',

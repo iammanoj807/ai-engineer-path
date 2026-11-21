@@ -24,7 +24,7 @@ export const foundationPhase1: FoundationPhase = {
         {
             id: 'f1-t1',
             name: 'Vectors, span and basis',
-            definition: 'A vector is a list of numbers you can draw as an arrow; the span of some vectors is every point you can reach by scaling and adding them, and a basis is a smallest set whose span is the whole space.',
+            definition: 'A vector is a list of numbers that you can draw as an arrow. The span of some vectors is every point you can reach by scaling and adding them, and a basis is the smallest set that reaches the whole space.',
             problem: 'Every piece of data in ML becomes a vector: a house is [size, rooms, age], a word is a list of 768 numbers, an image is a long list of pixel values. To reason about data you need to know what you can build from a few vectors, and whether a feature carries new information or just repeats what you already have.',
             howItWorks: [
                 'A vector [3, 2] means "3 steps along x, then 2 steps along y". Drawn from the origin it is an arrow; written down it is just two numbers.',
@@ -47,6 +47,10 @@ export const foundationPhase1: FoundationPhase = {
                 'Thinking more vectors always means a bigger span. Extra dependent vectors add nothing.',
                 'Forgetting that every span passes through the origin: scale everything by 0 and you are there.',
                 'Testing independence with an exact "== 0" check on decimals. Use the rank with a tolerance, or look at the singular values.',
+            ],
+            myths: [
+                { claim: 'Adding one more vector to a set always makes its span bigger.', truth: 'Only an independent vector adds something. A vector that is a combination of the others, like [2, 4] next to [1, 2], reaches nothing new.' },
+                { claim: 'Span of two vectors: a line or a plane, which may miss the origin.', truth: 'Every span contains the origin: scale all the vectors by 0 and you are there.' },
             ],
             followUps: [
                 { q: 'Do [1, 0] and [3, 0] form a basis of 2-D space?', a: 'No. [3, 0] = 3·[1, 0], so both lie on the x-axis. Their span is a line, not the whole plane.' },
@@ -102,6 +106,10 @@ export const foundationPhase1: FoundationPhase = {
                 'Assuming AB = BA. It is rarely true.',
                 'Mixing up the shape: a (3, 2) matrix takes 2-D vectors to 3-D vectors, not the other way round.',
             ],
+            myths: [
+                { claim: 'In NumPy, A * B computes the matrix product of A and B.', truth: 'A * B multiplies the entries in the same position. The matrix product is written A @ B.' },
+                { claim: 'For two matrices, AB always equals BA.', truth: 'The order matters. AB means do B first, then A, and swapping them usually gives a different result.' },
+            ],
             followUps: [
                 { q: 'Where does [[1, 2], [3, 4]] send the vector [1, 0]?', a: 'To [1, 3], its first column.' },
                 { q: 'What shape is (32, 10) @ (10, 4)?', a: '(32, 4). The inner 10s match and disappear.' },
@@ -149,7 +157,7 @@ export const foundationPhase1: FoundationPhase = {
                 '|det| is how much areas (in 2-D) or volumes (in 3-D) are scaled.',
                 'det < 0 means space is flipped; det = 0 means space is squashed into fewer dimensions.',
                 'det = 0 ⇔ no inverse ⇔ the columns are dependent ⇔ the rank is not full.',
-                'For 2 × 2: det [[a, b], [c, d]] = ad − bc.',
+                'For a 2 × 2 matrix [[a, b], [c, d]], the determinant is ad − bc.',
                 'det(AB) = det(A)·det(B): when you chain movements, their scale factors multiply.',
                 'For big matrices use np.linalg.slogdet, which returns the log, because determinants can be astronomically large or small.',
             ],
@@ -157,6 +165,10 @@ export const foundationPhase1: FoundationPhase = {
                 'Using "the determinant is tiny" as a test for "nearly impossible to invert". 0.1 × the 100 × 100 identity has det 10⁻¹⁰⁰ but is trivial to invert. The condition number is the right measure.',
                 'Treating a negative determinant as an error. It just means a flip.',
                 'Asking for the determinant of a non-square matrix. It only exists for square ones.',
+            ],
+            myths: [
+                { claim: '|det| tiny (say 10⁻¹⁰⁰) = a matrix that is very hard to invert.', truth: 'Not always: 0.1 times the 100 × 100 identity has a determinant of 10⁻¹⁰⁰, yet it is trivial to invert. The condition number is the right test.' },
+                { claim: 'Determinant of a 2 × 3 matrix: the product of its diagonal entries.', truth: 'A determinant exists only for square matrices. A 2 × 3 matrix has none.' },
             ],
             followUps: [
                 { q: 'What is det [[4, 2], [1, 3]]?', a: '4·3 − 2·1 = 10. Areas grow 10 times, with no flip.' },
@@ -190,7 +202,7 @@ export const foundationPhase1: FoundationPhase = {
         {
             id: 'f1-t4',
             name: 'Inverse, rank and solving Ax = b',
-            definition: 'The inverse A⁻¹ undoes what A does; the rank is how many independent directions survive A; and when the rank is full, Ax = b has exactly one solution.',
+            definition: 'The inverse of a matrix undoes what the matrix does. The rank counts how many independent directions survive it, and when the rank is full, Ax = b has exactly one solution.',
             problem: 'Many ML problems end in "solve these equations": the best weights of linear regression satisfy XᵀX w = Xᵀy. You need to know when there is exactly one answer, when there is none or infinitely many, and how to compute it safely. Rank and the inverse answer exactly those questions.',
             howItWorks: [
                 'Write the equations 2x + y = 3 and x + 3y = 5 as a matrix: A = [[2, 1], [1, 3]] and b = [3, 5]. The question becomes: which vector does A move onto b?',
@@ -213,6 +225,10 @@ export const foundationPhase1: FoundationPhase = {
                 'Computing inv(A) @ b. It is slower and less accurate, especially when A is nearly singular.',
                 'Assuming every square matrix has an inverse. Check the rank or the condition number.',
                 'Mixing up "no solution" and "infinitely many": both come from too low a rank, depending on b.',
+            ],
+            myths: [
+                { claim: 'The most accurate way to solve Ax = b in code is to compute the inverse of A and multiply it by b.', truth: 'Building the inverse is slower and less accurate, especially when A is nearly singular. np.linalg.solve finds x without ever building it.' },
+                { claim: 'Every square matrix has an inverse.', truth: 'A square matrix that squashes space flat (its rank is too low, its determinant is 0) has no inverse. Check the rank or the condition number first.' },
             ],
             followUps: [
                 { q: 'What is the rank of [[1, 2], [2, 4]]?', a: '1. The second column is 2 times the first, so only one direction survives.' },
@@ -247,7 +263,7 @@ export const foundationPhase1: FoundationPhase = {
         {
             id: 'f1-t5',
             name: 'Dot product, projection and orthogonality',
-            definition: 'The dot product multiplies two vectors entry by entry and adds the results; it measures how much they point the same way, and it gives the length of one vector\'s shadow on another.',
+            definition: 'The dot product multiplies two vectors entry by entry and adds the results. It measures how much they point the same way, and it gives the length of one vector\'s shadow on another.',
             problem: 'ML constantly asks "how similar are these two things?": two documents in search, a query and a key in attention, an input and a neuron\'s weights. The dot product answers with one cheap number. Projection, built from the dot product, keeps only the part of a vector that lies along a direction, which is the idea behind least squares and PCA.',
             howItWorks: [
                 'Multiply matching entries and add: for a = [3, 4] and b = [1, 0], a·b = 3·1 + 4·0 = 3.',
@@ -258,9 +274,9 @@ export const foundationPhase1: FoundationPhase = {
                 'Cosine similarity divides out the lengths: cos θ = a·b / (|a||b|). It runs from −1 (opposite) to 1 (same direction) and ignores length, which is why search uses it.',
             ],
             keyPoints: [
-                'a·b = Σ aᵢbᵢ = |a||b| cos θ.',
-                'A dot product of 0 means orthogonal: at 90°.',
-                'a·a = |a|², so a vector\'s length is √(a·a).',
+                'The dot product two ways: a·b = Σ aᵢbᵢ (multiply matching entries and add) = |a||b| cos θ (the two lengths times the cosine of the angle between them).',
+                'A dot product of 0 means the two vectors are orthogonal: at 90° to each other.',
+                'A vector dotted with itself gives its length squared: a·a = |a|², so its length is √(a·a).',
                 'Projection of a onto b: (a·b / b·b)·b. The leftover part is orthogonal to b.',
                 'Cosine similarity is the dot product after scaling both vectors to length 1.',
                 'A matrix–vector product is a list of dot products: each output is one row of the matrix dotted with the vector.',
@@ -269,6 +285,10 @@ export const foundationPhase1: FoundationPhase = {
                 'Comparing similarity with the raw dot product when lengths differ a lot. Long vectors win just for being long; use cosine similarity.',
                 'Forgetting to divide by b·b in the projection when b is not length 1.',
                 'Dividing by a zero-length vector in cosine similarity.',
+            ],
+            myths: [
+                { claim: 'Similarity of two vectors: the raw dot product a·b, whether they are long or short.', truth: 'A long vector gets a large dot product just for being long. Cosine similarity divides by both lengths, so only the direction counts.' },
+                { claim: 'Cosine similarity with a zero-length vector: 0.', truth: 'A zero-length vector makes the formula divide by 0, so the cosine has no value at all. Check for zero vectors before dividing.' },
             ],
             followUps: [
                 { q: 'Compute [2, −1, 3]·[4, 5, 0].', a: '8 − 5 + 0 = 3.' },
@@ -303,7 +323,7 @@ export const foundationPhase1: FoundationPhase = {
         {
             id: 'f1-t6',
             name: 'Eigenvalues and eigenvectors',
-            definition: 'An eigenvector of a matrix is a direction the matrix does not turn, only stretches; its eigenvalue is how much it stretches: Av = λv.',
+            definition: 'An eigenvector of a matrix is a direction the matrix does not turn, only stretches. Its eigenvalue is how much it is stretched.',
             problem: 'A matrix moves vectors in a confusing mix of turning and stretching. Eigenvectors find the special directions where it acts like plain multiplication, which makes the matrix easy to understand. They give the main directions of variation in data (PCA), tell you whether repeated multiplication explodes or fades (RNNs, Markov chains), and explain how fast gradient descent converges.',
             howItWorks: [
                 'Apply A = [[2, 1], [1, 2]] to many directions and see which ones stay on their own line. Most are knocked off: [1, 0] becomes [2, 1], a different direction.',
@@ -326,6 +346,22 @@ export const foundationPhase1: FoundationPhase = {
                 'Expecting eigenvectors to have a particular length. Any multiple works; libraries return length 1.',
                 'Using np.linalg.eig on a symmetric matrix. eigh is faster, more accurate, and returns real, sorted values.',
             ],
+            myths: [
+                { claim: 'Every matrix has at least one real direction that it only stretches.', truth: 'A rotation in 2-D turns every direction, so it has no real eigenvector: its eigenvalues are complex numbers.' },
+                { claim: 'An eigenvector has length 1, and a longer copy of it is not an eigenvector.', truth: 'Any multiple of an eigenvector is an eigenvector too. Libraries return length 1 only as a convention.' },
+            ],
+            deeper: {
+                title: 'Why multiplying by A again and again finds the biggest eigenvector',
+                steps: [
+                    'Take a matrix with eigenvectors v₁ and v₂ and eigenvalues λ₁ and λ₂, where |λ₁| is the bigger one. In the lesson\'s example, v₁ = [1, 1] with λ₁ = 3, and v₂ = [1, −1] with λ₂ = 1.',
+                    'Any starting vector is a mix of the two: x = c₁v₁ + c₂v₂. For example [1, 0] = 0.5·[1, 1] + 0.5·[1, −1].',
+                    'Apply A once. Each eigenvector is only stretched, so Ax = c₁λ₁v₁ + c₂λ₂v₂.',
+                    'Apply it k times: Aᵏx = c₁λ₁ᵏv₁ + c₂λ₂ᵏv₂ = λ₁ᵏ·(c₁v₁ + c₂(λ₂/λ₁)ᵏv₂).',
+                    'Because |λ₂/λ₁| < 1, the second part shrinks every round: here by a factor of 3 each time. After 10 rounds it is 59,049 times smaller.',
+                    'Rescale the vector to length 1 after each round, so the numbers don\'t overflow. What is left points along v₁. This method is called power iteration.',
+                ],
+                result: 'Aᵏx lines up with the eigenvector of the largest |λ|, and the error shrinks by |λ₂/λ₁| each round. It needs c₁ ≠ 0 and one eigenvalue that is strictly the largest.',
+            },
             followUps: [
                 { q: 'Is [1, 0] an eigenvector of [[3, 0], [0, 5]]? With what eigenvalue?', a: 'Yes, with eigenvalue 3: the matrix sends it to [3, 0].' },
                 { q: 'What are the eigenvalues of a diagonal matrix?', a: 'The numbers on its diagonal; the axes are its eigenvectors.' },
@@ -359,7 +395,7 @@ export const foundationPhase1: FoundationPhase = {
         {
             id: 'f1-t7',
             name: 'SVD, and the maths behind PCA',
-            definition: 'SVD splits any matrix into rotate → stretch → rotate (A = UΣVᵀ); PCA uses it to find the directions along which data varies most, so you can keep a few and drop the rest.',
+            definition: 'SVD splits any matrix into three simple moves: rotate, stretch, rotate. PCA uses it to find the directions in which data varies most, so you can keep a few and drop the rest.',
             problem: 'Real data has many features, and many move together: height and weight, or neighbouring pixels. Working in fewer dimensions is faster, easier to plot and often less noisy. PCA finds the few directions that keep most of the information, and SVD is the reliable way to compute them for any matrix, square or not.',
             howItWorks: [
                 'Centre the data: subtract the mean of each feature, so the cloud sits around the origin. PCA measures spread around the mean, so this step is essential.',
@@ -384,6 +420,22 @@ export const foundationPhase1: FoundationPhase = {
                 'Reading principal directions as causes. They are directions of spread, nothing more.',
                 'Fitting PCA on all the data, test set included. Fit it on the training data, then apply it to the test data.',
             ],
+            myths: [
+                { claim: 'PCA finds the same directions whether or not you subtract the mean first.', truth: 'PCA measures spread around the mean. Without centring, the first direction mostly points from the origin towards the mean of the data.' },
+                { claim: 'Principal directions = the causes behind the data.', truth: 'They are only the directions along which the data spreads out most. PCA says nothing about what causes what.' },
+            ],
+            deeper: {
+                title: 'Why the direction of most variance is an eigenvector',
+                steps: [
+                    'Centre the data and call its covariance matrix C = XᵀX / (n − 1). Take any direction u of length 1.',
+                    'Project every sample onto u: the scores are Xu. Their variance is (Xu)ᵀ(Xu) / (n − 1) = uᵀCu.',
+                    'PCA asks for the u that makes uᵀCu as large as possible, under the constraint uᵀu = 1. Without the constraint you could simply make u longer.',
+                    'Use a Lagrange multiplier (the last lesson of this unit): L = uᵀCu − λ(uᵀu − 1). Setting the gradient with respect to u to zero gives 2Cu − 2λu = 0, so Cu = λu.',
+                    'So the best u has to be an eigenvector of C. Which one? Put Cu = λu back into the variance: uᵀCu = λ·uᵀu = λ.',
+                    'The variance along an eigenvector equals its eigenvalue, so the largest eigenvalue wins. Ask again for the best direction at 90° to the ones already chosen, and you get the second eigenvector, then the third.',
+                ],
+                result: 'The principal directions are the eigenvectors of the covariance matrix, and the variance along each one is its eigenvalue, λₖ = σₖ² / (n − 1).',
+            },
             followUps: [
                 { q: 'Why must you centre data before PCA?', a: 'PCA finds directions of spread around the mean. Without centring, the first direction mostly points from the origin to the middle of the data.' },
                 { q: 'The singular values are [4, 2, 1]. What share of the variance does the first direction explain?', a: '16 / (16 + 4 + 1) = 16/21 ≈ 76%.' },
@@ -440,6 +492,10 @@ export const foundationPhase1: FoundationPhase = {
                 'Using the wrong values in the chain. Each rate is worked out at the current point (u = 4 here).',
                 'Numerical derivatives with h far too small, like 1e-15: rounding errors swamp the answer.',
             ],
+            myths: [
+                { claim: 'Numerical derivative: the smaller the step h, the more accurate the answer.', truth: 'Only up to a point. With h as small as 1e-15, rounding errors swamp the tiny difference and the answer becomes wrong.' },
+                { claim: 'd/dx (3x + 1)² = 2(3x + 1).', truth: 'The chain rule also multiplies by the inner rate, which is 3. The derivative is 2(3x + 1) × 3 = 6(3x + 1).' },
+            ],
             followUps: [
                 { q: 'What is the derivative of x³ at x = 2?', a: '3x² = 12.' },
                 { q: 'Differentiate e^(2x).', a: 'Outer rate e^u, inner rate 2, so 2e^(2x).' },
@@ -473,7 +529,7 @@ export const foundationPhase1: FoundationPhase = {
         {
             id: 'f1-t9',
             name: 'Partial derivatives, gradients and Jacobians',
-            definition: 'A partial derivative is the rate of change when you nudge one input and hold the rest still; the gradient stacks all of them into a vector that points in the direction of steepest increase.',
+            definition: 'A partial derivative is the rate of change when you nudge one input and hold the others still. The gradient puts all of them into one vector, which points in the direction of steepest increase.',
             problem: 'A loss depends on many weights at once, often millions. You need to know how it changes with each one, and which combined direction makes it fall fastest. The gradient packages exactly that, and gradient descent simply steps the other way. Jacobians extend the idea to functions with many outputs, like a whole network layer.',
             howItWorks: [
                 'Take the bowl f(x, y) = x² + 2y² and stand at (1.5, 1), where f = 2.25 + 2 = 4.25.',
@@ -496,6 +552,10 @@ export const foundationPhase1: FoundationPhase = {
                 'Forgetting to hold the other variables still: ∂/∂x of x²y is 2xy, not 2x.',
                 'Stepping along +∇f when minimising. Descent goes against the gradient.',
                 'Getting the Jacobian sideways. Fix the rule: rows are outputs, columns are inputs.',
+            ],
+            myths: [
+                { claim: 'In a Jacobian, each row belongs to one input and each column to one output.', truth: 'It is the other way round: one row for each output, one column for each input.' },
+                { claim: 'To make a function smaller, step in the direction of its gradient.', truth: 'The gradient points uphill, the way the function grows fastest. To make it smaller, step against the gradient.' },
             ],
             followUps: [
                 { q: 'Find ∇f for f(x, y) = 3x + y² at (2, 1).', a: '[3, 2]: ∂f/∂x = 3 and ∂f/∂y = 2y = 2.' },
@@ -528,7 +588,7 @@ export const foundationPhase1: FoundationPhase = {
         {
             id: 'f1-t10',
             name: 'Gradient descent and the learning rate',
-            definition: 'Gradient descent minimises a function by repeatedly stepping against its gradient, w ← w − η·∇f(w), where the learning rate η sets the size of each step.',
+            definition: 'Gradient descent makes a function smaller by taking many small steps downhill, against its gradient. The learning rate sets the size of each step.',
             problem: 'For most models there is no formula that gives the best weights directly, and for neural networks there certainly isn\'t. But you can always compute the gradient. Gradient descent turns "which way is downhill?" into an algorithm that walks to a minimum one small step at a time. Choosing the step size well is the difference between fast training, slow training and no training at all.',
             howItWorks: [
                 'Pick a starting point: w = 4, where f(w) = w² = 16.',
@@ -552,6 +612,22 @@ export const foundationPhase1: FoundationPhase = {
                 'Blaming the model when the real problem is a learning rate far too big or too small.',
                 'Leaving features on wildly different scales. The loss surface becomes a long, thin valley and gradient descent zig-zags. Scale features first.',
             ],
+            myths: [
+                { claim: 'Gradient descent works equally well whether or not the features are on similar scales.', truth: 'Features on very different scales turn the loss surface into a long, thin valley, where gradient descent zig-zags and crawls. Scale them first.' },
+                { claim: 'A bigger learning rate always reaches the minimum sooner.', truth: 'Too big a step jumps over the minimum: the weight swings from side to side, or flies away. For f(w) = w², any η above 1 diverges.' },
+            ],
+            deeper: {
+                title: 'Why the learning rate has a hard upper limit',
+                steps: [
+                    'Take a bowl of any steepness: f(w) = (a/2)·w², with a > 0. Its gradient is a·w, and a measures how sharply the bowl curves (it is the second derivative).',
+                    'One step of gradient descent: w ← w − η·a·w = (1 − ηa)·w. Every step multiplies w by the same number, 1 − ηa.',
+                    'After k steps, w = (1 − ηa)ᵏ·w₀. This shrinks to 0 exactly when |1 − ηa| < 1.',
+                    'Solve it: −1 < 1 − ηa < 1 gives 0 < η < 2/a. The lesson\'s f(w) = w² has a = 2, so the limit is η < 1: that is why 0.9 converges and 1.1 explodes.',
+                    'The fastest choice is η = 1/a: the factor is 0 and one step lands on the minimum. Between 1/a and 2/a the factor is negative, so w overshoots and zig-zags but still converges.',
+                    'With many weights, each direction has its own curvature. η must stay below 2 / (the largest curvature), which makes progress slow in the flattest direction. That gap is why badly scaled problems train slowly, and why momentum and Adam help.',
+                ],
+                result: 'On a bowl with curvature a, gradient descent converges only for 0 < η < 2/a, and η = 1/a is the fastest. The sharpest direction sets the limit for all the others.',
+            },
             followUps: [
                 { q: 'f(w) = w², w = 2, η = 0.25. What is w after one step?', a: 'The gradient is 2w = 4, so w = 2 − 0.25·4 = 1.' },
                 { q: 'Why does gradient descent slow down near the minimum, even with a fixed learning rate?', a: 'Each step is η times the gradient, and the gradient shrinks as the slope flattens.' },
@@ -578,7 +654,7 @@ export const foundationPhase1: FoundationPhase = {
             practice: {
                 explain: 'In three sentences, tell a friend why the learning rate matters.',
                 derive: 'f(w) = (w − 3)². Start at w = 0 with learning rate 0.1. Do 3 steps on paper. Where is w going, and why?',
-                build: 'Write gradient descent for f(w) and plot w over 50 steps. Then use it for linear regression on real data, and plot the loss.',
+                build: 'Write gradient descent for f(w) and plot w over 50 steps. Then use it to fit a straight line to real data (the model from the first lesson; Unit 2 calls it linear regression), and plot the loss.',
                 break: 'Try learning rates 0.01, 0.5, 0.9 and 1.1 on f(w) = (w − 3)². Which is slow, which is fastest, which swings from side to side, and which explodes? Use the update rule to explain why.',
             },
         },
@@ -597,7 +673,7 @@ export const foundationPhase1: FoundationPhase = {
             ],
             keyPoints: [
                 'Discrete: a list of values with probabilities (a die, a coin, a class label). Continuous: a density, where probability = area.',
-                'E[X] = Σ x·P(x). Expectation is linear: E[aX + bY] = aE[X] + bE[Y], always.',
+                'The expectation is E[X] = Σ x·P(x): each value times its probability, added up. It is linear: E[aX + bY] = aE[X] + bE[Y], always.',
                 'Var(X) = E[X²] − E[X]². The standard deviation √Var is in the units of X.',
                 'Var(aX) = a²·Var(X). For independent X and Y, Var(X + Y) = Var(X) + Var(Y).',
                 'Gaussian: about 68% of values lie within 1σ of the mean and about 95% within 2σ.',
@@ -607,6 +683,10 @@ export const foundationPhase1: FoundationPhase = {
                 'Thinking the expectation is the most likely value. For a die, 3.5 is never rolled.',
                 'Adding standard deviations instead of variances for independent variables.',
                 'Reading a density value as a probability. Densities can be bigger than 1; only areas are probabilities.',
+            ],
+            myths: [
+                { claim: 'Expectation E[X]: the most likely value of X.', truth: 'It is the long-run average, which need not be a possible value at all: a fair die has expectation 3.5 and never rolls 3.5.' },
+                { claim: 'Density: like a probability, it lies between 0 and 1.', truth: 'A density can be bigger than 1. Only areas under the curve are probabilities, and the whole area is 1.' },
             ],
             followUps: [
                 { q: 'A coin pays £1 for heads and £0 for tails. What are the expectation and variance?', a: 'Expectation 0.5, variance 0.5·0.5 = 0.25: a Bernoulli with p = 0.5.' },
@@ -641,8 +721,8 @@ export const foundationPhase1: FoundationPhase = {
         {
             id: 'f1-t12',
             name: 'Conditional probability and Bayes’ rule',
-            definition: 'Conditional probability P(A | B) is the chance of A once you know B happened; Bayes\' rule turns P(B | A) into P(A | B) using how common A was to begin with.',
-            problem: 'People and models constantly update beliefs from evidence: is this email spam given these words, is this patient sick given a positive test? The probability you know (how often the test is positive for sick people) is usually not the one you want (how likely you are sick given a positive test). Bayes\' rule converts one into the other, and ignoring the starting rate is one of the most common reasoning errors there is.',
+            definition: 'Conditional probability is the chance of A once you know that B happened. Bayes\' rule flips it round: from the chance of B given A, it gives the chance of A given B, using how common A was to begin with.',
+            problem: 'People and models constantly update beliefs from evidence: is this email spam given these words, is this patient sick given a positive test?\n\nThe probability you know (how often the test is positive for sick people) is usually not the one you want (how likely you are sick given a positive test). Bayes\' rule converts one into the other, and ignoring the starting rate is one of the most common reasoning errors there is.',
             howItWorks: [
                 'Start with counts, not formulas. Imagine 1,000 people; 1% are sick, so 10 are sick and 990 are healthy.',
                 'The test catches 99% of sick people: about 9.9 of the 10 test positive.',
@@ -652,7 +732,7 @@ export const foundationPhase1: FoundationPhase = {
                 'The starting rate (the prior) matters enormously. If 5% were sick, the same test would give P(sick | +) ≈ 0.51.',
             ],
             keyPoints: [
-                'P(A | B) = P(A and B) / P(B).',
+                'Conditional probability: P(A | B) = P(A and B) / P(B), the share of the B cases in which A happens too.',
                 'Bayes: posterior = likelihood × prior / evidence.',
                 'P(A | B) ≠ P(B | A). The test is 99% sensitive, yet a positive result means only a 17% chance of being sick.',
                 'Natural frequencies (counting 1,000 people) make Bayes problems far easier to get right.',
@@ -663,6 +743,10 @@ export const foundationPhase1: FoundationPhase = {
                 'Confusing P(positive | sick) with P(sick | positive).',
                 'Ignoring the base rate (the prior). Rare things stay fairly unlikely even after quite strong evidence.',
                 'Forgetting that P(B) must count every way B can happen.',
+            ],
+            myths: [
+                { claim: 'Once the evidence is strong, how rare something was to begin with no longer matters.', truth: 'The starting rate still matters a great deal: a rare disease stays fairly unlikely even after a positive result from a good test.' },
+                { claim: 'P(positive | sick) and P(sick | positive) are the same number.', truth: 'They answer different questions and can be far apart: most sick people can test positive while most positive tests come from healthy people. Bayes\' rule turns one into the other.' },
             ],
             followUps: [
                 { q: 'P(rain) = 0.2, P(clouds | rain) = 0.9 and P(clouds) = 0.45. What is P(rain | clouds)?', a: '0.9 × 0.2 / 0.45 = 0.4.' },
@@ -719,6 +803,10 @@ export const foundationPhase1: FoundationPhase = {
                 'Multiplying thousands of small probabilities directly. They underflow to 0; add their logs instead.',
                 'Trusting maximum likelihood on tiny data: 3 heads out of 3 flips gives p = 1.',
             ],
+            myths: [
+                { claim: 'Maximum likelihood on 3 coin flips: a trustworthy estimate of p.', truth: 'Three heads out of three gives p = 1: a coin that could never land tails. On tiny data, add a prior or collect more.' },
+                { claim: 'Likelihood L(θ) = the probability that θ is the correct value.', truth: 'It is the probability of the data, given that parameter value. It says how well the value explains what was seen.' },
+            ],
             followUps: [
                 { q: 'You saw 2 heads in 8 flips. What is the maximum likelihood estimate of p?', a: '2/8 = 0.25.' },
                 { q: 'Why maximise the log-likelihood instead of the likelihood?', a: 'The log has the same peak, turns products into sums (easier to differentiate), and avoids numbers too small for a computer.' },
@@ -752,7 +840,7 @@ export const foundationPhase1: FoundationPhase = {
         {
             id: 'f1-t14',
             name: 'Statistics: sampling, confidence intervals, hypothesis tests',
-            definition: 'Statistics measures how far a result from a sample can be trusted: a confidence interval gives a plausible range for the true value, and a hypothesis test asks whether a difference could just be luck.',
+            definition: 'Statistics measures how far a result from a sample can be trusted. A confidence interval gives a likely range for the true value, and a hypothesis test asks whether a difference could just be luck.',
             problem: 'Every accuracy you report comes from a finite test set, so it is an estimate with noise. Model B beating model A by 1% might be real, or might vanish on another test set. Without confidence intervals and tests you will chase noise, ship worse models and over-claim results.',
             howItWorks: [
                 'Treat the test set as a random sample. Each example is right (1) or wrong (0), so accuracy is a sample mean.',
@@ -764,8 +852,8 @@ export const foundationPhase1: FoundationPhase = {
                 'To shrink the interval, get more data. The standard error falls like 1/√n, so 4 times more examples halves it.',
             ],
             keyPoints: [
-                'Standard error of a mean = σ/√n; of a proportion = √(p(1 − p)/n).',
-                '95% interval ≈ estimate ± 1.96 standard errors.',
+                'The standard error of a mean is σ/√n; of a proportion, such as an accuracy, it is √(p(1 − p)/n).',
+                'A 95% confidence interval is about the estimate ± 1.96 standard errors.',
                 'Central limit theorem: averages of many independent samples are roughly Gaussian, whatever the original distribution.',
                 'A p-value is P(a result at least this extreme | no real effect). It is not the probability that the effect is real.',
                 '4 times more data halves the interval width.',
@@ -777,6 +865,22 @@ export const foundationPhase1: FoundationPhase = {
                 'Trying many variants and reporting only the best: some will look significant by luck alone.',
                 'Assuming a bigger sample fixes a biased one. It doesn\'t.',
             ],
+            myths: [
+                { claim: 'A p-value of 0.04 means there is a 96% chance that the new model really is better.', truth: 'A p-value is the chance of a result at least this extreme if there were no real difference. It is not the probability that the effect is real.' },
+                { claim: 'If the best of 20 model variants passes p < 0.05, its improvement must be real.', truth: 'With many variants, some look significant by luck alone: about 1 in 20 passes p < 0.05 with no real effect. Reporting only the best one hides that.' },
+            ],
+            deeper: {
+                title: 'Why the standard error falls like 1/√n',
+                steps: [
+                    'Take n independent samples X₁, …, Xₙ, each with mean μ and variance σ². Call their average m = (X₁ + … + Xₙ)/n.',
+                    'Two facts about variance: multiplying a variable by c multiplies its variance by c², and for independent variables the variance of a sum is the sum of the variances.',
+                    'So Var(X₁ + … + Xₙ) = nσ², and Var(m) = nσ² / n² = σ²/n.',
+                    'The standard error is the standard deviation of the estimate: √(σ²/n) = σ/√n.',
+                    'For accuracy, each test example scores 1 (right) with probability p or 0 (wrong). That variable has variance p(1 − p), so the standard error is √(p(1 − p)/n): the formula in the lesson.',
+                    'The catch is the word independent. If many test examples are near-copies of each other, the real uncertainty is larger than the formula says.',
+                ],
+                result: 'Var(the mean of n independent samples) = σ²/n, so the standard error is σ/√n. Four times the data halves it.',
+            },
             followUps: [
                 { q: 'Accuracy is 90% on 100 examples. Roughly what is the 95% interval?', a: 'SE = √(0.9·0.1/100) = 0.03, so 90% ± 5.9%: about 84% to 96%.' },
                 { q: 'How much more data do you need to halve the interval width?', a: '4 times as much, because the width falls like 1/√n.' },
@@ -809,7 +913,7 @@ export const foundationPhase1: FoundationPhase = {
         {
             id: 'f1-t15',
             name: 'Entropy, cross-entropy and KL divergence',
-            definition: 'Entropy measures how uncertain a distribution is; cross-entropy measures how surprised a model q is by data that really comes from p; KL divergence is the extra surprise caused by using q instead of p.',
+            definition: 'Entropy measures how uncertain a distribution is. Cross-entropy measures how surprised a model is by the real data, and KL divergence is the extra surprise that comes from the model being wrong.',
             problem: 'A classifier outputs probabilities, and you need a loss that rewards putting high probability on the right answer and punishes confident mistakes hard. Cross-entropy is that loss, and nearly every classifier and every language model is trained on it. KL divergence measures how far apart two distributions are, and it shows up in VAEs, knowledge distillation and RLHF.',
             howItWorks: [
                 'The surprise of an event with probability q is −log q. Certain events (q = 1) cost 0; rare ones cost a lot.',
@@ -823,15 +927,31 @@ export const foundationPhase1: FoundationPhase = {
                 'Surprise = −log(probability). The natural log gives nats; log base 2 gives bits.',
                 'Entropy H(p) = −Σ p log p: highest for a uniform distribution, zero for a certain one.',
                 'Cross-entropy H(p, q) = −Σ p log q, and it is always at least H(p).',
-                'KL(p ‖ q) = H(p, q) − H(p) ≥ 0, and it is not symmetric.',
+                'KL divergence is cross-entropy minus entropy: KL(p ‖ q) = H(p, q) − H(p). It is never negative, and it is not symmetric.',
                 'Classification loss = −log(probability of the true class), averaged over examples.',
                 'Language models are trained on exactly this: −log P(the next token).',
             ],
             mistakes: [
                 'Taking the log of a probability that is exactly 0: −log 0 is infinite. Work with logits and log-softmax instead.',
-                'Treating KL as a distance. KL(p ‖ q) ≠ KL(q ‖ p).',
+                'Treating KL divergence as a distance. It is not symmetric: KL(p ‖ q) ≠ KL(q ‖ p).',
                 'Swapping the roles in cross-entropy: the true distribution does the averaging, and the model supplies the logs.',
             ],
+            myths: [
+                { claim: 'KL divergence is a true distance: KL(p ‖ q) always equals KL(q ‖ p).', truth: 'KL divergence is not symmetric, so it is not a distance. Swapping p and q usually changes its value.' },
+                { claim: 'Cross-entropy stays small when the model gives the true class a probability close to 0.', truth: '−log of a probability near 0 is huge, and −log 0 is infinite. A confident wrong answer is punished very heavily.' },
+            ],
+            deeper: {
+                title: 'Why KL divergence can never be negative',
+                steps: [
+                    'Start from one fact about the logarithm: log x ≤ x − 1 for every x > 0, with equality only at x = 1. (The straight line x − 1 touches the curve log x at x = 1 and lies above it everywhere else.)',
+                    'Write out the definition: KL(p ‖ q) = Σ p·log(p/q) = −Σ p·log(q/p).',
+                    'Apply the fact to each term, with x = q/p: log(q/p) ≤ q/p − 1. Multiply by p and add up: Σ p·log(q/p) ≤ Σ (q − p).',
+                    'Both distributions add up to 1, so Σ (q − p) = 1 − 1 = 0. Therefore Σ p·log(q/p) ≤ 0, which is the same as KL(p ‖ q) ≥ 0.',
+                    'Equality needs q/p = 1 in every term: that is, q = p.',
+                    'Since KL = H(p, q) − H(p), this also proves that cross-entropy is never below entropy. No model can be less surprised by the data than the true distribution is.',
+                ],
+                result: 'KL(p ‖ q) ≥ 0, with equality only when q = p. So H(p, q) ≥ H(p): the entropy of the data is the floor of the loss.',
+            },
             followUps: [
                 { q: 'The model gives the right class probability 0.5. What is the cross-entropy loss?', a: '−ln 0.5 ≈ 0.69.' },
                 { q: 'Which has higher entropy: a fair coin, or a coin that lands heads 99% of the time?', a: 'The fair coin. It is the most uncertain coin possible: 1 bit.' },
@@ -865,8 +985,8 @@ export const foundationPhase1: FoundationPhase = {
         {
             id: 'f1-t16',
             name: 'Convex optimisation: constraints, Lagrange multipliers and duality',
-            definition: 'A convex function is bowl-shaped, so any local minimum is the global minimum; constrained problems are solved by adding the constraint with a Lagrange multiplier, and duality views the same problem from the constraint\'s side.',
-            problem: 'Gradient descent only promises a local minimum. For convex problems that is enough: the answer is the best possible and doesn\'t depend on where you start. Knowing which models are convex (linear and logistic regression, SVMs) tells you when to trust the optimiser. Constraints like "weights must add up to 1" or "every point on the right side of the margin" need Lagrange multipliers, and SVMs are usually trained through their dual problem.',
+            definition: 'A convex function is bowl-shaped, so any local minimum is the global one. A problem with a constraint is solved by adding the constraint with a Lagrange multiplier, and duality looks at the same problem from the constraint\'s side.',
+            problem: 'Gradient descent only promises a local minimum. For convex problems that is enough: the answer is the best possible and doesn\'t depend on where you start. Knowing which models are convex (linear and logistic regression, SVMs) tells you when to trust the optimiser.\n\nConstraints like "weights must add up to 1" or "every point on the right side of the margin" need Lagrange multipliers, and SVMs are usually trained through their dual problem.',
             howItWorks: [
                 'Test convexity with the chord rule: the straight line between any two points on the curve lies on or above the curve. w² passes; w⁴ − 3w² + w fails.',
                 'For a smooth function, convex means the second derivative is never negative. In many dimensions: the Hessian matrix has no negative eigenvalues.',
@@ -880,7 +1000,7 @@ export const foundationPhase1: FoundationPhase = {
                 'Convex: the chord lies above the curve; the second derivative is ≥ 0; there is one valley.',
                 'A sum of convex functions is convex, so loss + an L2 penalty stays convex.',
                 'Convex models: linear regression with squared error, logistic regression, SVMs. Neural networks are not convex.',
-                'Lagrange condition at a constrained optimum: ∇f = λ∇g.',
+                'At the best point under a constraint, the gradient of the objective is parallel to the gradient of the constraint: ∇f = λ∇g.',
                 'The multiplier λ is the "price" of the constraint: how fast the best value changes as the constraint is relaxed.',
                 'Duality turns a constrained problem into a different one, often easier to solve. SVMs and their kernels come from the dual.',
             ],
@@ -889,6 +1009,21 @@ export const foundationPhase1: FoundationPhase = {
                 'Forgetting that a convex function can have a flat bottom with many minimisers, all with the same value.',
                 'Dropping the constraint equation itself when solving the Lagrange conditions.',
             ],
+            myths: [
+                { claim: 'A convex function always has exactly one point where it is lowest.', truth: 'It has one lowest value, but that value can be reached along a whole flat stretch: many minimisers, all equally good.' },
+                { claim: 'The loss of a deep neural network is convex.', truth: 'Deep-learning losses are not convex: they have many valleys. That is why initialisation and learning-rate schedules matter.' },
+            ],
+            deeper: {
+                title: 'Why a local minimum of a convex function is the global one',
+                steps: [
+                    'Write the chord rule from the lesson as a formula. For a convex f and any t between 0 and 1: f(t·v + (1 − t)·w) ≤ t·f(v) + (1 − t)·f(w). The left side is a point on the line between w and v; the right side is the chord above it.',
+                    'Suppose w is a local minimum: no point close to w is lower. Suppose also, hoping for a contradiction, that some far-away point v is lower: f(v) < f(w).',
+                    'Walk a tiny way from w towards v: the point t·v + (1 − t)·w, with t small, is as close to w as you like.',
+                    'By the chord rule, f at that point is at most t·f(v) + (1 − t)·f(w). Because f(v) < f(w), that is strictly less than f(w).',
+                    'So there are points right next to w that are lower than w, which contradicts "w is a local minimum". The assumption was wrong: no lower point v exists.',
+                ],
+                result: 'For a convex function, every local minimum is a global minimum. That is why gradient descent cannot get stuck in a bad valley on linear regression, logistic regression or an SVM.',
+            },
             followUps: [
                 { q: 'Is f(w) = |w| convex?', a: 'Yes. The chord between any two points lies on or above the V shape, even though it has a corner at 0.' },
                 { q: 'Why can gradient descent end in different places on w⁴ − 3w² + w?', a: 'It isn\'t convex: it has two valleys, and each start rolls into the valley it begins above.' },
@@ -900,7 +1035,7 @@ export const foundationPhase1: FoundationPhase = {
                 caption: 'The bowl (w²) has one bottom, so gradient descent always finds it. The wavy curve has two valleys, so where you end up depends on where you start.',
             },
             note: {
-                idea: 'A convex function is shaped like a bowl, so any local minimum is the global minimum and gradient descent cannot get stuck in a wrong valley. Constrained problems (\'minimise this, but keep that true\') are solved with Lagrange multipliers, which add the constraint to the objective as an extra term. Duality looks at the same problem from the constraint\'s side, and it is how SVMs are usually solved.',
+                idea: 'A convex function is shaped like a bowl, so any local minimum is the global minimum and gradient descent cannot get stuck in a wrong valley.\n\nConstrained problems (\'minimise this, but keep that true\') are solved with Lagrange multipliers, which add the constraint to the objective as an extra term. Duality looks at the same problem from the constraint\'s side, and it is how SVMs are usually solved.',
                 analogy: 'A bowl versus a mountain range. Drop a marble into a bowl and it always ends at the same bottom. In a mountain range it can stop in any valley.',
                 breaks: 'Real bowls are simple 3D shapes. Neural network losses are not convex at all, yet gradient descent still works well on them. Convexity is a guarantee we only get for simpler models, like linear regression, logistic regression and SVMs.',
                 example: 'Minimise x² + y² subject to x + y = 1. The Lagrangian is x² + y² − λ(x + y − 1). Setting its gradient to zero gives 2x = λ and 2y = λ, so x = y = 0.5.',

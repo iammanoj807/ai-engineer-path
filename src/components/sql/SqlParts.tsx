@@ -380,8 +380,8 @@ export const SavedQueriesPanel = ({ accent, openTopic }: { accent: string; openT
     if (Object.keys(all).length === 0) {
         return (
             <Typography variant="body2" sx={{ color: 'text.primary' }}>
-                Nothing saved yet. Every query you write (or change) and run, in a topic's boxes or the practice database box,
-                is saved here automatically, with the topic and the step you ran it in.
+                Nothing saved yet. Every query you write (or change) and run, in a lesson's boxes or the practice database box,
+                is saved here automatically, with the lesson and the step you ran it in.
             </Typography>
         );
     }
@@ -389,7 +389,7 @@ export const SavedQueriesPanel = ({ accent, openTopic }: { accent: string; openT
     return (
         <Stack spacing={2.5}>
             <Typography variant="body2" sx={{ color: 'text.primary' }}>
-                Every query you wrote (or changed) and ran is saved here automatically, newest first, with the topic and the step
+                Every query you wrote (or changed) and ran is saved here automatically, newest first, with the lesson and the step
                 you ran it in. Running the same query again in the same place moves it to the top instead of saving a copy.
                 The newest {MAX_SAVED_QUERIES} are kept, in your account rather than this browser, so clearing cookies or
                 browser data doesn't lose them. Tap × on one to delete it.

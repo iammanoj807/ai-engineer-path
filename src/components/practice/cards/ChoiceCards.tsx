@@ -1,11 +1,11 @@
 // Cards answered by tapping: match the pairs, spot the mistake, put the steps
 // in order, and remember it (honest self-check for a free-text answer).
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Box, Button, ButtonBase, Stack, Typography } from '@mui/material';
 import { cardTitle, type MatchCard, type MistakeCard, type OrderCard, type RecallCard } from '../../../practice/cards';
 import { cardLine } from '../../../practice/lines';
-import { ProseText } from '../../learning/GlossaryText';
+import { GlossaryQuiet, ProseText } from '../../learning/GlossaryText';
 import { usePractice } from '../context';
 import { Body, CardHeader, Footer } from '../parts';
 import { RIGHT, WRONG, bigButton, choiceSx, moodFor, praiseFor, shakeSx, type CardProps, type Feedback } from '../style';
@@ -105,10 +105,15 @@ export const MistakeCardView = ({ card, accent, onDone }: CardProps<MistakeCard>
     const [chosen, setChosen] = useState<number | null>(null);
     const [checked, setChecked] = useState(false);
     const right = chosen !== null && card.options[chosen].mistake;
+    // Once checked, the explanation takes room at the bottom: keep the wrong statement itself in view.
+    const wrongOne = useRef<HTMLButtonElement>(null);
+    useEffect(() => {
+        if (checked) wrongOne.current?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
+    }, [checked]);
     const feedback: Feedback = checked
         ? right
-            ? { tone: 'right', title: praiseFor(card.id), detail: 'That is a common mistake. The others are true.' }
-            : { tone: 'wrong', title: 'Not quite: that one is true', detail: 'The mistake is the one in green.' }
+            ? { tone: 'right', title: praiseFor(card.id), detail: card.why }
+            : { tone: 'wrong', title: 'Not quite: that one is true', detail: `The false one is in green. ${card.why}` }
         : null;
 
     return (
@@ -121,9 +126,12 @@ export const MistakeCardView = ({ card, accent, onDone }: CardProps<MistakeCard>
                     {card.options.map((option, i) => {
                         const colour = checked ? (option.mistake ? RIGHT : chosen === i ? WRONG : undefined) : chosen === i ? accent : undefined;
                         return (
-                            <ButtonBase key={option.text} role="radio" aria-checked={chosen === i} disabled={checked} onClick={() => setChosen(i)} sx={choiceSx(colour, checked && !option.mistake && chosen !== i)}>
+                            <ButtonBase key={option.text} ref={option.mistake ? wrongOne : undefined} role="radio" aria-checked={chosen === i} disabled={checked} onClick={() => setChosen(i)} sx={choiceSx(colour, checked && !option.mistake && chosen !== i)}>
                                 <Box component="span">
-                                    <ProseText value={prose(option.text)} />
+                                    {/* A tap here chooses the statement; its words explain themselves on hover only. */}
+                                    <GlossaryQuiet>
+                                        <ProseText value={prose(option.text)} />
+                                    </GlossaryQuiet>
                                 </Box>
                             </ButtonBase>
                         );
