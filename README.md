@@ -108,9 +108,9 @@ Maths, machine learning, deep learning and LLMs, from scratch. **8 units · 98 l
 
 | Unit | What you will learn | Lessons |
 |---|---|:-:|
-| [0 · Your toolkit](https://learn.hamropedia.com/foundations/unit/toolkit/) | Get fast with the tools you will use every day. This phase is short. | 6 |
+| [0 · Your toolkit](https://learn.hamropedia.com/foundations/unit/toolkit/) | Get fast with the tools you will use every day. This unit is short: do it alongside the start of Unit 1. | 6 |
 | [1 · Math foundations](https://learn.hamropedia.com/foundations/unit/math/) | The language of ML. You will see matrices as movements of space, gradients as directions, and loss functions as probabilities. | 16 |
-| [2 · Classical ML, built by you](https://learn.hamropedia.com/foundations/unit/classical-ml/) | Build every classic algorithm yourself in NumPy. After this phase, a library is only a shortcut for something you already understand. | 17 |
+| [2 · Classical ML, built by you](https://learn.hamropedia.com/foundations/unit/classical-ml/) | Build every classic algorithm yourself in NumPy. After this unit, a library is only a shortcut for something you already understand. | 17 |
 | [3 · Deep learning foundations](https://learn.hamropedia.com/foundations/unit/deep-learning/) | Build neural networks from a single neuron up. Write backprop by hand first. | 16 |
 | [4 · Transformers and LLMs](https://learn.hamropedia.com/foundations/unit/llms/) | Build a small GPT from scratch: tokenizer, attention, training and fine-tuning. | 14 |
 | [5 · AI engineering](https://learn.hamropedia.com/foundations/unit/ai-engineering/) | Turn foundation models into real products: retrieval, evaluation, agents and deployment. | 16 |

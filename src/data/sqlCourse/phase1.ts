@@ -83,7 +83,7 @@ export const sqlPhase1: SqlPhase = {
             mistakes: [
                 'A trailing comma before FROM: `SELECT name, salary, FROM employees` is a syntax error.',
                 'Using double quotes for text. \'London\' is text; "London" means a column called London in PostgreSQL.',
-                'Using an alias in WHERE in the same query. WHERE runs before SELECT, so the alias doesn\'t exist yet (Phase 2 explains why).',
+                'Using an alias in WHERE in the same query. WHERE runs before SELECT, so the alias doesn\'t exist yet (Unit 2 explains why).',
             ],
             dialects: [
                 'Joining text: PostgreSQL and SQLite use `||`; MySQL uses `CONCAT(a, b)`; SQL Server uses `+` or `CONCAT`. `CONCAT` works almost everywhere.',
@@ -115,7 +115,7 @@ export const sqlPhase1: SqlPhase = {
             problem: 'Tables hold every row ever stored, and you almost always want a slice: one department, orders over £100, everyone hired this year. WHERE is how you say which rows count.',
             idea: 'A condition is a statement about a row that is either true or false, like `salary > 60000`. The database checks it against every row and keeps the rows where it is true. You can combine conditions: AND needs both to be true, OR needs at least one, and NOT flips true and false. Comparisons are `=`, `<>` (not equal; `!=` also works), `<`, `<=`, `>` and `>=`. Text values go in single quotes.',
             analogy: 'A bouncer with a list of rules. Every row walks up to the door; if it passes the rules, it gets in. "Over 18 AND on the guest list" is stricter than "over 18 OR on the guest list".',
-            breaks: 'A bouncer answers yes or no. SQL has a third answer, unknown, which comes from NULL — and WHERE treats unknown the same as no. The NULL lesson next in this phase shows why that matters.',
+            breaks: 'A bouncer answers yes or no. SQL has a third answer, unknown, which comes from NULL — and WHERE treats unknown the same as no. The NULL lesson next in this unit shows why that matters.',
             syntax: code`
                 SELECT columns
                 FROM table_name
@@ -218,7 +218,7 @@ export const sqlPhase1: SqlPhase = {
             problem: '`status = \'shipped\' OR status = \'pending\' OR status = \'cancelled\'` is long and easy to get wrong. Questions like "names starting with P" or "orders in February" come up all the time. These three words make such conditions short and readable.',
             idea: 'IN: `status IN (\'shipped\', \'pending\')` is true when status equals any value in the list. BETWEEN: `amount BETWEEN 50 AND 100` means `amount >= 50 AND amount <= 100`, ends included. LIKE: `product_name LIKE \'P%\'` matches text starting with P; `%` stands for any number of characters (even none) and `_` for exactly one. Put NOT in front of any of them to flip it: NOT IN, NOT BETWEEN, NOT LIKE.',
             analogy: 'IN is a guest list: is your name on it? BETWEEN is a height limit at a fair ride: between 1.2 m and 1.9 m, both ends allowed. LIKE is a crossword clue with blanks: "P _ _" fits Pen.',
-            breaks: 'A guest list doesn\'t care about missing names, but SQL does: if the list after NOT IN contains a NULL, nothing matches at all. Phase 4 shows this trap.',
+            breaks: 'A guest list doesn\'t care about missing names, but SQL does: if the list after NOT IN contains a NULL, nothing matches at all. Unit 4 shows this trap.',
             syntax: code`
                 WHERE column IN (value1, value2)
                 WHERE column BETWEEN low AND high
@@ -394,7 +394,7 @@ export const sqlPhase1: SqlPhase = {
                 'Any comparison with NULL is unknown, and WHERE drops unknown rows — including from `<>` and NOT IN.',
                 'Arithmetic with NULL gives NULL: `10 + NULL` is NULL.',
                 '`COALESCE(a, b, c)` returns the first non-NULL value. `NULLIF(a, b)` returns NULL when a = b — handy to avoid dividing by zero.',
-                'Aggregates (SUM, AVG, COUNT of a column) skip NULLs — Phase 2 covers this.',
+                'Aggregates (SUM, AVG, COUNT of a column) skip NULLs — Unit 2 covers this.',
             ],
             mistakes: [
                 'Writing `WHERE manager_id = NULL` and getting no rows, with no error.',
@@ -433,7 +433,7 @@ export const sqlPhase1: SqlPhase = {
             problem: '"The 3 highest salaries", "the newest orders first", "page 2 of the results" — order matters to people. And without ORDER BY, the database may return rows in any order it likes, which can change from one run to the next.',
             idea: 'ORDER BY salary DESC sorts biggest first. Add more columns to break ties: `ORDER BY salary DESC, name` sorts by salary, and people with the same salary by name. ASC (smallest first) is the default. LIMIT 3 keeps the first 3 rows after sorting. OFFSET 3 skips 3 rows first, which is how page 2 works when there are 3 rows per page. Without an ORDER BY, LIMIT just takes whichever rows come first — an arbitrary choice.',
             analogy: 'A race. ORDER BY lines the runners up by finishing time; LIMIT 3 hands out gold, silver and bronze. OFFSET 3 LIMIT 3 is "who came 4th, 5th and 6th?".',
-            breaks: 'In a race, two runners on the same time share a place. LIMIT doesn\'t: it cuts at exactly n rows, so if 3rd and 4th place tie, one of them is dropped without warning. Phase 5 (RANK) handles ties properly.',
+            breaks: 'In a race, two runners on the same time share a place. LIMIT doesn\'t: it cuts at exactly n rows, so if 3rd and 4th place tie, one of them is dropped without warning. Unit 5 (RANK) handles ties properly.',
             syntax: code`
                 SELECT columns
                 FROM table_name
@@ -610,16 +610,16 @@ export const sqlPhase1: SqlPhase = {
                 'DISTINCT applies to the whole selected row, never to just one column.',
                 'Adding a unique column (like an id) to a DISTINCT query makes it do nothing.',
                 'NULLs count as equal for DISTINCT: many NULLs become one.',
-                '`COUNT(DISTINCT column)` counts the different values — Phase 2.',
+                '`COUNT(DISTINCT column)` counts the different values — Unit 2.',
                 'DISTINCT has to compare every row, which costs time on big results.',
             ],
             mistakes: [
                 'Writing `SELECT DISTINCT(name), email` and thinking only name is distinct. The brackets do nothing; the whole row is compared.',
-                'Using DISTINCT to hide duplicates caused by a wrong join. Fix the join instead (Phase 3).',
+                'Using DISTINCT to hide duplicates caused by a wrong join. Fix the join instead (Unit 3).',
                 'Using DISTINCT when you actually need a count per value. That is GROUP BY.',
             ],
             dialects: [
-                'PostgreSQL has `DISTINCT ON (column)`, which keeps the first row for each value of that column — handy for "latest order per customer". Elsewhere, use ROW_NUMBER (Phase 5).',
+                'PostgreSQL has `DISTINCT ON (column)`, which keeps the first row for each value of that column — handy for "latest order per customer". Elsewhere, use ROW_NUMBER (Unit 5).',
             ],
             interviewAnswer: 'SELECT DISTINCT removes duplicate rows from the result, comparing all the selected columns together, with NULLs treated as equal. I use it for lists of unique values, but if I find myself adding DISTINCT to fix unexpected duplicates, I go back and check the join, because DISTINCT can hide a fan-out that also breaks sums and counts.',
             followUps: [
@@ -644,7 +644,7 @@ export const sqlPhase1: SqlPhase = {
             name: 'CASE WHEN: if-then logic inside a query',
             priority: 'must',
             definition: 'CASE WHEN condition THEN value … ELSE value END returns a value chosen by the first condition that is true, so a query can label, group or tidy values row by row.',
-            problem: 'Data often needs sorting into buckets — salary bands, "open" or "closed" orders, "new" or "returning" customers — and those labels aren\'t stored anywhere. CASE builds them inside the query. It is also the key to counting several things in one pass (Phase 2) and to pivoting.',
+            problem: 'Data often needs sorting into buckets — salary bands, "open" or "closed" orders, "new" or "returning" customers — and those labels aren\'t stored anywhere. CASE builds them inside the query. It is also the key to counting several things in one pass (Unit 2) and to pivoting.',
             idea: 'CASE is SQL\'s if-else. For each row, it checks the WHEN conditions from top to bottom and returns the THEN value of the first one that is true. If none is true, it returns the ELSE value — or NULL if there is no ELSE. CASE is an expression, so it can go anywhere a value can: in SELECT, WHERE, ORDER BY, GROUP BY, or inside SUM and COUNT. The short form, `CASE status WHEN \'shipped\' THEN …`, compares one column with several values.',
             analogy: 'Sorting post into pigeonholes. You read the address, check the first rule ("London?"), then the next ("Leeds?"), and drop the letter into the first hole that fits. Anything that fits no rule goes into "other" — that is ELSE.',
             breaks: 'A postal worker can put one letter in two holes by mistake. CASE never does: it stops at the first true WHEN, so the order of the WHENs matters. Put the strictest test first.',
@@ -759,7 +759,7 @@ export const sqlPhase1: SqlPhase = {
             priority: 'should',
             definition: 'Functions such as UPPER, LENGTH, SUBSTR, ROUND and the date functions transform a value inside a query — one value in, one value out, for each row.',
             problem: 'Data rarely arrives in the shape you need: names in mixed case, prices that need rounding, dates you want as "2024-03" or as "how many days ago". Functions do these small transformations inside the query.',
-            idea: 'A function takes values in brackets and returns one value. Text: UPPER and LOWER change case, LENGTH counts characters, `SUBSTR(text, start, length)` cuts out a piece (counting from 1), TRIM removes spaces at the ends, and REPLACE swaps text. Numbers: `ROUND(x, 2)` rounds to 2 decimal places, ABS removes the minus sign. Dates are where databases differ most: SQLite uses strftime and julianday; PostgreSQL uses DATE_TRUNC, EXTRACT and date subtraction. These run once per row — unlike aggregate functions, which turn many rows into one (Phase 2).',
+            idea: 'A function takes values in brackets and returns one value. Text: UPPER and LOWER change case, LENGTH counts characters, `SUBSTR(text, start, length)` cuts out a piece (counting from 1), TRIM removes spaces at the ends, and REPLACE swaps text. Numbers: `ROUND(x, 2)` rounds to 2 decimal places, ABS removes the minus sign. Dates are where databases differ most: SQLite uses strftime and julianday; PostgreSQL uses DATE_TRUNC, EXTRACT and date subtraction. These run once per row — unlike aggregate functions, which turn many rows into one (Unit 2).',
             analogy: 'Kitchen tools. A peeler (TRIM), a slicer (SUBSTR), a measuring spoon (ROUND). Each one takes one ingredient and gives back a changed version of it.',
             breaks: 'Kitchen tools are the same in every kitchen. Date functions are not the same in every database — so in an interview, say which database you are assuming, and the interviewer will usually accept any reasonable syntax.',
             syntax: code`
@@ -776,7 +776,7 @@ export const sqlPhase1: SqlPhase = {
             ],
             diagram: {
                 code: 'flowchart LR\n  A["one value per row<br/>Dara · 52000 · 2024-01-21"] --> F["a function<br/>UPPER · ROUND · strftime"] --> B["one new value per row<br/>DARA · 4333.33 · 2024-01"]',
-                caption: 'A row function changes each value on its own: one value in, one value out, for every row. Aggregate functions in Phase 2 do the opposite and squash many rows into one.',
+                caption: 'A row function changes each value on its own: one value in, one value out, for every row. Aggregate functions in Unit 2 do the opposite and squash many rows into one.',
             },
             examples: [
                 {

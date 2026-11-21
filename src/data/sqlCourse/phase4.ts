@@ -198,7 +198,7 @@ export const sqlPhase4: SqlPhase = {
                 'EXISTS is true when the subquery returns at least one row; `SELECT 1` inside is a convention.',
                 'NOT EXISTS is the NULL-safe "no match" test. Prefer it to NOT IN.',
                 '`x NOT IN (… NULL …)` is never true. `x IN (… NULL …)` still works for the values that match.',
-                'Correlated subqueries are clear for "compare with my own group"; window functions (Phase 5) often do the same faster.',
+                'Correlated subqueries are clear for "compare with my own group"; window functions (Unit 5) often do the same faster.',
             ],
             mistakes: [
                 'Using NOT IN against a column that can be NULL.',

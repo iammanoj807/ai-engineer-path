@@ -15,12 +15,16 @@ import { systemDesignPhases, type SDTopic } from '../../data/systemDesign';
 import { COURSES, type CourseInfo, type PathTopic, type PathUnit } from '../courses';
 import { SITE_URL, coursePath, topicPath, unitPath } from '../addresses';
 import { SITE_NAME, allPages, metaFor, type PageMeta } from '../seo';
+import { SITE_LINK } from '../../utils/glossaryEngine';
 
 const OUT = fileURLToPath(new URL('../../../generated/site-pages.json', import.meta.url));
 
 const esc = (text: string) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-/** Escaped text, with `code` in backticks shown as code, as the lessons show it. */
-const prose = (text: string) => esc(text).replace(/`([^`\n]+)`/g, '<code>$1</code>');
+/** Escaped text, with `code` in backticks shown as code and [label](/path/) as a link, as the lessons show them. */
+const prose = (text: string) =>
+    esc(text)
+        .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+        .replace(SITE_LINK, '<a href="$2">$1</a>');
 const para = (text: string) => text.split(/\n\s*\n/).map(p => `<p>${prose(p.trim()).replace(/\n/g, '<br>')}</p>`).join('');
 const list = (items: string[] | undefined, ordered = false) =>
     items?.length ? `<${ordered ? 'ol' : 'ul'}>${items.map(item => `<li>${prose(item).replace(/\n/g, '<br>')}</li>`).join('')}</${ordered ? 'ol' : 'ul'}>` : '';

@@ -474,7 +474,7 @@ const FoundationsPage = () => {
                                     ML FOUNDATIONS
                                 </Typography>
                                 <Typography variant="body1" fontWeight="medium" color="text.primary">
-                                    Self-paced · {foundationPhases.length} phases · {allFoundationTopics.length} topics · in order
+                                    Self-paced · {foundationPhases.length} units · {allFoundationTopics.length} lessons · in order
                                 </Typography>
                             </Box>
                             <Stack direction="row" spacing={1.5} alignItems="flex-end" flexWrap="wrap" useFlexGap>
@@ -601,7 +601,7 @@ const FoundationsPage = () => {
                             <Box sx={{ pb: 6 }}>
                                 {/* Title and goal */}
                                 <Typography variant="caption" sx={{ color: phase.accent, fontWeight: 800, letterSpacing: 1.2 }}>
-                                    PHASE {phase.number}
+                                    UNIT {phase.number}
                                 </Typography>
                                 <Typography variant="h4" fontWeight="bold" color="text.primary" sx={{ mt: 0.5, mb: 1 }}>
                                     {phase.title}
@@ -679,14 +679,14 @@ const FoundationsPage = () => {
                                 <Box sx={{ mt: 4 }}>
                                     <ReferencePanel
                                         key={phase.id}
-                                        title="Phase books and courses (for reference)"
+                                        title="Books and courses for this unit (for reference)"
                                         tint="rgba(255,255,255,0.02)"
                                         border="rgba(255,255,255,0.08)"
                                     >
                                         <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, maxWidth: 760 }}>
                                             The main courses and books for this whole phase. Each topic above already lists its own exact chapters and videos.
                                         </Typography>
-                                        <SectionLabel>PHASE BACKBONE RESOURCES</SectionLabel>
+                                        <SectionLabel>MAIN RESOURCES FOR THIS UNIT</SectionLabel>
                                         <Stack spacing={1.5}>
                                             {phase.main.map(resource => <PhaseResource key={resource.title} resource={resource} accent={phase.accent} />)}
                                         </Stack>

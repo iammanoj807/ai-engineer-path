@@ -244,7 +244,7 @@ export const sqlPhase3: SqlPhase = {
                 '`WHERE o.order_id IS NULL` keeps only those NULL rows: the customers with no orders.',
                 'order_id is the orders primary key, so it is NULL only when there was no match — never in a real order.',
                 'NOT EXISTS version: for each customer, look for any order with their id; keep the customer if there is none.',
-                'Avoid NOT IN for this when the inner list can hold a NULL — it returns nothing (Phase 4 shows why).',
+                'Avoid NOT IN for this when the inner list can hold a NULL — it returns nothing (Unit 4 shows why).',
             ],
             diagram: {
                 code: 'flowchart LR\n  C["all 6 customers"] -->|"LEFT JOIN orders"| J["4 with orders: matched<br/>Omar, Tom 6: NULL orders"]\n  J -->|"WHERE order_id IS NULL"| R["Omar, Tom 6<br/>never ordered"]',
@@ -275,7 +275,7 @@ export const sqlPhase3: SqlPhase = {
                         ORDER BY p.product_name;
                     `,
                     result: { columns: ['product_name'], rows: [['Phone case']] },
-                    note: 'For each product, the inner query looks for any order line with that product. NOT EXISTS keeps the product when it finds none. Phase 4 explains EXISTS fully.',
+                    note: 'For each product, the inner query looks for any order line with that product. NOT EXISTS keeps the product when it finds none. Unit 4 explains EXISTS fully.',
                 },
                 {
                     title: 'The opposite, a semi-join: rows that do have a match',
@@ -398,7 +398,7 @@ export const sqlPhase3: SqlPhase = {
                 'Read the ON condition carefully: `m.emp_id = e.manager_id` means "m is e\'s manager".',
                 'Use LEFT JOIN to keep rows whose pointer is NULL (the top of the tree).',
                 '`a.id < b.id` gives each pair once; `a.id <> b.id` gives each pair twice.',
-                'A self join reaches one level. For a whole chain of managers, use a recursive CTE (Phase 4).',
+                'A self join reaches one level. For a whole chain of managers, use a recursive CTE (Unit 4).',
             ],
             mistakes: [
                 'Swapping the condition (`e.emp_id = m.manager_id`), which lists each person\'s reports instead of their manager.',

@@ -137,7 +137,7 @@ export const sqlPhase2: SqlPhase = {
                 'GROUP BY dept_id makes piles: department 1 (Asha, Ben, Chen, Hana), department 2 (Dara, Eli), department 3 (Fatima), and a NULL pile (Gus).',
                 'For each pile, `COUNT(*)` and `AVG(salary)` are worked out: department 1 has 4 people averaging 78750.',
                 'SELECT returns one row per pile: dept_id, plus the aggregates.',
-                'Department 4 (HR) has no employees, so there is no pile and no row for it. Getting zero rows to show needs a join (Phase 3).',
+                'Department 4 (HR) has no employees, so there is no pile and no row for it. Getting zero rows to show needs a join (Unit 3).',
             ],
             diagram: {
                 code: 'flowchart LR\n  E["8 employee rows"] --> G1["dept 1: Asha, Ben, Chen, Hana"]\n  E --> G2["dept 2: Dara, Eli"]\n  E --> G3["dept 3: Fatima"]\n  E --> G0["dept NULL: Gus"]\n  G1 --> R1["1 · 4 people · avg 78750"]\n  G2 --> R2["2 · 2 people · avg 52500"]\n  G3 --> R3["3 · 1 person · avg 52000"]\n  G0 --> R0["NULL · 1 person · avg 38000"]',
@@ -193,7 +193,7 @@ export const sqlPhase2: SqlPhase = {
                 'GROUP BY makes one result row per distinct combination of the grouping columns.',
                 'Every column in SELECT must be in GROUP BY or inside an aggregate.',
                 'All NULLs in a grouping column form one group.',
-                'Groups with no rows don\'t appear at all. To show zeros (like HR with 0 people), start from the full list and LEFT JOIN (Phase 3).',
+                'Groups with no rows don\'t appear at all. To show zeros (like HR with 0 people), start from the full list and LEFT JOIN (Unit 3).',
                 'Grouped results come back in no particular order. Add ORDER BY.',
             ],
             mistakes: [
@@ -468,7 +468,7 @@ export const sqlPhase2: SqlPhase = {
                         ORDER BY bonus DESC;
                     `,
                     result: { columns: ['name', 'bonus'], rows: [['Asha', 9500], ['Hana', 8000]] },
-                    note: '`WHERE bonus > 7000` fails in a single query in strict databases, because WHERE runs before SELECT makes bonus. The inner query makes it first; Phase 4 covers this properly.',
+                    note: '`WHERE bonus > 7000` fails in a single query in strict databases, because WHERE runs before SELECT makes bonus. The inner query makes it first; Unit 4 covers this properly.',
                 },
             ],
             keyPoints: [

@@ -11,7 +11,7 @@ export const foundationPhase1: FoundationPhase = {
     main: [
         { title: '3Blue1Brown: Essence of Linear Algebra', url: 'https://www.3blue1brown.com/topics/linear-algebra', kind: 'Video', free: true, why: 'You have already started this. Finish it.' },
         { title: '3Blue1Brown: Essence of Calculus', url: 'https://www.3blue1brown.com/topics/calculus', kind: 'Video', free: true, why: 'Derivatives and the chain rule, shown with pictures.' },
-        { title: 'Mathematics for Machine Learning (Deisenroth, Faisal, Ong)', url: 'https://mml-book.github.io/', kind: 'Book', free: true, why: 'Your main written text for this phase. Chapters 2 to 7.' },
+        { title: 'Mathematics for Machine Learning (Deisenroth, Faisal, Ong)', url: 'https://mml-book.github.io/', kind: 'Book', free: true, why: 'Your main written text for this unit. Chapters 2 to 7.' },
         { title: 'StatQuest (Josh Starmer)', url: 'https://www.youtube.com/@statquest', kind: 'Video', free: true, why: 'Probability and statistics in very plain English. One idea per video.' },
     ],
     deeper: [
@@ -657,7 +657,7 @@ export const foundationPhase1: FoundationPhase = {
                 'P(A | B) ≠ P(B | A). The test is 99% sensitive, yet a positive result means only a 17% chance of being sick.',
                 'Natural frequencies (counting 1,000 people) make Bayes problems far easier to get right.',
                 'Independence means P(A | B) = P(A): knowing B tells you nothing about A.',
-                'Naive Bayes classifiers (Phase 2) and Bayesian reasoning about uncertainty are built on this rule.',
+                'Naive Bayes classifiers (Unit 2) and Bayesian reasoning about uncertainty are built on this rule.',
             ],
             mistakes: [
                 'Confusing P(positive | sick) with P(sick | positive).',
@@ -921,7 +921,7 @@ export const foundationPhase1: FoundationPhase = {
         },
     ],
     builds: [
-        { id: 'f1-b1', text: 'A numerical gradient checker: compare your hand-derived gradients with finite differences. You will reuse it in Phase 3.' },
+        { id: 'f1-b1', text: 'A numerical gradient checker: compare your hand-derived gradients with finite differences. You will reuse it in Unit 3.' },
         { id: 'f1-b2', text: 'PCA from scratch with eigen-decomposition, then with SVD. Show both give the same answer on a real dataset.' },
         { id: 'f1-b3', text: 'Simulate the central limit theorem and plot it.' },
         { id: 'f1-b4', text: 'Fit a Gaussian with maximum likelihood. Show that the best mean is the sample mean.' },

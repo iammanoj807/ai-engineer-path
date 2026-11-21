@@ -61,7 +61,7 @@ export const sqlPhase0: SqlPhase = {
                 'The result of a query is itself a table. That is why a query can be put inside another query.',
                 'SQL keywords are not case-sensitive (`select` works), but writing them in capitals makes a query easier to read.',
                 'Every major database speaks SQL. The core is the same everywhere; small details such as dates and LIMIT differ, and these notes point them out.',
-                'How databases scale — SQL versus NoSQL, replication, sharding — is in the System Design tab, Phase 3.',
+                'How databases scale — SQL versus NoSQL, replication, sharding — is in [System Design, Unit 3: Data](/system-design/unit/data/).',
             ],
             mistakes: [
                 'Thinking SQL runs top to bottom like Python. It doesn\'t: the database reads FROM first and SELECT near the end.',
@@ -237,7 +237,7 @@ export const sqlPhase0: SqlPhase = {
                         columns: ['order_id', 'customer_id', 'amount'],
                         rows: [[101, 1, 120], [102, 1, 80], [103, 1, 45], [105, 1, 150], [109, 1, 30]],
                     },
-                    note: 'All five orders hold customer_id 1, so all five belong to Priya. In Phase 3, a JOIN will fetch her name for you.',
+                    note: 'All five orders hold customer_id 1, so all five belong to Priya. In Unit 3, a JOIN will fetch her name for you.',
                 },
                 {
                     title: 'Many-to-many through the link table',

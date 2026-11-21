@@ -40,7 +40,7 @@ const ERROR = '#ef9a9a';
 const cellText = (cell: SqlCell) => (cell === null ? 'NULL' : String(cell));
 
 /** A query's result as a small table. NULL is shown as a grey NULL, never as an empty cell. */
-const ResultTable = ({
+export const ResultTable = ({
     result,
     keys,
     showCount = true,
@@ -503,6 +503,9 @@ const ErrorBox = ({ message, hint }: { message: string; hint?: string | null }) 
     );
 };
 
+/** The database's error for a query, with a plain-English hint for the common ones. */
+export const QueryError = ({ message }: { message: string }) => <ErrorBox message={message} hint={errorHint(message)} />;
+
 /** What an example gives back: its rows, or — for one that is meant to fail — the database's error. */
 export const ExampleOutcome = ({ example }: { example: Pick<SqlExample, 'result' | 'error'> }) => (
     <>
@@ -623,7 +626,7 @@ export const PracticeDatabase = ({ accent }: { accent: string }) => {
 const KEY_COLOURS = { PK: '#ffca28', FK: '#4dd0e1' };
 
 /** Every practice table and its columns, one line each, to glance at while writing a query. */
-const TableColumns = () => {
+export const TableColumns = () => {
     const t = useTextSize();
     return (
         <Box sx={{ mb: 1.5, p: 1.25, borderRadius: 2, bgcolor: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.08)' }}>

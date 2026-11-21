@@ -7,7 +7,7 @@ export const foundationPhase6: FoundationPhase = {
     title: 'Systems and scale',
     accent: '#ffca28',
     goal: 'Make models fast and cheap. Understand what limits speed and memory on a GPU, and how training works across many GPUs.',
-    bigPicture: 'Same car, less fuel, more speed. Most of this phase is about moving data efficiently, not about doing more maths.',
+    bigPicture: 'Same car, less fuel, more speed. Most of this unit is about moving data efficiently, not about doing more maths.',
     main: [
         { title: 'Making Deep Learning Go Brrrr From First Principles (Horace He)', url: 'https://horace.io/brrr_intro.html', kind: 'Blog', free: true, why: 'Compute, memory bandwidth and overhead: the three limits on speed.' },
         { title: 'Karpathy: Let’s reproduce GPT-2 (the speed-up parts)', url: 'https://karpathy.ai/zero-to-hero.html', kind: 'Video', free: true, why: 'Mixed precision, torch.compile and multi-GPU, applied to a real model.' },

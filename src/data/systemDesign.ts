@@ -48,10 +48,10 @@ export const SD_PRIORITY_LABELS: Record<SDPriority, string> = {
 /** Suggested order through the phases. */
 export const sdHowToStudy: string[] = [
     'The notes on every topic are written to be enough on their own. The free resources are optional: a second explanation and extra practice.',
-    'Start with Phase 0. Its first topic is a map of every building block; then learn the step-by-step answer frameworks.',
-    'HLD track: Phases 1 → 2 → 3 → 4, then practise with Phase 8.',
-    'LLD track: Phases 5 → 6, then practise with Phase 7. You can run it alongside the HLD track.',
-    'AI/ML track: Phase 9, once the core concepts and the ML Foundations AI-engineering topics feel solid.',
+    'Start with Unit 0. Its first topic is a map of every building block; then learn the step-by-step answer frameworks.',
+    'HLD track: Units 1 → 2 → 3 → 4, then practise with Unit 8.',
+    'LLD track: Units 5 → 6, then practise with Unit 7. You can run it alongside the HLD track.',
+    'AI/ML track: Unit 9, once the core concepts and ML Foundations Unit 5 (AI engineering) feel solid.',
     'Graduate and junior interviews focus on the "Must know" topics. Learn those first; come back for the rest.',
     'Interview tomorrow? Use Revise mode with "Must know only".',
 ];
@@ -1216,7 +1216,7 @@ export const systemDesignPhases: SDPhase[] = [
                     'Wide-column (Cassandra): massive write volume; queries designed around the partition key.',
                     'Graph: relationships first (friends of friends).',
                     'Default in most interviews: start with SQL unless there\'s a clear reason not to.',
-                    'Hands-on: the SQL tab teaches the language itself, from SELECT to window functions, with every query runnable.',
+                    'Hands-on: the [SQL course](/sql/) teaches the language itself, from SELECT to window functions, with every query runnable.',
                 ],
                 tradeOffs: [
                     'SQL: flexible queries and strong guarantees, but harder to scale writes horizontally.',
@@ -1273,7 +1273,7 @@ export const systemDesignPhases: SDPhase[] = [
                     'Lost-update fixes: SELECT … FOR UPDATE (pessimistic lock) or a version column (optimistic locking).',
                     'Durability comes from a write-ahead log saved to disk before the commit is confirmed.',
                     'Distributed transactions (two-phase commit) exist but are slow and fragile; prefer sagas across services.',
-                    'Hands-on: the SQL tab, Phase 6, runs real BEGIN, COMMIT and ROLLBACK examples.',
+                    'Hands-on: [Transactions and ACID](/sql/transactions-and-acid/) in the SQL course runs real BEGIN, COMMIT and ROLLBACK examples.',
                 ],
                 code: 'BEGIN;\nUPDATE accounts SET balance = balance - 100\n WHERE id = \'A\' AND balance >= 100;   -- if 0 rows changed: ROLLBACK\nUPDATE accounts SET balance = balance + 100\n WHERE id = \'B\';\nCOMMIT;',
                 codeLanguage: 'sql',
@@ -1329,7 +1329,7 @@ export const systemDesignPhases: SDPhase[] = [
                     'Every index slows writes and uses storage; index for your real queries only.',
                     'Use EXPLAIN to check whether a query uses an index.',
                     'LSM trees (Cassandra, RocksDB): very fast writes, merged in the background.',
-                    'Hands-on: the SQL tab, Phase 7, shows real query plans before and after adding an index.',
+                    'Hands-on: [Reading a query plan with EXPLAIN](/sql/reading-a-query-plan-with-explain/) in the SQL course shows real query plans before and after adding an index.',
                 ],
                 code: 'CREATE INDEX idx_orders_user_time ON orders (user_id, created_at);\n\nEXPLAIN SELECT * FROM orders\nWHERE user_id = 42\nORDER BY created_at DESC LIMIT 20;',
                 codeLanguage: 'sql',
@@ -1898,7 +1898,7 @@ export const systemDesignPhases: SDPhase[] = [
         title: 'Low-level design: OOP and SOLID',
         accent: '#4db6ac',
         goal: 'The building blocks of good class design: the four pillars of OOP, composition over inheritance, the five SOLID principles, class diagrams, and the concurrency basics LLD questions expect.',
-        bigPicture: 'Low-level design is about code that\'s easy to change. SOLID is a set of reasons to split or join classes; patterns (next phase) are proven shapes that follow those reasons. Learn the \'why\' here, and the patterns will make sense.',
+        bigPicture: 'Low-level design is about code that\'s easy to change. SOLID is a set of reasons to split or join classes; patterns (next unit) are proven shapes that follow those reasons. Learn the \'why\' here, and the patterns will make sense.',
         topics: [
             {
                 id: 'sd5-t1',

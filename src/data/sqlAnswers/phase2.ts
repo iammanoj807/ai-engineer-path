@@ -82,7 +82,7 @@ export const sqlPhase2Answers: Record<string, SqlTopicAnswers> = {
             },
         },
         edge: {
-            answer: 'SUM skips NULLs, but if every amount in a group is NULL, there is nothing to add and SUM returns NULL. Wrap it: `COALESCE(SUM(amount), 0)`.\n\nNo customer here has only NULL amounts (customer 3 has one NULL and one £60, so their total is 60). To see the COALESCE work, add `WHERE order_id = 106` and customer 3 shows 0.\n\nNote that Omar, who has no orders at all, is not in the result: he has no rows in orders to group. Showing him needs a LEFT JOIN from customers (Phase 3).',
+            answer: 'SUM skips NULLs, but if every amount in a group is NULL, there is nothing to add and SUM returns NULL. Wrap it: `COALESCE(SUM(amount), 0)`.\n\nNo customer here has only NULL amounts (customer 3 has one NULL and one £60, so their total is 60). To see the COALESCE work, add `WHERE order_id = 106` and customer 3 shows 0.\n\nNote that Omar, who has no orders at all, is not in the result: he has no rows in orders to group. Showing him needs a LEFT JOIN from customers (Unit 3).',
             query: {
                 sql: code`
                     SELECT customer_id, COALESCE(SUM(amount), 0) AS total_spend

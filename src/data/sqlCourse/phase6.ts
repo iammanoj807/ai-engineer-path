@@ -366,7 +366,7 @@ export const sqlPhase6: SqlPhase = {
                 'Isolation levels trade safety for speed: READ COMMITTED, REPEATABLE READ, SERIALIZABLE.',
                 'Anomalies the levels prevent: dirty reads, non-repeatable reads, phantom reads.',
                 'Keep transactions short; long ones hold locks and block others.',
-                'Locks, write skew and transactions that span several services (sagas) are in the System Design tab, Phases 3 and 4.',
+                'Locks and write skew: [ACID transactions and isolation levels](/system-design/acid-transactions-and-isolation-levels/). Transactions across several services: [Distributed transactions: sagas and the outbox pattern](/system-design/distributed-transactions-sagas-and-the-outbox-pattern/). Both are in System Design.',
             ],
             mistakes: [
                 'Running related changes without a transaction, so a failure halfway leaves the data inconsistent.',

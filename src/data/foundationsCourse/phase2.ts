@@ -6,7 +6,7 @@ export const foundationPhase2: FoundationPhase = {
     short: 'Classic ML',
     title: 'Classical ML, built by you',
     accent: '#64b5f6',
-    goal: 'Build every classic algorithm yourself in NumPy. After this phase, a library is only a shortcut for something you already understand.',
+    goal: 'Build every classic algorithm yourself in NumPy. After this unit, a library is only a shortcut for something you already understand.',
     bigPicture: 'Classical ML is a toolbox of different tools for one job: learning a pattern from examples. Build each tool once by hand, and you will know which one to pick, and why.',
     main: [
         { title: 'StatQuest: machine learning videos', url: 'https://www.youtube.com/@statquest', kind: 'Video', free: true, why: 'Optional. Short videos, one algorithm each, if you want a second explanation of a lesson.' },
@@ -157,7 +157,7 @@ export const foundationPhase2: FoundationPhase = {
                 'Gradient: Xᵀ(p − y)/n. Remember it — it appears again in neural networks.',
                 'The boundary is linear. Curved boundaries need extra features.',
                 'The weights are log-odds: one more unit of a feature adds w to log(p/(1 − p)).',
-                'More than two classes: replace the sigmoid with softmax (Phase 3).',
+                'More than two classes: replace the sigmoid with softmax (Unit 3).',
             ],
             mistakes: [
                 'Training with squared error. The loss becomes non-convex and learning is slow.',
@@ -216,7 +216,7 @@ export const foundationPhase2: FoundationPhase = {
                 'L1 (lasso): many weights exactly 0, so it selects features.',
                 'Too big a λ underfits; too small overfits. Tune it on validation data.',
                 'Regularisation reduces variance at the cost of a little bias.',
-                'In deep learning, weight decay, dropout, data augmentation and early stopping all play this role (Phase 3).',
+                'In deep learning, weight decay, dropout, data augmentation and early stopping all play this role (Unit 3).',
             ],
             mistakes: [
                 'Regularising without scaling features: features measured in small units need big weights, so they get punished unfairly.',
@@ -273,7 +273,7 @@ export const foundationPhase2: FoundationPhase = {
                 'High variance: good on training data, bad on validation. Fix: more data, regularisation, a simpler model, early stopping.',
                 'Training error alone can\'t tell you which problem you have. Compare it with validation error.',
                 'Learning curves (error against training-set size) also show it: a big, stable gap means variance.',
-                'Very large neural networks can break the simple U shape ("double descent", later in this phase).',
+                'Very large neural networks can break the simple U shape ("double descent", later in this unit).',
             ],
             mistakes: [
                 'Picking the model with the lowest training error.',
@@ -446,7 +446,7 @@ export const foundationPhase2: FoundationPhase = {
                 'Distance-based and gradient-based models need scaling. Trees and forests don\'t.',
                 'Standardise: (x − mean) / std, with statistics from the training rows only.',
                 'One-hot for categories with no order; ordinal numbers only for real orders.',
-                'Categories with thousands of values (postcodes, user ids) need other tricks: hashing, frequency or learned embeddings (Phase 3).',
+                'Categories with thousands of values (postcodes, user ids) need other tricks: hashing, frequency or learned embeddings (Unit 3).',
                 'Log-transform heavily skewed values like prices or incomes before scaling.',
                 'Keep the fitted scaler and encoder with the model: they are part of it.',
             ],
@@ -505,7 +505,7 @@ export const foundationPhase2: FoundationPhase = {
                 'Use an odd k for two classes, to avoid ties.',
                 'Feature scaling is essential.',
                 'Curse of dimensionality: with hundreds of features, all points are nearly the same distance apart.',
-                'Fast approximate nearest-neighbour search (Phase 5) makes this idea work at the scale of millions of vectors.',
+                'Fast approximate nearest-neighbour search (Unit 5) makes this idea work at the scale of millions of vectors.',
             ],
             mistakes: [
                 'Forgetting to scale features.',
@@ -791,7 +791,7 @@ export const foundationPhase2: FoundationPhase = {
                 'Assumes round clusters of similar size; struggles with long, curved or uneven clusters.',
                 'Scale features first.',
                 'Results depend on the start: use k-means++ and several restarts.',
-                'It is the "hard" version of a Gaussian mixture with EM (later in this phase).',
+                'It is the "hard" version of a Gaussian mixture with EM (later in this unit).',
             ],
             mistakes: [
                 'Running it once from random starts and trusting the result.',
@@ -848,7 +848,7 @@ export const foundationPhase2: FoundationPhase = {
                 'Cumulative explained variance chooses k.',
                 'PCA ignores labels: maximum spread is not always maximum usefulness.',
                 'It removes correlated, redundant features and can denoise data.',
-                'Non-linear structure needs other tools (t-SNE or UMAP for plotting, autoencoders in Phase 7).',
+                'Non-linear structure needs other tools (t-SNE or UMAP for plotting, autoencoders in Unit 7).',
                 'For MNIST digits, about 150 of 784 components keep around 95% of the variance.',
             ],
             mistakes: [

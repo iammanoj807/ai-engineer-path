@@ -476,7 +476,7 @@ export const phase2Answers: Record<string, TopicAnswers> = {
             answer: `Distances from the new point (3, 3):\nA (2, 3): √(1² + 0²) = 1.0\nA (0, 0): √(3² + 3²) ≈ 4.24\nB (5, 3): √(2² + 0²) = 2.0\nB (3, 5.5): √(0² + 2.5²) = 2.5\n\nk = 1: the single nearest is A at (2, 3), distance 1.0. Answer: A.\nk = 3: the three nearest are A (1.0), B (2.0) and B (2.5). The vote is 2 to 1 for B. Answer: B.\n\nThe choice of k changed the answer. Small k follows the closest point exactly, so it is sensitive to noise; larger k smooths things out.`,
         },
         build: {
-            answer: `Vectorised distances use the same trick as the toolkit phase: ‖a − b‖² = ‖a‖² + ‖b‖² − 2a·b for all pairs at once. Then sort each row, take the k nearest labels, and vote.\n\nOn the standardised breast-cancer data, validation accuracy stays around 94 to 97% across most k, so the curve is fairly flat. When it is this flat, prefer a moderate k (say 5 to 10) over a lucky peak at k = 1: small k follows single noisy points, and very large k gets too smooth. Pick k from the validation curve, never from the test set.`,
+            answer: `Vectorised distances use the same trick as the toolkit unit: ‖a − b‖² = ‖a‖² + ‖b‖² − 2a·b for all pairs at once. Then sort each row, take the k nearest labels, and vote.\n\nOn the standardised breast-cancer data, validation accuracy stays around 94 to 97% across most k, so the curve is fairly flat. When it is this flat, prefer a moderate k (say 5 to 10) over a lucky peak at k = 1: small k follows single noisy points, and very large k gets too smooth. Pick k from the validation curve, never from the test set.`,
             code: py`
                 import numpy as np
                 import matplotlib.pyplot as plt

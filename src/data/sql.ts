@@ -73,13 +73,13 @@ export const SQL_DIFFICULTY_LABELS: Record<SqlDifficulty, string> = {
 
 /** Suggested way through the course. */
 export const sqlHowToStudy: string[] = [
-    'Go in order. Each phase uses the ones before it, and the practice database stays the same all the way through.',
+    'Go in order. Each unit uses the ones before it, and the practice database stays the same all the way through.',
     'Open "The practice database" once and look at the six tables. Every example uses them, so you will soon know the rows by heart — that is what lets you check answers by eye.',
     'Type every example yourself before you look at the result. Press "Try it", change something small, and run it again. Reading SQL is not the same as writing it.',
     'Before you run any query, say out loud what you expect it to return. That is the Predict check, and it is the fastest way to find gaps.',
     'The notes on every topic are enough on their own. The free resources are a second explanation and extra practice.',
-    'Phases 0–3 are the core: most real work and most interview questions use only these. Phases 4–5 (subqueries, CTEs, window functions) are what separates a pass from a strong pass.',
-    'Interview soon? Learn every "Must know" topic, then do Phase 8 twice: once with the hints, once from a blank page. Use Revise mode the night before.',
+    'Units 0–3 are the core: most real work and most interview questions use only these. Units 4–5 (subqueries, CTEs, window functions) are what separates a pass from a strong pass.',
+    'Interview soon? Learn every "Must know" topic, then do Unit 8 twice: once with the hints, once from a blank page. Use Revise mode the night before.',
 ];
 
 export type SqlResourceKind = 'watch' | 'read' | 'practice';

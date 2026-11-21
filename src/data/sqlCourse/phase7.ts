@@ -72,7 +72,7 @@ export const sqlPhase7: SqlPhase = {
                 'Primary keys and UNIQUE constraints get an index automatically; foreign keys usually don\'t — index them yourself.',
                 'Every index slows down writes and uses space. Index the columns you filter and join on.',
                 'An index helps most when it narrows the search to a small share of the rows (high selectivity).',
-                'B-trees versus LSM trees, and indexing at scale, are in the System Design tab, Phase 3.',
+                'B-trees versus LSM trees, and indexing at scale: [Database indexing](/system-design/database-indexing/) in System Design.',
             ],
             mistakes: [
                 'Indexing every column "just in case", which slows every write.',

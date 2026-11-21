@@ -272,7 +272,7 @@ export const foundationPhase4: FoundationPhase = {
                 'Generation is sequential: one forward step per new token.',
                 'The context window is the maximum number of tokens the model can look at.',
                 'The output at each step is a probability distribution; how you choose from it is decoding (next topics).',
-                'Chat assistants are GPTs plus instruction and preference tuning (later in this phase).',
+                'Chat assistants are GPTs plus instruction and preference tuning (later in this unit).',
             ],
             mistakes: [
                 'Training without the causal mask: the loss looks great because the model copies the answer, but generation fails.',
@@ -661,7 +661,7 @@ export const foundationPhase4: FoundationPhase = {
                 'Trainable LoRA parameters per matrix = r × (d_in + d_out).',
                 'B = 0 at the start means no change at step 0.',
                 'Adapters can be merged into W for free inference, or swapped per task.',
-                'Fine-tuning teaches style and format well; it is a poor way to add lots of new facts (use RAG, Phase 5).',
+                'Fine-tuning teaches style and format well; it is a poor way to add lots of new facts (use RAG, Unit 5).',
             ],
             mistakes: [
                 'Starting both A and B random, so the model is damaged at step 0.',

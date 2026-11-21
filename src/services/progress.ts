@@ -296,19 +296,25 @@ export const onCelebrate = (listener: (event: Celebration) => void) => {
 const CHECKS_PER_TOPIC = 4;
 
 /**
- * Tick or untick one check. Counts towards today's goal when it is a tick, and
- * celebrates when it is the fourth check of a topic.
+ * Tick or untick several checks of one topic in one save (a practice session
+ * can prove three at once). Each new tick counts towards today's goal, and the
+ * topic celebrates when it reaches all four checks.
  */
-const saveCheck = async (course: Course, topicId: string, check: string, done: boolean): Promise<void> => {
-    if (!allowedOrAsk(() => saveCheck(course, topicId, check, done), [course, 'activity'])) return;
-    const before = { ...(asObject((state[course] as { checks?: unknown } | undefined)?.checks)[topicId] as Record<string, boolean> | undefined ?? {}) };
+const saveChecks = async (course: Course, topicId: string, changes: Record<string, boolean>): Promise<void> => {
+    if (!allowedOrAsk(() => saveChecks(course, topicId, changes), [course, 'activity'])) return;
+    // Just after signing in, the account's progress may not have arrived yet. Counting
+    // from an empty copy would treat old ticks as new and overwrite today's count.
+    await whenLoaded(course);
+    await whenLoaded('activity');
+    const before ={ ...(asObject((state[course] as { checks?: unknown } | undefined)?.checks)[topicId] as Record<string, boolean> | undefined ?? {}) };
     const passedBefore = Object.values(before).filter(Boolean).length;
-    const after = { ...before, [check]: done };
+    const after = { ...before, ...changes };
     const passedAfter = Object.values(after).filter(Boolean).length;
+    const newTicks = Object.entries(changes).filter(([check, done]) => done && !before[check]).length;
 
-    const saving = write(course, { checks: { [topicId]: { [check]: done } } });
-    if (done) {
-        void recordActivity();
+    const saving = write(course, { checks: { [topicId]: changes } });
+    if (newTicks > 0) {
+        void recordActivity(newTicks);
         if (passedBefore < CHECKS_PER_TOPIC && passedAfter >= CHECKS_PER_TOPIC) {
             celebrationListeners.forEach(fn => fn({ course, topicId }));
         }
@@ -316,22 +322,26 @@ const saveCheck = async (course: Course, topicId: string, check: string, done: b
     await saving;
 };
 
-const dayTickListeners = new Set<(ticksToday: number) => void>();
+/** Tick or untick one check. */
+const saveCheck = (course: Course, topicId: string, check: string, done: boolean): Promise<void> =>
+    saveChecks(course, topicId, { [check]: done });
 
-/** Called with today's new count after each tick, so the page can celebrate the daily goal. */
-export const onDayTick = (listener: (ticksToday: number) => void) => {
+const dayTickListeners = new Set<(ticksToday: number, added: number) => void>();
+
+/** Called with today's new count and how many ticks were just added, so the page can celebrate the daily goal. */
+export const onDayTick = (listener: (ticksToday: number, added: number) => void) => {
     dayTickListeners.add(listener);
     return () => {
         dayTickListeners.delete(listener);
     };
 };
 
-const recordActivity = async () => {
+const recordActivity = async (ticks = 1) => {
     const today = localDay();
     const count = state.activity?.days[today] ?? 0;
-    dayTickListeners.forEach(fn => fn(count + 1));
+    dayTickListeners.forEach(fn => fn(count + ticks, ticks));
     try {
-        await write('activity', { days: { [today]: count + 1 } });
+        await write('activity', { days: { [today]: count + ticks } });
     } catch (error) {
         console.error('Could not record today\'s activity:', error);
     }
@@ -370,6 +380,10 @@ export const subscribeToSql = (callback: (progress: SqlProgress) => void) =>
 
 export const saveSqlCheck = (topicId: string, check: SqlCheckKey, done: boolean) =>
     saveCheck('sql', topicId, check, done);
+
+/** Tick the checks a practice session proved, in one save. */
+export const saveSqlChecks = (topicId: string, checks: SqlCheckKey[]) =>
+    saveChecks('sql', topicId, Object.fromEntries(checks.map(check => [check, true])));
 
 // ============ SQL SAVED QUERIES ============
 

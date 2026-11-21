@@ -1,7 +1,8 @@
 import { Fragment, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
-import { Box, Button, Collapse, Paper, Popover, Popper, Stack, Typography, styled } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
+import { Box, Button, Collapse, Link, Paper, Popover, Popper, Stack, Typography, styled } from '@mui/material';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
-import type { GlossaryTerm, TextSegment } from '../../utils/glossaryEngine';
+import { SITE_LINK, type GlossaryTerm, type TextSegment } from '../../utils/glossaryEngine';
 import { CYAN, TAP } from './learning';
 import {
     GlossaryActionsContext,
@@ -266,11 +267,8 @@ const InlineCode = styled('code')({
     overflowWrap: 'anywhere',
 });
 
-/**
- * Text that is not a glossary word. `Backticks` mark inline code (the SQL notes
- * use them for snippets like `WHERE salary > 50000`); it is shown in a code font.
- */
-const PlainText = ({ text }: { text: string }) => {
+/** `Backticks` mark inline code (the SQL notes use them for snippets like `WHERE salary > 50000`); it is shown in a code font. */
+const CodeText = ({ text }: { text: string }) => {
     if (!text.includes('`')) return <>{text}</>;
     // Splitting on a captured group puts the code at the odd positions.
     const parts = text.split(/`([^`]+)`/);
@@ -281,6 +279,28 @@ const PlainText = ({ text }: { text: string }) => {
             )}
         </>
     );
+};
+
+/**
+ * Text that is not a glossary word: inline code, and links to other pages of
+ * the site written as [label](/path/) (see SITE_LINK).
+ */
+const PlainText = ({ text }: { text: string }) => {
+    if (!text.includes('](/')) return <CodeText text={text} />;
+    const parts: ReactNode[] = [];
+    let last = 0;
+    for (const match of text.matchAll(SITE_LINK)) {
+        const start = match.index ?? 0;
+        parts.push(<CodeText key={`t${last}`} text={text.slice(last, start)} />);
+        parts.push(
+            <Link key={`l${start}`} component={RouterLink} to={match[2]} sx={{ color: CYAN, fontWeight: 700, textDecorationColor: `${CYAN}88` }}>
+                {match[1]}
+            </Link>
+        );
+        last = start + match[0].length;
+    }
+    parts.push(<CodeText key={`t${last}`} text={text.slice(last)} />);
+    return <>{parts}</>;
 };
 
 /** Text with its glossary words underlined; tap one to see what it means. */

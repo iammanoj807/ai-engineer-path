@@ -535,7 +535,7 @@ const functions = (): AnimationSpec => {
         frame(`UPPER('${dara[0]}') = '${dara[1]}'. Worked out for each row separately.`, [q, tbl(1, 'shout'), flow('UPPER', `'${dara[0]}'`, `'${dara[1]}'`)]),
         frame(`LENGTH counts characters: '${dara[0]}' has ${dara[2]}.`, [q, tbl(2, 'letters'), flow('LENGTH', `'${dara[0]}'`, String(dara[2]))]),
         frame(`SUBSTR(name, 1, 3): start at character 1 (SQL counts from 1), take 3: '${dara[3]}'.`, [q, tbl(3, 'first_three'), flow('SUBSTR(…,1,3)', `'${dara[0]}'`, `'${dara[3]}'`)]),
-        frame('Two rows in, two rows out. That is the difference from an aggregate like SUM, which turns many rows into one (Phase 2).', [q, tbl(3, null)]),
+        frame('Two rows in, two rows out. That is the difference from an aggregate like SUM, which turns many rows into one (Unit 2).', [q, tbl(3, null)]),
     ];
     return { title: 'Row functions: one value in, one value out, for every row', variants: [{ label: 'Text functions', frames }] };
 };

@@ -172,7 +172,7 @@ export const sqlPhase1Answers: Record<string, SqlTopicAnswers> = {
     },
     'sql1-t5': {
         explain: {
-            answer: 'Because of a tie. Asha (95,000) and Hana (80,000) are first and second, and Ben and Chen both earn 70,000, so they share third place.\n\n`ORDER BY salary DESC LIMIT 3` must cut one of them, and which one depends on the tie-breaker. With no tie-breaker it is whichever the database happens to return first. Either way you leave out someone who is just as highly paid.\n\nSo first ask: should ties be included? If yes, the answer has 4 people. Use RANK or DENSE_RANK (Phase 5), or `WHERE salary >= ` the third-highest salary. If no, say how you break the tie, for example `ORDER BY salary DESC, name`.',
+            answer: 'Because of a tie. Asha (95,000) and Hana (80,000) are first and second, and Ben and Chen both earn 70,000, so they share third place.\n\n`ORDER BY salary DESC LIMIT 3` must cut one of them, and which one depends on the tie-breaker. With no tie-breaker it is whichever the database happens to return first. Either way you leave out someone who is just as highly paid.\n\nSo first ask: should ties be included? If yes, the answer has 4 people. Use RANK or DENSE_RANK (Unit 5), or `WHERE salary >= ` the third-highest salary. If no, say how you break the tie, for example `ORDER BY salary DESC, name`.',
         },
         write: {
             answer: 'Sort from most expensive and keep 2. The next product is the £25 desk lamp, so there is no tie to worry about here (but always check for one).',

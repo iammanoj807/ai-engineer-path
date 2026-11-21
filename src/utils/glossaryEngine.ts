@@ -48,6 +48,14 @@ export interface GlossarySource<T extends GlossaryTopicRef = GlossaryTopicRef> {
 
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+/**
+ * A link to another page of this site, written in lesson text as
+ * [label](/path/), for example [Database indexing](/system-design/database-indexing/).
+ * Its words are never marked as glossary words, so the link stays whole.
+ * Group 1 is the label, group 2 the path.
+ */
+export const SITE_LINK = /\[([^\]]+)\]\((\/[^)\s]*)\)/g;
+
 export const createGlossary = <T extends GlossaryTopicRef>(
     terms: GlossaryTerm[],
     topicsInOrder: T[],
@@ -74,7 +82,9 @@ export const createGlossary = <T extends GlossaryTopicRef>(
     );
 
     const skippedRanges = (text: string): [number, number][] =>
-        options.skip ? [...text.matchAll(options.skip)].map(m => [m.index ?? 0, (m.index ?? 0) + m[0].length]) : [];
+        [...(options.skip ? [options.skip] : []), SITE_LINK].flatMap(skip =>
+            [...text.matchAll(skip)].map((m): [number, number] => [m.index ?? 0, (m.index ?? 0) + m[0].length])
+        );
 
     const segmentText = (text: string): TextSegment[] => {
         const segments: TextSegment[] = [];

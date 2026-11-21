@@ -70,7 +70,7 @@ export const topicLoop: LoopStep[] = [
 ];
 
 export const foundationRules: string[] = [
-    'Go in order. Each phase assumes the ones before it.',
+    'Go in order. Each unit assumes the ones before it.',
     'The lesson is the main resource. Extras are optional: if you want one, pick the one marked "Worth it". Collecting resources feels like progress, but it is not.',
     'Start building before you feel ready. Getting stuck while coding is where real learning happens.',
     'Every two weeks, test yourself on old topics. If you fail a check, untick it. An honest tracker is worth more than a full one.',

@@ -6,7 +6,7 @@ export const foundationPhase0: FoundationPhase = {
     short: 'Toolkit',
     title: 'Your toolkit',
     accent: '#90a4ae',
-    goal: 'Get fast with the tools you will use every day. This phase is short. Do it in the same two weeks as the start of Phase 1.',
+    goal: 'Get fast with the tools you will use every day. This unit is short: do it alongside the start of Unit 1.',
     bigPicture: 'Tools are like a carpenter\'s workshop. You cannot learn furniture design while fighting with the saw. NumPy is your saw: practise until it feels natural.',
     main: [
         { title: 'NumPy: the absolute basics for beginners', url: 'https://numpy.org/doc/stable/user/absolute_beginners.html', kind: 'Guide', free: true, why: 'The official guide. Short and clear. Type every example yourself.' },
@@ -14,7 +14,7 @@ export const foundationPhase0: FoundationPhase = {
     ],
     deeper: [
         { title: 'The Missing Semester (MIT)', url: 'https://missing.csail.mit.edu/', kind: 'Course', free: true, why: 'Shell, Git and developer tools. The Git lecture is the important one.' },
-        { title: 'PyTorch: Learn the Basics', url: 'https://docs.pytorch.org/tutorials/beginner/basics/intro.html', kind: 'Tutorial', free: true, why: 'Keep this for the start of Phase 3.' },
+        { title: 'PyTorch: Learn the Basics', url: 'https://docs.pytorch.org/tutorials/beginner/basics/intro.html', kind: 'Tutorial', free: true, why: 'Keep this for the start of Unit 3.' },
     ],
     topics: [
         {
@@ -56,7 +56,7 @@ export const foundationPhase0: FoundationPhase = {
             mistakes: [
                 'Thinking the model "understands" houses. It only found the numbers that make the loss small on these examples.',
                 'Testing on the training data. A model can memorise its examples and still fail on new ones.',
-                'Believing that more training always helps. After a point the model starts fitting noise; Phase 2 calls this overfitting.',
+                'Believing that more training always helps. After a point the model starts fitting noise; Unit 2 calls this overfitting.',
                 'Mixing up the model and training. The model is the formula with weights; training is the loop that sets the weights.',
             ],
             followUps: [
@@ -258,7 +258,7 @@ export const foundationPhase0: FoundationPhase = {
             definition: 'Git saves snapshots of your project, called commits, so you can go back, branch off and merge; GitHub stores those repositories online.',
             problem: 'Without version control you end up with files like model_final_v3_REALLY_final.py, and no idea which version gave your best result. One bad edit can break working code with no way back. Git records every change with a message, lets you try ideas safely on a branch, and GitHub backs it all up and shows employers your work.',
             diagram: {
-                code: 'gitGraph\n  commit id: "start roadmap"\n  commit id: "phase 0 notes"\n  branch experiment\n  checkout experiment\n  commit id: "try a new idea"\n  checkout main\n  commit id: "fix typo"\n  merge experiment\n  commit id: "phase 0 done"',
+                code: 'gitGraph\n  commit id: "start roadmap"\n  commit id: "unit 0 notes"\n  branch experiment\n  checkout experiment\n  commit id: "try a new idea"\n  checkout main\n  commit id: "fix typo"\n  merge experiment\n  commit id: "phase 0 done"',
                 caption: 'Each dot is a commit (a saved snapshot). The experiment branch lets you try an idea safely, then merge it back into main.',
             },
             note: {
@@ -340,7 +340,7 @@ export const foundationPhase0: FoundationPhase = {
                 'np.allclose checks |a − b| ≤ atol + rtol·|b| for every pair. By default atol = 1e-8 and rtol = 1e-5.',
                 'Good tests check properties as well as values: probabilities sum to 1, shapes are right, the order of values is kept.',
                 'Compare a fast vectorised version with a slow, obvious loop version on small random inputs.',
-                'A gradient check (Phase 1) is a test too: compare your gradient with an estimate from tiny nudges.',
+                'A gradient check (Unit 1) is a test too: compare your gradient with an estimate from tiny nudges.',
                 'Fix the random seed in tests, for example rng = np.random.default_rng(0), so a failure can be repeated.',
             ],
             mistakes: [
@@ -370,7 +370,7 @@ export const foundationPhase0: FoundationPhase = {
     ],
     builds: [
         { id: 'f0-b1', text: 'Rewrite five loop-based functions in vectorised NumPy: dot product, matrix multiply, pairwise distances, softmax, moving average. Time both versions.' },
-        { id: 'f0-b2', text: 'Create one GitHub repo for this whole roadmap, with a folder per phase, a README and pytest set up.' },
+        { id: 'f0-b2', text: 'Create one GitHub repo for this whole roadmap, with a folder per unit, a README and pytest set up.' },
     ],
     ready: [
         { q: 'A is (32, 10) and B is (10, 4). What is the shape of A @ B, and why?', a: '(32, 4). For A @ B the inner sizes must match (10 and 10), and they disappear: each of the 32 rows of A is dotted with each of the 4 columns of B, giving one number per (row, column) pair.' },

@@ -721,7 +721,7 @@ const SystemDesignPage = () => {
                                     SYSTEM DESIGN
                                 </Typography>
                                 <Typography variant="body1" fontWeight="medium" color="text.primary">
-                                    Self-paced · {systemDesignPhases.length} phases · {allSystemDesignTopics.length} topics
+                                    Self-paced · {systemDesignPhases.length} units · {allSystemDesignTopics.length} lessons
                                 </Typography>
                             </Box>
                             <TextSizeControl value={textSize} onChange={changeTextSize} />
@@ -841,7 +841,7 @@ const SystemDesignPage = () => {
                                         <Box sx={{ pb: 6 }}>
                                 {/* Title and goal */}
                                 <Typography variant="caption" sx={{ color: phase.accent, fontWeight: 800, letterSpacing: 1.2 }}>
-                                    PHASE {phase.number}
+                                    UNIT {phase.number}
                                 </Typography>
                                 <Typography variant="h4" fontWeight="bold" color="text.primary" sx={{ mt: 0.5, mb: 1 }}>
                                     {phase.title}
@@ -993,7 +993,7 @@ const SystemDesignPage = () => {
                                 '& .MuiTab-root': { minHeight: TAP, textTransform: 'none', fontWeight: 700, fontSize: px(t.small), '&:focus': { outline: 'none' } },
                             }}
                         >
-                            {mode === 'revise' && <Tab value="all" label="All phases" />}
+                            {mode === 'revise' && <Tab value="all" label="All units" />}
                             {systemDesignPhases.map(p => (
                                 <Tab key={p.id} value={p.number} label={`${p.number} ${p.short} · ${confidentCount(progress, p.topics)}/${p.topics.length}`} />
                             ))}
@@ -1007,7 +1007,7 @@ const SystemDesignPage = () => {
                                         return (
                                             <Box key={p.id} sx={{ mb: 4 }}>
                                                 <Typography variant="caption" sx={{ display: 'block', color: p.accent, fontWeight: 800, letterSpacing: 1.2 }}>
-                                                    PHASE {p.number}
+                                                    UNIT {p.number}
                                                 </Typography>
                                                 <Typography variant="h5" fontWeight="bold" color="text.primary" sx={{ mt: 0.25, mb: 2 }}>
                                                     {p.title}

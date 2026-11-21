@@ -6,7 +6,7 @@
    "title": "Your toolkit",
    "short": "Toolkit",
    "accent": "#90a4ae",
-   "goal": "Get fast with the tools you will use every day. This phase is short. Do it in the same two weeks as the start of Phase 1.",
+   "goal": "Get fast with the tools you will use every day. This unit is short: do it alongside the start of Unit 1.",
    "topics": [
     {
      "id": "f0-t6",
@@ -158,7 +158,7 @@
    "title": "Classical ML, built by you",
    "short": "Classic ML",
    "accent": "#64b5f6",
-   "goal": "Build every classic algorithm yourself in NumPy. After this phase, a library is only a shortcut for something you already understand.",
+   "goal": "Build every classic algorithm yourself in NumPy. After this unit, a library is only a shortcut for something you already understand.",
    "topics": [
     {
      "id": "f2-t1",
@@ -752,7 +752,7 @@
      "id": "sql1-t7",
      "name": "CASE WHEN: if-then logic inside a query",
      "definition": "CASE WHEN condition THEN value … ELSE value END returns a value chosen by the first condition that is true, so a query can label, group or tidy values row by row.",
-     "problem": "Data often needs sorting into buckets — salary bands, \"open\" or \"closed\" orders, \"new\" or \"returning\" customers — and those labels aren't stored anywhere. CASE builds them inside the query. It is also the key to counting several things in one pass (Phase 2) and to pivoting."
+     "problem": "Data often needs sorting into buckets — salary bands, \"open\" or \"closed\" orders, \"new\" or \"returning\" customers — and those labels aren't stored anywhere. CASE builds them inside the query. It is also the key to counting several things in one pass (Unit 2) and to pivoting."
     },
     {
      "id": "sql1-t8",

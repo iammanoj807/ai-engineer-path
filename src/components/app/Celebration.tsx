@@ -68,8 +68,10 @@ const Celebration = () => {
     }), []);
 
     // Today's goal: celebrate the tick that reaches it.
-    useEffect(() => onDayTick(ticksToday => {
-        if (ticksToday === readDailyGoal()) setGoalToast(true);
+    useEffect(() => onDayTick((ticksToday, added) => {
+        // Several checks can be ticked at once (a practice session), so look for crossing the goal.
+        const goal = readDailyGoal();
+        if (ticksToday >= goal && ticksToday - added < goal) setGoalToast(true);
     }), []);
 
     const close = () => setShown(null);

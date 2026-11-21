@@ -7,9 +7,9 @@ export const foundationPhase5: FoundationPhase = {
     title: 'AI engineering',
     accent: '#b39ddb',
     goal: 'Turn foundation models into real products: retrieval, evaluation, agents and deployment. This is the core of most AI engineer jobs.',
-    bigPicture: 'Phases 1 to 4 teach you how the engine works. Phase 5 teaches you to build the car around it: steering (prompts), fuel (data and retrieval), a dashboard (evaluation) and brakes (safety).',
+    bigPicture: 'Units 1 to 4 teach you how the engine works. Unit 5 teaches you to build the car around it: steering (prompts), fuel (data and retrieval), a dashboard (evaluation) and brakes (safety).',
     main: [
-        { title: 'AI Engineering (Chip Huyen)', kind: 'Book', paid: true, why: 'You are already reading it. Keep going. It is the main text for this phase.' },
+        { title: 'AI Engineering (Chip Huyen)', kind: 'Book', paid: true, why: 'You are already reading it. Keep going. It is the main text for this unit.' },
         { title: 'Your AI Product Needs Evals (Hamel Husain)', url: 'https://hamel.dev/blog/posts/evals/', kind: 'Blog', free: true, why: 'The clearest guide to evaluation, the most important AI engineering skill.' },
         { title: 'Made With ML (Goku Mohandas)', url: 'https://madewithml.com/', kind: 'Course', free: true, why: 'Takes a model to production: testing, serving, CI/CD.' },
     ],

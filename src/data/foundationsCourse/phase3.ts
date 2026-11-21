@@ -7,7 +7,7 @@ export const foundationPhase3: FoundationPhase = {
     title: 'Deep learning foundations',
     accent: '#ff8a65',
     goal: 'Build neural networks from a single neuron up. Write backprop by hand first. Then you can trust PyTorch, because you know what it does.',
-    bigPicture: 'A neural network is many small logistic regressions stacked in layers and trained together with backprop. Phase 2 made the bricks. Phase 3 builds the wall.',
+    bigPicture: 'A neural network is many small logistic regressions stacked in layers and trained together with backprop. Unit 2 made the bricks. Unit 3 builds the wall.',
     main: [
         { title: 'Andrej Karpathy: Neural Networks: Zero to Hero', url: 'https://karpathy.ai/zero-to-hero.html', kind: 'Video', free: true, why: 'Builds everything from scratch in Python. The best fit for how you learn. Code along, then rebuild without the video.' },
         { title: 'Understanding Deep Learning (Simon Prince)', url: 'https://udlbook.github.io/udlbook/', kind: 'Book', free: true, why: 'Your main deep learning text. Very clear figures, with practice notebooks.' },
@@ -267,7 +267,7 @@ export const foundationPhase3: FoundationPhase = {
                 'Adding the same number to every logit doesn\'t change the softmax, so subtracting the max is free and safe.',
                 'Loss = −log p(correct class). Its gradient on the logits is p − one_hot(y).',
                 'In PyTorch, F.cross_entropy takes raw logits and applies log-softmax itself. Don\'t softmax first.',
-                'Scaling logits by 1/T (temperature) makes the distribution sharper (T < 1) or flatter (T > 1). Used in sampling (Phase 4).',
+                'Scaling logits by 1/T (temperature) makes the distribution sharper (T < 1) or flatter (T > 1). Used in sampling (Unit 4).',
                 'At random initialisation with K classes, the loss starts near ln K.',
             ],
             mistakes: [
@@ -325,7 +325,7 @@ export const foundationPhase3: FoundationPhase = {
                 'Adam gives each parameter its own effective step size; it is robust to the learning rate.',
                 'Typical starting learning rates: SGD ≈ 0.1, Adam ≈ 0.001 (3e-4 is a famous default).',
                 'Warm-up prevents huge early steps while the weights and Adam\'s averages are still unreliable.',
-                'Adam stores two extra numbers per weight, which matters for memory in large models (Phase 6).',
+                'Adam stores two extra numbers per weight, which matters for memory in large models (Unit 6).',
             ],
             mistakes: [
                 'Using Adam\'s learning rate with SGD, or the other way round.',
@@ -614,7 +614,7 @@ export const foundationPhase3: FoundationPhase = {
                 'Parameters of a conv layer = K × K × C_in × C_out + C_out, whatever the image size.',
                 'Output size = (W − K + 2P)/S + 1.',
                 'Receptive field grows with depth, stride and pooling.',
-                'Vision transformers (Phase 4) now rival CNNs, but convolutions remain everywhere in vision, audio and on-device models.',
+                'Vision transformers (Unit 4) now rival CNNs, but convolutions remain everywhere in vision, audio and on-device models.',
             ],
             mistakes: [
                 'Getting the output size wrong, then hitting shape errors at the first linear layer.',
@@ -717,7 +717,7 @@ export const foundationPhase3: FoundationPhase = {
                 'To predict, read an output from each hₜ (the next character, say), or only from the last one (a sentiment score).',
                 'Training unrolls the network through time and runs backprop through every step: backpropagation through time.',
                 'The gradient reaching step 1 has been multiplied by W (and tanh\'s slope) once per step. Over 100 steps, a factor of 0.9 becomes 0.9¹⁰⁰ ≈ 0.00003: it vanishes. A factor above 1 explodes instead.',
-                'So plain RNNs struggle to connect events far apart. Gradient clipping tames explosions; LSTMs (later in this phase) tame vanishing.',
+                'So plain RNNs struggle to connect events far apart. Gradient clipping tames explosions; LSTMs (later in this unit) tame vanishing.',
             ],
             keyPoints: [
                 'Hidden state = a fixed-size summary of everything read so far.',
@@ -782,7 +782,7 @@ export const foundationPhase3: FoundationPhase = {
                 'Only the rows used in a batch get gradients.',
                 'Similar items → nearby vectors; compare them with cosine similarity.',
                 'Dimensions rarely have human-readable meanings.',
-                'Pre-trained embeddings (from language models) power semantic search and RAG (Phase 5).',
+                'Pre-trained embeddings (from language models) power semantic search and RAG (Unit 5).',
             ],
             mistakes: [
                 'An id bigger than the table size: an index error.',
@@ -935,7 +935,7 @@ export const foundationPhase3: FoundationPhase = {
     ],
     builds: [
         { id: 'f3-b1', text: 'Rebuild micrograd from memory: a tiny autograd engine, with an MLP on top.' },
-        { id: 'f3-b2', text: 'An MLP in pure NumPy on MNIST, with your own backprop. Check the gradients with your Phase 1 gradient checker.' },
+        { id: 'f3-b2', text: 'An MLP in pure NumPy on MNIST, with your own backprop. Check the gradients with your Unit 1 gradient checker.' },
         { id: 'f3-b3', text: 'The same MLP in PyTorch. Compare accuracy and speed.' },
         { id: 'f3-b4', text: 'A CNN on CIFAR-10 in PyTorch, then add residual blocks. Keep an experiment log: what you changed, what happened, and why.' },
     ],

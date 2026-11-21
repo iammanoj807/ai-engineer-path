@@ -138,7 +138,7 @@ export const sqlPhase0Answers: Record<string, SqlTopicAnswers> = {
             },
         },
         edge: {
-            answer: 'Sorting text compares character by character, so you get \'10\', \'100\', \'9\'. The 1s come before the 9.\n\nThe quick fix is to sort by the number: `ORDER BY CAST(price AS INTEGER)`. The real fix is to store prices in a number column (INTEGER, or DECIMAL for pence), so they sort, compare and add up correctly everywhere.\n\nBelow, WITH just makes a tiny three-row table to test on (you meet it in Phase 4). Change the ORDER BY to plain `price` to see the wrong order.',
+            answer: 'Sorting text compares character by character, so you get \'10\', \'100\', \'9\'. The 1s come before the 9.\n\nThe quick fix is to sort by the number: `ORDER BY CAST(price AS INTEGER)`. The real fix is to store prices in a number column (INTEGER, or DECIMAL for pence), so they sort, compare and add up correctly everywhere.\n\nBelow, WITH just makes a tiny three-row table to test on (you meet it in Unit 4). Change the ORDER BY to plain `price` to see the wrong order.',
             query: {
                 sql: code`
                     WITH prices(price) AS (VALUES ('9'), ('10'), ('100'))
