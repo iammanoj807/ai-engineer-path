@@ -308,12 +308,13 @@ export const Hero = ({ onSeeCourses }: { onSeeCourses: () => void }) => {
                     {HERO.lead}
                 </Typography>
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mt: 4 }}>
+                    {/* The courses' own colour, like their "Open course" buttons. */}
                     <Button
-                        variant="outlined"
+                        variant="contained"
                         size="large"
                         endIcon={<ArrowDownwardRoundedIcon />}
                         onClick={onSeeCourses}
-                        sx={{ fontWeight: 700, px: 3, minHeight: 52, fontSize: '1.05rem', color: 'text.primary', borderColor: 'rgba(255,255,255,0.2)' }}
+                        sx={{ fontWeight: 800, px: 3, minHeight: 52, fontSize: '1.05rem', bgcolor: COURSES[0].colour, color: '#0B0E14', '&:hover': { bgcolor: COURSES[0].colour, filter: 'brightness(1.1)' } }}
                     >
                         {HERO.browse}
                     </Button>
