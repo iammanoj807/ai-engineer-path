@@ -19,17 +19,15 @@ import {
     Typography,
 } from '@mui/material';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
-import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
-import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import LocalFireDepartmentRoundedIcon from '@mui/icons-material/LocalFireDepartmentRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
-import { courseById, readHomeCourse, unitOf, writeHomeCourse } from '../../game/courses';
+import { courseById, writeHomeCourse } from '../../game/courses';
 import { topicPath, unitPath } from '../../game/addresses';
 import { checksDocOf, useGameStats, type CourseStats } from '../../game/useProgress';
 import { DAILY_GOALS, lastDays, readDailyGoal, writeDailyGoal } from '../../game/xp';
 import type { Course } from '../../services/progress';
-import { FLAME, MASTERED, XP_GOLD } from './colours';
-import CoursePath, { CARD, CheckDots } from './CoursePath';
+import { FLAME, MASTERED } from './colours';
+import CoursePath, { CARD } from './CoursePath';
 import GuestNote from './GuestNote';
 import ReviewCard from './ReviewCard';
 import { signIn, useAccount, useTracksProgress, wasSignedIn } from '../../services/account';
@@ -77,73 +75,84 @@ const DailyGoalCard = ({ today, streak, activity }: { today: number; streak: num
                 </Menu>
             </Stack>
 
-            {/* Today: the ring, and what it means. */}
-            <Stack direction="row" spacing={2.5} alignItems="center">
-                <Box sx={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
-                    <CircularProgress variant="determinate" value={100} size={84} thickness={5} sx={{ color: 'rgba(255,255,255,0.08)', position: 'absolute' }} />
-                    <CircularProgress
-                        variant="determinate"
-                        value={Math.min(100, (today / goal) * 100)}
-                        size={84}
-                        thickness={5}
-                        sx={{ color: done ? MASTERED : 'primary.main', '& circle': { strokeLinecap: 'round' } }}
-                        aria-label={`${today} of ${goal} XP today`}
-                    />
-                    <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-                        {done ? (
-                            <CheckRoundedIcon sx={{ color: MASTERED, fontSize: 34 }} />
-                        ) : (
-                            <>
-                                <Typography sx={{ fontWeight: 800, fontSize: '1.2rem', lineHeight: 1.1 }}>
-                                    {today}/{goal}
-                                </Typography>
-                                <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: 'text.secondary' }}>XP</Typography>
-                            </>
-                        )}
+            {/* Full width: today on the left, the streak and the week on the right (stacked on a phone). */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 1fr) auto' }, gap: { xs: 2.5, md: 5 }, alignItems: 'center' }}>
+                {/* Today: the ring, and what it means. */}
+                <Stack direction="row" spacing={{ xs: 2.5, md: 3.5 }} alignItems="center">
+                    <Box sx={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+                        <CircularProgress variant="determinate" value={100} size={116} thickness={5} sx={{ color: 'rgba(255,255,255,0.08)', position: 'absolute' }} />
+                        <CircularProgress
+                            variant="determinate"
+                            value={Math.min(100, (today / goal) * 100)}
+                            size={116}
+                            thickness={5}
+                            sx={{ color: done ? MASTERED : 'primary.main', '& circle': { strokeLinecap: 'round' } }}
+                            aria-label={`${today} of ${goal} XP today`}
+                        />
+                        <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+                            {done ? (
+                                <CheckRoundedIcon sx={{ color: MASTERED, fontSize: 48 }} />
+                            ) : (
+                                <>
+                                    <Typography sx={{ fontWeight: 800, fontSize: '1.6rem', lineHeight: 1.1 }}>
+                                        {today}/{goal}
+                                    </Typography>
+                                    <Typography sx={{ fontSize: '0.85rem', fontWeight: 700, color: 'text.secondary' }}>XP today</Typography>
+                                </>
+                            )}
+                        </Box>
                     </Box>
-                </Box>
-                <Typography sx={{ fontWeight: 700, fontSize: '1.05rem', lineHeight: 1.45 }}>
-                    {done ? 'Goal done for today. Nice work!' : today === 0 ? 'Practise a lesson or tick a check to earn your first XP today.' : `${goal - today} more XP to hit today's goal.`}
-                </Typography>
-            </Stack>
-
-            {/* The streak, and the last seven days, evenly across the card. */}
-            <Stack direction="row" alignItems="center" spacing={2} sx={{ mt: 'auto', pt: 2, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                <Stack direction="row" alignItems="center" spacing={0.5} sx={{ flexShrink: 0 }}>
-                    <LocalFireDepartmentRoundedIcon sx={{ color: streak > 0 ? FLAME : 'text.disabled' }} />
-                    <Typography sx={{ fontWeight: 800, whiteSpace: 'nowrap', color: streak > 0 ? FLAME : 'text.secondary' }}>
-                        {streak}-day streak
+                    <Typography sx={{ fontWeight: 800, fontSize: { xs: '1.15rem', md: '1.35rem' }, lineHeight: 1.4 }}>
+                        {done ? 'Goal done for today. Nice work!' : today === 0 ? 'Practise a lesson or tick a check to earn your first XP today.' : `${goal - today} more XP to hit today's goal.`}
                     </Typography>
                 </Stack>
-                <Box aria-label="The last 7 days" sx={{ flex: 1, maxWidth: 280, ml: 'auto', display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 0.5 }}>
-                    {week.map(({ day, xp }, index) => {
-                        const isToday = index === week.length - 1;
-                        return (
-                            <Tooltip key={day} title={`${isToday ? 'Today' : day}: ${xp} XP`}>
-                                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-                                    <Box
-                                        sx={{
-                                            width: 24,
-                                            height: 24,
-                                            borderRadius: '50%',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            bgcolor: xp > 0 ? FLAME : 'rgba(255,255,255,0.1)',
-                                            boxShadow: isToday ? `0 0 0 2px #0f131b, 0 0 0 4px ${xp > 0 ? FLAME : 'rgba(255,255,255,0.35)'}` : 'none',
-                                        }}
-                                    >
-                                        {xp > 0 && <CheckRoundedIcon sx={{ fontSize: 16, color: '#1b1206' }} />}
+
+                {/* The streak, and the last seven days. */}
+                <Stack
+                    spacing={1.5}
+                    sx={{
+                        pt: { xs: 2.5, md: 0 },
+                        pl: { md: 5 },
+                        borderTop: { xs: '1px solid rgba(255,255,255,0.08)', md: 'none' },
+                        borderLeft: { md: '1px solid rgba(255,255,255,0.08)' },
+                    }}
+                >
+                    <Stack direction="row" alignItems="center" spacing={0.75}>
+                        <LocalFireDepartmentRoundedIcon sx={{ color: streak > 0 ? FLAME : 'text.disabled', fontSize: 28 }} />
+                        <Typography sx={{ fontWeight: 800, fontSize: '1.2rem', whiteSpace: 'nowrap', color: streak > 0 ? FLAME : 'text.secondary' }}>
+                            {streak}-day streak
+                        </Typography>
+                    </Stack>
+                    <Box aria-label="The last 7 days" sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: { xs: 0.75, md: 1.25 }, maxWidth: 340 }}>
+                        {week.map(({ day, xp }, index) => {
+                            const isToday = index === week.length - 1;
+                            return (
+                                <Tooltip key={day} title={`${isToday ? 'Today' : day}: ${xp} XP`}>
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.75 }}>
+                                        <Box
+                                            sx={{
+                                                width: 32,
+                                                height: 32,
+                                                borderRadius: '50%',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                bgcolor: xp > 0 ? FLAME : 'rgba(255,255,255,0.1)',
+                                                boxShadow: isToday ? `0 0 0 2px #0f131b, 0 0 0 4px ${xp > 0 ? FLAME : 'rgba(255,255,255,0.35)'}` : 'none',
+                                            }}
+                                        >
+                                            {xp > 0 && <CheckRoundedIcon sx={{ fontSize: 20, color: '#1b1206' }} />}
+                                        </Box>
+                                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 700, lineHeight: 1, color: isToday ? 'text.primary' : 'text.secondary' }}>
+                                            {dayLetter(day)}
+                                        </Typography>
                                     </Box>
-                                    <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, lineHeight: 1, color: isToday ? 'text.primary' : 'text.secondary' }}>
-                                        {dayLetter(day)}
-                                    </Typography>
-                                </Box>
-                            </Tooltip>
-                        );
-                    })}
-                </Box>
-            </Stack>
+                                </Tooltip>
+                            );
+                        })}
+                    </Box>
+                </Stack>
+            </Box>
         </Box>
     );
 };
@@ -177,58 +186,6 @@ const TrackProgressCard = () => {
             >
                 Sign in with Google
             </Button>
-        </Box>
-    );
-};
-
-// ============ CONTINUE ============
-
-const ContinueCard = ({ stats, tracking }: { stats: CourseStats; tracking: boolean }) => {
-    const navigate = useNavigate();
-    const { course, next, nextPassed } = stats;
-    const unit = next ? unitOf(course, next.id) : undefined;
-
-    if (!next) {
-        return (
-            <Box sx={{ ...CARD, flex: 1.4, minWidth: 0, borderColor: XP_GOLD }}>
-                <Stack direction="row" spacing={2} alignItems="center">
-                    <EmojiEventsRoundedIcon sx={{ fontSize: 48, color: XP_GOLD }} />
-                    <Box>
-                        <Typography variant="h6" fontWeight={800}>You mastered every {course.title} topic</Typography>
-                        <Typography color="text.secondary">Re-test old topics every two weeks, and untick any you fail. Or pick another course below.</Typography>
-                    </Box>
-                </Stack>
-            </Box>
-        );
-    }
-
-    return (
-        <Box sx={{ ...CARD, flex: 1.4, minWidth: 0, borderColor: `${course.colour}66`, background: `linear-gradient(135deg, ${course.colour}1f, rgba(21,25,33,1) 60%)` }}>
-            <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: 1.2, color: course.colour }}>
-                {nextPassed > 0 ? 'KEEP GOING' : 'UP NEXT'} · {course.title.toUpperCase()}{unit ? ` · UNIT ${unit.number}` : ''}
-            </Typography>
-            <Typography variant="h5" sx={{ fontWeight: 800, mt: 0.5, mb: 1 }}>
-                {next.name}
-            </Typography>
-            <Typography
-                color="text.secondary"
-                sx={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', mb: 2 }}
-            >
-                <Box component="span" sx={{ color: 'text.primary', fontWeight: 700 }}>Why it matters: </Box>
-                {next.problem}
-            </Typography>
-            <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap>
-                <Button
-                    variant="contained"
-                    size="large"
-                    startIcon={<PlayArrowRoundedIcon />}
-                    onClick={() => navigate(topicPath(course, next.id))}
-                    sx={{ fontWeight: 800, px: 3, minHeight: 48 }}
-                >
-                    {nextPassed > 0 ? 'Continue' : 'Start'}
-                </Button>
-                {tracking && <CheckDots passed={nextPassed} names={course.checkNames} colour={course.colour} />}
-            </Stack>
         </Box>
     );
 };
@@ -298,10 +255,10 @@ const HomePage = () => {
     // The front page starts on ML Foundations every time; browsing its tabs is not a choice to remember.
     // The dashboard shows the course picked on it, ML Foundations until then.
     const [frontPageCourse, setFrontPageCourse] = useState<Course>('foundations');
-    const [homeCourse, setHomeCourse] = useState<Course>(readHomeCourse);
+    // The home page always opens on ML Foundations, the start of the path.
+    const [homeCourse, setHomeCourse] = useState<Course>('foundations');
     const selected = frontPage ? frontPageCourse : homeCourse;
     const course = courseById(selected);
-    const selectedStats = stats.find(s => s.course.id === selected)!;
 
     // Signing in from far down the front page swaps it for the much shorter
     // dashboard; start that at the top, at the welcome and the next topic.
@@ -329,12 +286,6 @@ const HomePage = () => {
             onOpenUnit={unitId => navigate(unitPath(course, unitId))}
         />
     );
-    const pathNote = (
-        <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 2 }}>
-            Every topic is a full lesson: an animation, the idea step by step, a worked example and four exercises with answers.
-            A topic is mastered when you pass all four checks without notes.
-        </Typography>
-    );
 
     if (frontPage) {
         return (
@@ -354,7 +305,6 @@ const HomePage = () => {
                 <Box sx={{ mt: SECTION_GAP }}>
                     <PathSection selected={selected} onSelect={select}>
                         {path}
-                        {pathNote}
                     </PathSection>
                 </Box>
                 <Box sx={{ mt: SECTION_GAP, mb: { xs: 2, md: 4 } }}>
@@ -381,10 +331,9 @@ const HomePage = () => {
                 </Typography>
             )}
             {tracking && <GuestNote />}
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 4 }}>
-                <ContinueCard stats={selectedStats} tracking={tracking} />
+            <Box sx={{ mb: 4 }}>
                 {tracking ? <DailyGoalCard today={today} streak={streak} activity={progress.activity} /> : <TrackProgressCard />}
-            </Stack>
+            </Box>
             {/* Lessons practised before, back for a short review just as they would fade. */}
             {tracking && <ReviewCard progress={progress} />}
 
@@ -394,7 +343,6 @@ const HomePage = () => {
             <CoursePicker stats={stats} selected={selected} tracking={tracking} onSelect={select} />
 
             <Box sx={{ maxWidth: 560, mx: 'auto' }}>{path}</Box>
-            {pathNote}
         </Box>
     );
 };

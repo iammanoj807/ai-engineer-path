@@ -112,7 +112,7 @@ Every lesson is free to read without an account. Sign in with Google to:
 - keep a **daily streak** and set a **daily goal**,
 - see the **same progress on your phone and your laptop**.
 
-Your progress is private: no other learner can see it. When you sign in, you get a welcome email, and a short reminder if you haven't learned for a week (at most four in a row). Turn reminders off from the account menu or the link in any email. You can delete your account, and everything in it, at any time from the account menu.
+Your progress is private: no other learner can see it. When you sign in, you get one welcome email. Reminder emails are off unless you turn them on in the account menu: then a short nudge comes when you haven't learned for a week (at most four in a row). You can delete your account, and everything in it, at any time from the account menu.
 
 ## The full curriculum
 
@@ -508,7 +508,7 @@ Yes. The lessons and the practice are made for phone screens too.
 Yes. No other learner can see it, and you can delete it with your account at any time.
 
 **Will you email me?**<br>
-Only if you sign in: a welcome email, and a reminder if you're away for a week. One tap turns reminders off.
+Only if you sign in: one welcome email. Weekly reminders are off unless you turn them on in the account menu.
 
 **I found a mistake in a lesson.**<br>
 Thank you! [Open an issue](https://github.com/iammanoj807/ai-engineer-path/issues/new/choose), or fix it yourself: see [CONTRIBUTING.md](CONTRIBUTING.md).

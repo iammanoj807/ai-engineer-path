@@ -3,7 +3,7 @@
 Two kinds of email go to learners who sign in with Google:
 
 - **Welcome:** a personal note from Manoj, the founder, within about 15 minutes of signing in for the first time, by first name. It invites a reply.
-- **Reminder:** when someone hasn't learned for 7 days, showing their own progress as the site shows it: their XP, the streak to start again, and their next lesson with a button straight to it. Then once a week, at most 4 in a row (the 4th says it's the last). Coming back resets the count. Anyone can turn reminders off from the account menu, or with the link at the bottom of every email.
+- **Reminder (off by default):** only for learners who turn on **Reminder emails** in the account menu. When such a learner hasn't learned for 7 days, showing their own progress as the site shows it: their XP, the streak to start again, and their next lesson with a button straight to it. Then once a week, at most 4 in a row (the 4th says it's the last). Coming back resets the count. Reminders can be turned off again from the account menu, or with the link at the bottom of every reminder.
 
 A scheduled GitHub Action sends them ([`.github/workflows/emails.yml`](../.github/workflows/emails.yml)): every 15 minutes for welcomes, every day at 09:45 UTC for reminders. It's free, and needs no server and no paid Firebase plan.
 

@@ -103,7 +103,8 @@ const EmailOptOut = () => {
 const AccountButton = () => {
     const account = useAccount();
     const { progress } = useGameStats();
-    const reminders = progress.activity?.emails !== false;
+    // Off unless the learner turned them on.
+    const reminders = progress.activity?.emails === true;
     const [anchor, setAnchor] = useState<HTMLElement | null>(null);
     const [deleting, setDeleting] = useState(false);
     // Stays open after the account is gone (signed out by then), to say it's done.

@@ -23,7 +23,10 @@ const subjectLine = text => text.replace(/[\r\n]+/g, ' ').trim();
 const button = (href, label) =>
     `<a href="${href}" style="display:inline-block;background:#2979ff;color:#ffffff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px">${escape(label)}</a>`;
 
-const page = (bodyHtml, preview) => `<!doctype html>
+const OFF_LINE = `Don't want reminders? <a href="${OFF}" style="color:#6b7280">Turn them off</a>.`;
+const ON_LINE = 'Want a nudge when you have been away a week? Turn on <b>Reminder emails</b> in your account menu.';
+
+const page = (bodyHtml, preview, reminderLine = OFF_LINE) => `<!doctype html>
 <html><body style="margin:0;background:#f4f5f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1d2330">
 <span style="display:none;max-height:0;overflow:hidden">${escape(preview)}</span>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f8"><tr><td align="center" style="padding:24px 12px">
@@ -32,11 +35,12 @@ const page = (bodyHtml, preview) => `<!doctype html>
 <tr><td style="padding:26px 28px 8px;font-size:16px;line-height:1.6">${bodyHtml}</td></tr>
 <tr><td style="padding:18px 28px 26px;font-size:12px;line-height:1.5;color:#6b7280;border-top:1px solid #eceef2">
 You're getting this because you signed in to <a href="${SITE}" style="color:#6b7280">learn.hamropedia.com</a> with Google.
-Don't want reminders? <a href="${OFF}" style="color:#6b7280">Turn them off</a>.
+${reminderLine}
 </td></tr>
 </table></td></tr></table></body></html>`;
 
 const footerText = `\n\n--\nYou're getting this because you signed in to learn.hamropedia.com with Google.\nDon't want reminders? Turn them off: ${OFF}\n`;
+const welcomeFooterText = `\n\n--\nYou're getting this because you signed in to learn.hamropedia.com with Google.\nWant a nudge when you have been away a week? Turn on Reminder emails in your account menu.\n`;
 
 export const welcomeEmail = ({ name }) => {
     const first = firstName(name);
@@ -57,6 +61,7 @@ export const welcomeEmail = ({ name }) => {
 <p style="margin:0 0 18px">Happy learning,<br><b>${FOUNDER}</b><br><span style="color:#6b7280">Founder, Hamropedia</span></p>
 <p style="margin:0 0 4px;font-size:14px;color:#4b5563">P.S. If the site helps you, a star on <a href="${REPO}">GitHub</a> helps other learners find it too.</p>`,
         `A quick hello from ${FOUNDER}, and how to get the most from your path.`,
+        ON_LINE,
     );
     const text = `Hi ${first},
 
@@ -83,7 +88,7 @@ Happy learning,
 ${FOUNDER}
 Founder, Hamropedia
 
-P.S. If the site helps you, a star on GitHub helps other learners find it too: ${REPO}${footerText}`;
+P.S. If the site helps you, a star on GitHub helps other learners find it too: ${REPO}${welcomeFooterText}`;
     return { subject: subjectLine(`Welcome to AI Engineer Path, ${first}`), html, text };
 };
 

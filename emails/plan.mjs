@@ -4,9 +4,9 @@
 // - Welcome: once, to someone who signed in for the first time after the
 //   emails were switched on (EMAILS_START), and within the last two days.
 //   Members from before that day are never "welcomed" out of the blue.
-// - Reminder: when someone hasn't learned for a week. Then once a week, at
-//   most MAX_REMINDERS in a row; learning again resets the count. Never to
-//   anyone who turned reminders off.
+// - Reminder: off unless the learner turned reminders on (account menu). Then,
+//   when they haven't learned for a week: once a week, at most MAX_REMINDERS in
+//   a row; learning again resets the count.
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -55,7 +55,8 @@ export const planEmails = ({ users, activity, mail, now, start, pass }) => {
             continue;
         }
         const doc = activity[user.uid];
-        if (doc?.emails === false) continue;
+        // Reminders are off by default: only for learners who turned them on.
+        if (doc?.emails !== true) continue;
         // Never active since signing up: count from the day they joined.
         const activeAt = Math.max(lastActiveTime(doc), user.createdAt);
         // Only people who used the site since emails began (they saw the notice).

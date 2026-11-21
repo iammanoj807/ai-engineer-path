@@ -33,7 +33,14 @@ describe('who gets a reminder', () => {
     const created = START + DAY;
     const lastDay = START + 10 * DAY;
     const activity = { a: { days: { [day(lastDay)]: 2 } } };
-    const plan = (now, mail = {}, docs = activity, users = [user('a', created)]) => planEmails({ users, activity: docs, mail, now, start: START, pass: 'reminders' });
+    /** Learners in these tests turned reminders on, unless a test says otherwise. */
+    const optedIn = docs => Object.fromEntries(Object.entries(docs).map(([uid, doc]) => [uid, { emails: true, ...doc }]));
+    const plan = (now, mail = {}, docs = activity, users = [user('a', created)]) => planEmails({ users, activity: optedIn(docs), mail, now, start: START, pass: 'reminders' });
+
+    it('sends none unless the learner turned reminders on: they are off by default', () => {
+        const off = planEmails({ users: [user('a', created)], activity: { a: { days: { [day(lastDay)]: 2 } } }, mail: {}, now: lastDay + 8 * DAY, start: START, pass: 'reminders' });
+        expect(off).toEqual([]);
+    });
 
     it('reminds after 7 days without learning, not after 6', () => {
         expect(plan(lastDay + 6 * DAY)).toEqual([]);
@@ -60,8 +67,8 @@ describe('who gets a reminder', () => {
         expect(plan(lastDay + 47 * DAY, log(MAX_REMINDERS), back)).toMatchObject([{ number: 1 }]);
     });
 
-    it('a new account that never comes back is reminded a week after joining', () => {
-        expect(plan(created + 7 * DAY, {}, {})).toMatchObject([{ uid: 'a', number: 1 }]);
+    it('a new account that turned reminders on and never came back is reminded a week after joining', () => {
+        expect(plan(created + 7 * DAY, {}, { a: {} })).toMatchObject([{ uid: 'a', number: 1 }]);
     });
 
     it('leaves alone members who have not been back since emails began', () => {
@@ -163,11 +170,14 @@ describe('the emails', () => {
         expect(email.subject).not.toMatch(/[\r\n]/);
     });
 
-    it('every email links to turning reminders off, in HTML and in plain text', () => {
-        for (const email of [welcomeEmail({ name: 'Ann' }), ...[1, 2, 3, 4].map(number => reminderEmail({ name: 'Ann', number }))]) {
+    it('every reminder links to turning reminders off, and the welcome says how to turn them on', () => {
+        for (const email of [1, 2, 3, 4].map(number => reminderEmail({ name: 'Ann', number }))) {
             expect(email.html).toContain('https://learn.hamropedia.com/?emails=off');
             expect(email.text).toContain('https://learn.hamropedia.com/?emails=off');
         }
+        const welcome = welcomeEmail({ name: 'Ann' });
+        expect(welcome.text).toContain('Turn on Reminder emails in your account menu');
+        expect(welcome.html).toContain('<b>Reminder emails</b>');
     });
 
     it('the welcome is a personal note from the founder, who invites a reply', () => {
