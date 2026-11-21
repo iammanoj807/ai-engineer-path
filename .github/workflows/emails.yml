@@ -7,7 +7,9 @@ name: Learner emails
 
 on:
   schedule:
-    - cron: '*/15 * * * *' # every 15 minutes: welcome emails
+    # Every 15 minutes: welcome emails. Off the hour (:07, :22, :37, :52), when GitHub
+    # is less busy: scheduled runs on the hour are often delayed or skipped.
+    - cron: '7,22,37,52 * * * *'
     - cron: '45 9 * * *' # every day at 09:45 UTC: reminders
   workflow_dispatch:
     inputs:
