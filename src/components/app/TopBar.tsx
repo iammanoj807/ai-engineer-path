@@ -33,6 +33,7 @@ import { useGameStats } from '../../game/useProgress';
 import { signIn, signOut, useAccount, useTracksProgress } from '../../services/account';
 import { setEmailReminders } from '../../services/progress';
 import { FLAME, XP_GOLD } from './colours';
+import { useProgressSummary } from './useProgressSummary';
 
 // Loaded only when someone opens it.
 const DeleteAccountDialog = lazy(() => import('./DeleteAccountDialog'));
@@ -188,8 +189,9 @@ const AccountButton = () => {
 const TopBar = () => {
     const { pathname } = useLocation();
     const navigate = useNavigate();
-    const { xp, streak, today } = useGameStats();
+    const { xp, streak, today, progress, stats } = useGameStats();
     const tracking = useTracksProgress();
+    useProgressSummary({ progress, stats, xp, streak });
     const [menu, setMenu] = useState<HTMLElement | null>(null);
 
     return (

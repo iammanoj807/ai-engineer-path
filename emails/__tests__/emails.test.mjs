@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { MAX_REMINDERS, planEmails } from '../plan.mjs';
 import { runEmails } from '../run.mjs';
-import { FOUNDER, firstName, reminderEmail, testEmails, welcomeEmail } from '../templates.mjs';
+import { FOUNDER, firstName, progressOf, reminderEmail, testEmails, welcomeEmail } from '../templates.mjs';
 
 const DAY = 24 * 60 * 60 * 1000;
 const START = Date.parse('2026-11-22T00:00:00Z');
@@ -176,6 +176,28 @@ describe('the emails', () => {
         expect(email.text).toContain(`I'm ${FOUNDER}, the founder of Hamropedia`);
         expect(email.text).toContain('Just reply to this email');
         expect(email.html).toContain('Founder, Hamropedia');
+    });
+
+    it('a reminder shows the learner their own progress: XP, the streak to restart, and the next lesson', () => {
+        const progress = { xp: 145, streak: 4, next: { name: 'Gradient descent and the learning rate', course: 'ML Foundations', path: '/foundations/gradient-descent-and-the-learning-rate/' } };
+        const email = reminderEmail({ name: 'Ann', number: 1, progress });
+        expect(email.subject).toBe('Ann, your next lesson is waiting: Gradient descent and the learning rate');
+        expect(email.html).toContain('145 XP');
+        expect(email.html).toContain('You had a 4-day streak going');
+        expect(email.html).toContain('href="https://learn.hamropedia.com/foundations/gradient-descent-and-the-learning-rate/"');
+        expect(email.text).toContain('Up next in ML Foundations: Gradient descent and the learning rate');
+        // With no summary yet, it still reads well.
+        expect(reminderEmail({ name: 'Ann', number: 1 }).text).toContain('press Start on the lesson marked Up next');
+    });
+
+    it("never trusts the learner's summary blindly: odd numbers become 0, and links stay on the site", () => {
+        expect(progressOf({ xp: 'lots', streak: -3 })).toEqual({ xp: 0, streak: 0, next: null });
+        expect(progressOf({ xp: 10, streak: 1, next: { name: 'X', course: 'SQL', path: 'https://evil.example/' } }).next).toBeNull();
+        expect(progressOf({ xp: 10, streak: 1, next: { name: 'X', course: 'SQL', path: '/sql/../../x/' } }).next).toBeNull();
+        expect(progressOf({ xp: 10, streak: 1, next: { name: '<b>X</b>', course: 'SQL', path: '/sql/joins/' } }).next.url).toBe('https://learn.hamropedia.com/sql/joins/');
+        const email = reminderEmail({ name: 'Ann', number: 2, progress: { xp: 5, streak: 0, next: { name: '<img src=x>', course: 'SQL', path: '/sql/joins/' } } });
+        expect(email.html).not.toContain('<img src=x>');
+        expect(email.html).not.toContain('streak going');
     });
 
     it('the four reminders differ, and the last says it is the last', () => {

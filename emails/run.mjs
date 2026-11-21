@@ -35,7 +35,7 @@ export const runEmails = async ({ store, mailer, pass, now, start, live, log = c
     let failed = 0;
     for (const action of actions) {
         const user = byUid.get(action.uid);
-        const email = action.kind === 'welcome' ? welcomeEmail({ name: user.name }) : reminderEmail({ name: user.name, number: action.number });
+        const email = action.kind === 'welcome' ? welcomeEmail({ name: user.name }) : reminderEmail({ name: user.name, number: action.number, progress: activity[user.uid]?.summary });
         if (!live) continue;
         try {
             await mailer.send({ to: user.email, ...email });

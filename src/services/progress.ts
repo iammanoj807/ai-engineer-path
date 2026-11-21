@@ -53,6 +53,20 @@ export interface Activity {
     xp?: Record<string, number>;
     lastSeen?: string;
     emails?: boolean;
+    /** The learner's progress as the site shows it, for the reminder emails. */
+    summary?: ProgressSummary;
+}
+
+/**
+ * What a reminder email says about the learner's progress: the same numbers
+ * the site shows (worked out by the site, not by the email job), kept current
+ * while they learn.
+ */
+export interface ProgressSummary {
+    xp: number;
+    streak: number;
+    /** The lesson marked Up next on their home page. */
+    next?: { name: string; course: string; path: string };
 }
 
 interface Docs {
@@ -84,6 +98,7 @@ const normalize = <N extends DocName>(name: N, raw: unknown): Docs[N] => {
                 xp: asObject(data.xp),
                 ...(typeof data.lastSeen === 'string' ? { lastSeen: data.lastSeen } : {}),
                 ...(typeof data.emails === 'boolean' ? { emails: data.emails } : {}),
+                ...(data.summary && typeof data.summary === 'object' ? { summary: data.summary as ProgressSummary } : {}),
             } as Docs[N];
         default:
             return { checks: asObject(data.checks), practice: asObject(data.practice) } as Docs[N];
@@ -427,6 +442,21 @@ export const markSeenToday = async (): Promise<void> => {
     } catch (error) {
         console.error('Could not note today\'s visit:', error);
     }
+};
+
+/**
+ * Whether a page's copy of the progress is the one just loaded from where it
+ * is kept now: not an empty copy from the moment of signing in.
+ */
+export const isCurrentProgress = (docs: Partial<Record<DocName, unknown>>, names: DocName[]) =>
+    names.every(name => state[name] !== undefined && docs[name] === state[name]);
+
+/** Keep the progress summary the reminder emails use (signed in only). */
+export const saveProgressSummary = async (summary: ProgressSummary): Promise<void> => {
+    if (!canSave()) return;
+    const { next, ...rest } = summary;
+    // Firestore merges, so a lesson that is no longer next is removed explicitly.
+    await write('activity', { summary: { ...rest, next: next ? { ...next } : DELETE } });
 };
 
 /** Turn the weekly reminder emails on or off (signed in only). */

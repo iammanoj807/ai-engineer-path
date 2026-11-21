@@ -3,7 +3,7 @@
 Two kinds of email go to learners who sign in with Google:
 
 - **Welcome:** a personal note from Manoj, the founder, within about 15 minutes of signing in for the first time, by first name. It invites a reply.
-- **Reminder:** when someone hasn't learned for 7 days. Then once a week, at most 4 in a row (the 4th says it's the last). Coming back resets the count. Anyone can turn reminders off from the account menu, or with the link at the bottom of every email.
+- **Reminder:** when someone hasn't learned for 7 days, showing their own progress as the site shows it: their XP, the streak to start again, and their next lesson with a button straight to it. Then once a week, at most 4 in a row (the 4th says it's the last). Coming back resets the count. Anyone can turn reminders off from the account menu, or with the link at the bottom of every email.
 
 A scheduled GitHub Action sends them ([`.github/workflows/emails.yml`](../.github/workflows/emails.yml)): every 15 minutes for welcomes, every day at 09:45 UTC for reminders. It's free, and needs no server and no paid Firebase plan.
 
@@ -66,6 +66,7 @@ Add the variable `EMAILS_LIVE` = `true`. To test, sign in to the site with a spa
 ## Good to know
 
 - **To change the wording,** edit [`templates.mjs`](templates.mjs). To change the timing or the limit of 4 reminders, edit the numbers at the top of [`plan.mjs`](plan.mjs). The tests in [`__tests__/`](__tests__/) check every rule: run `npm test` from the repository's root.
+- **Where the progress in a reminder comes from:** while a learner uses the site, it keeps a short summary (XP, streak, the lesson marked Up next) in their own progress, so the email says exactly what the site showed them. The job checks it before use: numbers must be numbers, and the lesson link must be a page of the site.
 - **What it stores:** a small log per learner at `mail/{uid}` in Firestore (when they were welcomed and reminded), so nobody gets the same email twice. Learners can't read it (the Firestore rules refuse everything outside their own progress). When an account is deleted, its log is removed by the next daily run.
 - **GitHub pauses scheduled workflows** in a public repository after 60 days without a commit. If emails stop, open the Actions tab and enable the workflow again.
 - **Firestore reads:** the daily reminder run reads 2 documents per account, which fits Firestore's free 50,000 reads a day up to about 25,000 accounts.
