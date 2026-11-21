@@ -46,7 +46,37 @@ const DailyGoalCard = ({ today, streak, activity }: { today: number; streak: num
     const dayLetter = (day: string) => new Date(`${day}T12:00:00`).toLocaleDateString(undefined, { weekday: 'narrow' });
 
     return (
-        <Box sx={{ ...CARD, flex: 1, minWidth: 0 }}>
+        <Box sx={{ ...CARD, flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+                <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: 1.2, color: 'text.secondary' }}>
+                    DAILY GOAL
+                </Typography>
+                <Tooltip title="Change your daily goal">
+                    <Button size="small" startIcon={<TuneRoundedIcon />} onClick={event => setAnchor(event.currentTarget)} sx={{ color: 'text.secondary', minHeight: 32 }}>
+                        {DAILY_GOALS.find(g => g.xp === goal)?.label}
+                    </Button>
+                </Tooltip>
+                <Menu anchorEl={anchor} open={!!anchor} onClose={() => setAnchor(null)}>
+                    {DAILY_GOALS.map(option => (
+                        <MenuItem
+                            key={option.xp}
+                            selected={option.xp === goal}
+                            onClick={() => {
+                                setGoal(option.xp);
+                                writeDailyGoal(option.xp);
+                                setAnchor(null);
+                            }}
+                        >
+                            <Box>
+                                <Typography fontWeight={700}>{option.label}</Typography>
+                                <Typography variant="body2" color="text.secondary">{option.detail}</Typography>
+                            </Box>
+                        </MenuItem>
+                    ))}
+                </Menu>
+            </Stack>
+
+            {/* Today: the ring, and what it means. */}
             <Stack direction="row" spacing={2.5} alignItems="center">
                 <Box sx={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
                     <CircularProgress variant="determinate" value={100} size={84} thickness={5} sx={{ color: 'rgba(255,255,255,0.08)', position: 'absolute' }} />
@@ -66,61 +96,51 @@ const DailyGoalCard = ({ today, streak, activity }: { today: number; streak: num
                                 <Typography sx={{ fontWeight: 800, fontSize: '1.2rem', lineHeight: 1.1 }}>
                                     {today}/{goal}
                                 </Typography>
-                                <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'text.secondary' }}>XP</Typography>
+                                <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: 'text.secondary' }}>XP</Typography>
                             </>
                         )}
                     </Box>
                 </Box>
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                        <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: 1.2, color: 'text.secondary' }}>
-                            DAILY GOAL
-                        </Typography>
-                        <Tooltip title="Change your daily goal">
-                            <Button size="small" startIcon={<TuneRoundedIcon />} onClick={event => setAnchor(event.currentTarget)} sx={{ color: 'text.secondary', minHeight: 32 }}>
-                                {DAILY_GOALS.find(g => g.xp === goal)?.label}
-                            </Button>
-                        </Tooltip>
-                        <Menu anchorEl={anchor} open={!!anchor} onClose={() => setAnchor(null)}>
-                            {DAILY_GOALS.map(option => (
-                                <MenuItem
-                                    key={option.xp}
-                                    selected={option.xp === goal}
-                                    onClick={() => {
-                                        setGoal(option.xp);
-                                        writeDailyGoal(option.xp);
-                                        setAnchor(null);
-                                    }}
-                                >
-                                    <Box>
-                                        <Typography fontWeight={700}>{option.label}</Typography>
-                                        <Typography variant="body2" color="text.secondary">{option.detail}</Typography>
-                                    </Box>
-                                </MenuItem>
-                            ))}
-                        </Menu>
-                    </Stack>
-                    <Typography sx={{ fontWeight: 700, mb: 1 }}>
-                        {done ? 'Goal done for today. Nice work!' : today === 0 ? 'Practise a lesson or tick a check to earn your first XP today.' : `${goal - today} more XP to hit today's goal.`}
+                <Typography sx={{ fontWeight: 700, fontSize: '1.05rem', lineHeight: 1.45 }}>
+                    {done ? 'Goal done for today. Nice work!' : today === 0 ? 'Practise a lesson or tick a check to earn your first XP today.' : `${goal - today} more XP to hit today's goal.`}
+                </Typography>
+            </Stack>
+
+            {/* The streak, and the last seven days, evenly across the card. */}
+            <Stack direction="row" alignItems="center" spacing={2} sx={{ mt: 'auto', pt: 2, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                <Stack direction="row" alignItems="center" spacing={0.5} sx={{ flexShrink: 0 }}>
+                    <LocalFireDepartmentRoundedIcon sx={{ color: streak > 0 ? FLAME : 'text.disabled' }} />
+                    <Typography sx={{ fontWeight: 800, whiteSpace: 'nowrap', color: streak > 0 ? FLAME : 'text.secondary' }}>
+                        {streak}-day streak
                     </Typography>
-                    <Stack direction="row" alignItems="center" spacing={1.5}>
-                        <Stack direction="row" alignItems="center" spacing={0.5}>
-                            <LocalFireDepartmentRoundedIcon sx={{ color: streak > 0 ? FLAME : 'text.disabled' }} />
-                            <Typography sx={{ fontWeight: 800, color: streak > 0 ? FLAME : 'text.secondary' }}>
-                                {streak} day{streak === 1 ? '' : 's'}
-                            </Typography>
-                        </Stack>
-                        <Stack direction="row" spacing={0.5} aria-label="The last 7 days">
-                            {week.map(({ day, xp }) => (
-                                <Tooltip key={day} title={`${day}: ${xp} XP`}>
-                                    <Box sx={{ textAlign: 'center' }}>
-                                        <Box sx={{ width: 18, height: 18, borderRadius: '50%', bgcolor: xp > 0 ? FLAME : 'rgba(255,255,255,0.1)' }} />
-                                        <Typography sx={{ fontSize: '0.65rem', color: 'text.secondary' }}>{dayLetter(day)}</Typography>
+                </Stack>
+                <Box aria-label="The last 7 days" sx={{ flex: 1, maxWidth: 280, ml: 'auto', display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 0.5 }}>
+                    {week.map(({ day, xp }, index) => {
+                        const isToday = index === week.length - 1;
+                        return (
+                            <Tooltip key={day} title={`${isToday ? 'Today' : day}: ${xp} XP`}>
+                                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                                    <Box
+                                        sx={{
+                                            width: 24,
+                                            height: 24,
+                                            borderRadius: '50%',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            bgcolor: xp > 0 ? FLAME : 'rgba(255,255,255,0.1)',
+                                            boxShadow: isToday ? `0 0 0 2px #0f131b, 0 0 0 4px ${xp > 0 ? FLAME : 'rgba(255,255,255,0.35)'}` : 'none',
+                                        }}
+                                    >
+                                        {xp > 0 && <CheckRoundedIcon sx={{ fontSize: 16, color: '#1b1206' }} />}
                                     </Box>
-                                </Tooltip>
-                            ))}
-                        </Stack>
-                    </Stack>
+                                    <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, lineHeight: 1, color: isToday ? 'text.primary' : 'text.secondary' }}>
+                                        {dayLetter(day)}
+                                    </Typography>
+                                </Box>
+                            </Tooltip>
+                        );
+                    })}
                 </Box>
             </Stack>
         </Box>

@@ -2,10 +2,10 @@
 
 Two kinds of email go to learners who sign in with Google:
 
-- **Welcome:** a personal note from Manoj, the founder, within an hour of signing in for the first time, by first name. It invites a reply.
+- **Welcome:** a personal note from Manoj, the founder, within about 15 minutes of signing in for the first time, by first name. It invites a reply.
 - **Reminder:** when someone hasn't learned for 7 days. Then once a week, at most 4 in a row (the 4th says it's the last). Coming back resets the count. Anyone can turn reminders off from the account menu, or with the link at the bottom of every email.
 
-A scheduled GitHub Action sends them ([`.github/workflows/emails.yml`](../.github/workflows/emails.yml)): every hour for welcomes, every day at 09:45 UTC for reminders. It's free, and needs no server and no paid Firebase plan.
+A scheduled GitHub Action sends them ([`.github/workflows/emails.yml`](../.github/workflows/emails.yml)): every 15 minutes for welcomes, every day at 09:45 UTC for reminders. It's free, and needs no server and no paid Firebase plan.
 
 **It is off until you set it up.** Nothing runs on its schedule until `EMAILS_START` is set, and nothing goes to learners until `EMAILS_LIVE` is `true`. Until then it's a dry run that only counts. A test send (step 4) only ever goes to your own address.
 
@@ -61,7 +61,7 @@ Your own account won't get a welcome from the real run: only people who sign up 
 
 ### 6. Switch it on
 
-Add the variable `EMAILS_LIVE` = `true`. To test, sign in to the site with a spare Google account: the welcome email arrives within the hour.
+Add the variable `EMAILS_LIVE` = `true`. To test, sign in to the site with a spare Google account: the welcome email arrives within about 15 minutes.
 
 ## Good to know
 

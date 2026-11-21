@@ -1,5 +1,5 @@
 # Welcome and reminder emails to signed-in learners (emails/README.md has the setup).
-# Every hour: welcome anyone who signed up. Every day: remind anyone away for a week.
+# Every 15 minutes: welcome anyone who signed up. Every day: remind anyone away for a week.
 #
 # Off until set up: nothing runs until the EMAILS_START variable is set, and it
 # is a dry run (it sends nothing) until the EMAILS_LIVE variable is "true".
@@ -7,7 +7,7 @@ name: Learner emails
 
 on:
   schedule:
-    - cron: '17 * * * *' # every hour: welcome emails
+    - cron: '*/15 * * * *' # every 15 minutes: welcome emails
     - cron: '45 9 * * *' # every day at 09:45 UTC: reminders
   workflow_dispatch:
     inputs:

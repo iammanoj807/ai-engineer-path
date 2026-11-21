@@ -23,7 +23,7 @@ const short = uid => `${uid.slice(0, 4)}…`;
  */
 export const runEmails = async ({ store, mailer, pass, now, start, live, log = console.log }) => {
     const users = await store.listUsers();
-    // The hourly welcome pass only reads the few accounts made in the last days.
+    // The welcome pass (every 15 minutes) only reads the few accounts made in the last days.
     const considered = pass === 'welcome' ? users.filter(user => user.createdAt >= start && now - user.createdAt <= WELCOME_WITHIN_DAYS * DAY) : users;
     const uids = considered.map(user => user.uid);
     const mail = uids.length ? await store.readMail(uids) : {};

@@ -83,7 +83,7 @@ const Moment = ({ guide, mood, title, children, actions, quiet = false }: { guid
     <>
         <Body>
             <Stack alignItems="center" textAlign="center" spacing={2} sx={{ pt: { xs: 4, sm: 8 } }}>
-                <Mascot mood={mood} size={128} who={guide} />
+                <Mascot mood={mood} size={160} who={guide} />
                 <Typography id="practice-question" component="h2" sx={{ fontWeight: 800, fontSize: { xs: '1.5rem', sm: '1.9rem' }, color: '#fff' }}>
                     {title}
                 </Typography>
@@ -193,7 +193,7 @@ const Summary = ({
         <>
             <Body>
                 <Stack alignItems="center" textAlign="center" spacing={1.5} sx={{ pt: { xs: 1, sm: 3 } }}>
-                    <Mascot mood="cheer" size={120} who={guideFor(topicId)} />
+                    <Mascot mood="cheer" size={150} who={guideFor(topicId)} />
                     <Typography id="practice-question" component="h2" sx={{ fontWeight: 800, fontSize: { xs: '1.7rem', sm: '2.1rem' }, color: '#fff' }}>
                         {perfect ? MOMENT_LINES.perfect : MOMENT_LINES.complete}
                     </Typography>

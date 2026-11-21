@@ -3,8 +3,7 @@
 // the result and holds the next button. (Colours and helpers: style.ts.)
 
 import { useEffect, type ReactNode } from 'react';
-import { Box, IconButton, Stack, Typography } from '@mui/material';
-import VolumeUpRoundedIcon from '@mui/icons-material/VolumeUpRounded';
+import { Box, ButtonBase, Stack, Typography } from '@mui/material';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
@@ -16,12 +15,13 @@ import { canSpeak, say, useVoiceOn } from './voice';
 
 /**
  * The card's title, then the lesson's guide saying the question in a speech
- * bubble and out loud. `speak` is the line itself (src/practice/lines.ts): the
- * bubble may style it, but these are the words.
+ * bubble and out loud. Tap the guide to hear it again. `speak` is the line
+ * itself (src/practice/lines.ts): the bubble may style it, but these are the words.
  */
 export const CardHeader = ({ title, accent, mood = 'idle', speak, children }: { title: string; accent: string; mood?: Mood; speak: string; children: ReactNode }) => {
     const { guide } = usePractice();
     const voice = useVoiceOn() && canSpeak();
+    const guideSx = { borderRadius: 3, flexShrink: 0, cursor: voice ? 'pointer' : 'default', '&:focus-visible': { outline: '3px solid #90caf9', outlineOffset: 2 } };
     // Say the line when the card appears, and again only if it changes.
     useEffect(() => {
         say(speak, guide);
@@ -31,29 +31,28 @@ export const CardHeader = ({ title, accent, mood = 'idle', speak, children }: { 
         <Typography variant="caption" sx={{ display: 'block', fontWeight: 800, letterSpacing: 1.2, color: accent, mb: 1.25 }}>
             {title.toUpperCase()}
         </Typography>
-        <Stack direction="row" spacing={2} alignItems="flex-start">
-            <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-                <Mascot mood={mood} size={84} who={guide} />
-            </Box>
-            <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
-                <Mascot mood={mood} size={58} who={guide} />
-            </Box>
+        <Stack direction="row" spacing={{ xs: 1.5, sm: 2 }} alignItems="center">
+            {/* The guide: tap them to hear the line again. */}
+            <ButtonBase
+                disabled={!voice}
+                onClick={() => say(speak, guide)}
+                aria-label="Hear the question again"
+                sx={{ ...guideSx, display: { xs: 'none', sm: 'block' } }}
+            >
+                <Mascot mood={mood} size={124} who={guide} />
+            </ButtonBase>
+            <ButtonBase
+                disabled={!voice}
+                onClick={() => say(speak, guide)}
+                aria-label="Hear the question again"
+                sx={{ ...guideSx, display: { xs: 'block', sm: 'none' } }}
+            >
+                <Mascot mood={mood} size={88} who={guide} />
+            </ButtonBase>
             <SpeechBubble>
-                <Stack direction="row" alignItems="flex-start" spacing={1}>
-                    <Typography id="practice-question" component="h2" sx={{ flex: 1, fontWeight: 700, fontSize: { xs: '1.05rem', sm: '1.2rem' }, color: '#fff', lineHeight: 1.45 }}>
-                        {children}
-                    </Typography>
-                    {voice && (
-                        <IconButton
-                            size="small"
-                            onClick={() => say(speak, guide)}
-                            aria-label="Hear the question again"
-                            sx={{ mt: -0.5, mr: -1, color: 'text.secondary' }}
-                        >
-                            <VolumeUpRoundedIcon fontSize="small" />
-                        </IconButton>
-                    )}
-                </Stack>
+                <Typography id="practice-question" component="h2" sx={{ fontWeight: 700, fontSize: { xs: '1.05rem', sm: '1.2rem' }, color: '#fff', lineHeight: 1.45 }}>
+                    {children}
+                </Typography>
             </SpeechBubble>
         </Stack>
     </Box>

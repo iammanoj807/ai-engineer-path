@@ -3,7 +3,7 @@
 // and to a mail server (SMTP: Gmail, Resend, Brevo, SendGrid... any of them).
 //
 // Settings, all from the environment:
-//   PASS                      "welcome" (hourly), "reminders" (daily), or "test":
+//   PASS                      "welcome" (every 15 minutes), "reminders" (daily), or "test":
 //                             every email once, to TEST_TO only (no Firebase needed)
 //   EMAILS_START              when emails were switched on, e.g. 2026-11-22T00:00:00Z
 //   LIVE                      "true" to really send; anything else is a dry run
