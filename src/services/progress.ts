@@ -13,27 +13,42 @@ import type { SDCheckKey } from '../data/systemDesign';
 import type { SqlCheckKey } from '../data/sql';
 import type { SavedSqlQueries, SavedSqlQuery } from '../utils/sqlQueries';
 import { localDay } from '../game/day';
+import { XP_PER_CHECK } from '../game/xp';
 
 // ============ SHAPES ============
 
 export type FoundationCheckKey = 'explain' | 'derive' | 'build' | 'break';
 
+/** A lesson's practice sessions: the best score (0–100), the last day practised, how many times. */
+export interface PracticeRecord {
+    best: number;
+    last: string;
+    times: number;
+}
+
 export interface FoundationsProgress {
     checks: Record<string, Partial<Record<FoundationCheckKey, boolean>>>;
     builds: Record<string, boolean>;
+    practice?: Record<string, PracticeRecord>;
 }
 
 export interface SystemDesignProgress {
     checks: Record<string, Partial<Record<SDCheckKey, boolean>>>;
+    practice?: Record<string, PracticeRecord>;
 }
 
 export interface SqlProgress {
     checks: Record<string, Partial<Record<SqlCheckKey, boolean>>>;
+    practice?: Record<string, PracticeRecord>;
 }
 
-/** How many checks (or builds) were ticked on each day, keyed by the learner's local date. */
+/**
+ * Each day's study, keyed by the learner's local date: how many checks (or
+ * builds) were ticked, and the XP earned in practice sessions.
+ */
 export interface Activity {
     days: Record<string, number>;
+    xp?: Record<string, number>;
 }
 
 interface Docs {
@@ -56,13 +71,13 @@ const normalize = <N extends DocName>(name: N, raw: unknown): Docs[N] => {
     const data = asObject(raw);
     switch (name) {
         case 'foundations':
-            return { checks: asObject(data.checks), builds: asObject(data.builds) } as Docs[N];
+            return { checks: asObject(data.checks), builds: asObject(data.builds), practice: asObject(data.practice) } as Docs[N];
         case 'sql_queries':
             return { queries: asObject(data.queries) } as Docs[N];
         case 'activity':
-            return { days: asObject(data.days) } as Docs[N];
+            return { days: asObject(data.days), xp: asObject(data.xp) } as Docs[N];
         default:
-            return { checks: asObject(data.checks) } as Docs[N];
+            return { checks: asObject(data.checks), practice: asObject(data.practice) } as Docs[N];
     }
 };
 
@@ -306,7 +321,7 @@ const saveChecks = async (course: Course, topicId: string, changes: Record<strin
     // from an empty copy would treat old ticks as new and overwrite today's count.
     await whenLoaded(course);
     await whenLoaded('activity');
-    const before ={ ...(asObject((state[course] as { checks?: unknown } | undefined)?.checks)[topicId] as Record<string, boolean> | undefined ?? {}) };
+    const before = { ...(asObject((state[course] as { checks?: unknown } | undefined)?.checks)[topicId] as Record<string, boolean> | undefined ?? {}) };
     const passedBefore = Object.values(before).filter(Boolean).length;
     const after = { ...before, ...changes };
     const passedAfter = Object.values(after).filter(Boolean).length;
@@ -326,25 +341,65 @@ const saveChecks = async (course: Course, topicId: string, changes: Record<strin
 const saveCheck = (course: Course, topicId: string, check: string, done: boolean): Promise<void> =>
     saveChecks(course, topicId, { [check]: done });
 
-const dayTickListeners = new Set<(ticksToday: number, added: number) => void>();
+const dayXpListeners = new Set<(xpToday: number, added: number) => void>();
 
-/** Called with today's new count and how many ticks were just added, so the page can celebrate the daily goal. */
-export const onDayTick = (listener: (ticksToday: number, added: number) => void) => {
-    dayTickListeners.add(listener);
+/** Called with today's new XP and how much was just added, so the page can celebrate the daily goal. */
+export const onDayXp = (listener: (xpToday: number, added: number) => void) => {
+    dayXpListeners.add(listener);
     return () => {
-        dayTickListeners.delete(listener);
+        dayXpListeners.delete(listener);
     };
 };
+
+/** Today's XP so far: 10 for each check ticked, plus what practice earned. */
+const xpSoFarToday = (today: string) => (state.activity?.days[today] ?? 0) * XP_PER_CHECK + (state.activity?.xp?.[today] ?? 0);
 
 const recordActivity = async (ticks = 1) => {
     const today = localDay();
     const count = state.activity?.days[today] ?? 0;
-    dayTickListeners.forEach(fn => fn(count + ticks, ticks));
+    const added = ticks * XP_PER_CHECK;
+    dayXpListeners.forEach(fn => fn(xpSoFarToday(today) + added, added));
     try {
         await write('activity', { days: { [today]: count + ticks } });
     } catch (error) {
         console.error('Could not record today\'s activity:', error);
     }
+};
+
+// ============ PRACTICE SESSIONS ============
+
+export interface PracticeResult {
+    /** XP the session earned. */
+    xp: number;
+    /** Share of exercises right first time, 0–100. */
+    score: number;
+    /** Checks the session proved (SQL), ticked in the same save. */
+    checks?: string[];
+}
+
+/**
+ * Save a finished practice session: its XP for today, the lesson's best score
+ * and last day practised, and any checks it proved. One save, so a learner who
+ * is asked to sign in first has all of it kept, and none of it counted twice.
+ */
+export const savePracticeResult = async (course: Course, topicId: string, result: PracticeResult): Promise<void> => {
+    if (!allowedOrAsk(() => savePracticeResult(course, topicId, result), [course, 'activity'])) return;
+    await whenLoaded(course);
+    await whenLoaded('activity');
+    const today = localDay();
+    const previous = asObject(asObject((state[course] as { practice?: unknown } | undefined)?.practice)[topicId]) as Partial<PracticeRecord>;
+    const record: PracticeRecord = {
+        best: Math.max(Number(previous.best) || 0, Math.round(result.score)),
+        last: today,
+        times: (Number(previous.times) || 0) + 1,
+    };
+    const saving: Promise<void>[] = [write(course, { practice: { [topicId]: { ...record } } })];
+    if (result.xp > 0) {
+        dayXpListeners.forEach(fn => fn(xpSoFarToday(today) + result.xp, result.xp));
+        saving.push(write('activity', { xp: { [today]: (state.activity?.xp?.[today] ?? 0) + result.xp } }));
+    }
+    if (result.checks?.length) saving.push(saveChecks(course, topicId, Object.fromEntries(result.checks.map(check => [check, true]))));
+    await Promise.all(saving);
 };
 
 // Keep today's count current even before the home page subscribes.

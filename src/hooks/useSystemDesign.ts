@@ -3,7 +3,7 @@ import { subscribeToSystemDesign, saveSystemDesignCheck } from '../services/prog
 import type { SystemDesignProgress } from '../services/progress';
 import type { SDCheckKey } from '../data/systemDesign';
 
-const EMPTY: SystemDesignProgress = { checks: {} };
+const EMPTY: SystemDesignProgress = { checks: {}, practice: {} };
 
 /**
  * The moving part of System Design: which checks are ticked.

@@ -25,6 +25,7 @@ AI Engineer Path is a free learning site that takes you from zero to interview-r
 
 - **231 lessons in 27 units**, from the first idea to interview questions.
 - **Every topic is a full lesson:** an animation, the idea step by step, a worked example, and four exercises with answers.
+- **Practise like a game:** after every lesson, Bit the robot asks quick questions (match the pairs, type the missing word letter by letter, put the steps in order, fix the SQL query) with hearts, XP and a streak.
 - **Interview questions in every course:** full spoken answers, the traps, and the follow-ups.
 - **SQL that runs in your browser:** a real SQLite engine, with nothing to install.
 - **Free, with no account needed to read.** Sign in with Google only if you want to save your progress.
@@ -78,6 +79,25 @@ Every topic teaches one idea all the way through:
 3. **A worked example** with code that has been run.
 4. **Four checks with answers** (in ML Foundations: Explain · Derive · Build · Break). Pass all four without notes and the topic is mastered.
 
+### Practise with Bit
+
+<p align="center">
+  <img src="docs/images/practice-idea.png" alt="Bit introduces the idea of a lesson, with its animation" width="24%">
+  <img src="docs/images/practice-match.png" alt="Match each word to its meaning" width="24%">
+  <img src="docs/images/practice-typing.png" alt="Type the missing word, checked letter by letter" width="24%">
+  <img src="docs/images/practice-summary.png" alt="Lesson complete: XP earned, first-try score and hearts left" width="24%">
+</p>
+
+Tap any lesson on the path and press **Practise**. Bit, the site's robot, teaches the idea and its new words first, then asks quick questions made from the lesson itself:
+
+- **Match the pairs:** each word to what it means.
+- **Fill the gap:** type the missing word; every letter is checked as you type.
+- **Put the steps in order:** how it works, step by step.
+- **Spot the mistake:** the one common mistake among true statements.
+- **SQL:** predict how many rows a query returns, write a query (it runs and is checked against the answer's rows), and fix a query with one small bug.
+
+A wrong answer costs a heart and the card comes back at the end. Finishing earns XP and keeps your streak.
+
 ### Run SQL in the page
 
 [![A SQL lesson's practice box: a GROUP BY query and its result table](docs/images/sql-run.png)](https://learn.hamropedia.com/sql/group-by-one-result-row-per-group/)
@@ -94,8 +114,8 @@ Each course has an **Interview questions** mode. Say your answer out loud, then 
 
 Reading every lesson is free without an account. Sign in with Google to:
 
-- tick off checks as you pass them, with **10 XP per check** and 20 more for mastering a topic,
-- keep a **daily streak** and set a **daily goal** of 1, 3, 5 or 8 checks,
+- keep the **XP** from every practice and every check (10 XP a check, 20 more for mastering a topic),
+- keep a **daily streak** and set a **daily goal** of 10, 30, 50 or 80 XP,
 - see the **same progress on your phone and your laptop**.
 
 Only you can see your progress.
@@ -480,5 +500,7 @@ The building blocks, then real designs, the way interviews ask them. **10 units 
 ## Support
 
 The site is free. If it helps you, you can [buy me a coffee](https://buymeacoffee.com/manojthapa).
+
+Want to help? Fixing a confusing sentence is a great first contribution: see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 <sub>Running the site yourself or forking it? See the [developer notes](docs/DEVELOPMENT.md).</sub>

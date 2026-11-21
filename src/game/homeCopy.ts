@@ -11,7 +11,7 @@ export const HERO = {
     chip: 'Free. Every lesson is open, no account needed.',
     title: 'Learn ML, SQL and system design,',
     titleEnd: 'one step at a time.',
-    lead: `${HOME_LESSONS} lessons that start from scratch and go all the way to interview questions. Every topic has an animation, the idea step by step, a worked example and four exercises with answers.`,
+    lead: `${HOME_LESSONS} lessons that start from scratch and go all the way to interview questions. Every topic has an animation, the idea step by step, a worked example, exercises with answers, and quick practice like a game.`,
     start: 'Start learning',
     browse: 'See the courses',
     firstLesson: 'First lesson:',

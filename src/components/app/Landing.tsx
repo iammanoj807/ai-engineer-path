@@ -468,7 +468,7 @@ const LESSON_PARTS: { icon: ElementType; colour: string; title: string; text: st
     { icon: AnimationRoundedIcon, colour: '#b39ddb', title: 'An animation', text: 'See the idea move before you read about it. Play it, pause it, or step through it.' },
     { icon: LightbulbRoundedIcon, colour: '#ffca28', title: 'The idea, step by step', text: 'Why it exists, how it works, and the mistakes people make with it.' },
     { icon: CodeRoundedIcon, colour: '#82b1ff', title: 'A worked example', text: 'Real numbers worked through, with code that has been run.' },
-    { icon: TaskAltRoundedIcon, colour: MASTERED, title: 'Four checks, with answers', text: 'Four exercises for every topic. Pass all four without notes and the topic is mastered.' },
+    { icon: TaskAltRoundedIcon, colour: MASTERED, title: 'Practise like a game', text: 'Bit the robot asks quick questions: match the pairs, type the missing word, put the steps in order. Hearts, XP and a streak keep you going.' },
     { icon: RecordVoiceOverRoundedIcon, colour: '#4dd0e1', title: 'Interview questions', text: 'Every course has an interview mode: full spoken answers, the traps, and the follow-ups.' },
     { icon: TerminalRoundedIcon, colour: COURSES.find(course => course.id === 'sql')?.colour ?? '#f48fb1', title: 'SQL that runs in the page', text: 'SQLite runs in your browser, so every query works with nothing to install.' },
 ];
@@ -476,7 +476,7 @@ const LESSON_PARTS: { icon: ElementType; colour: string; title: string; text: st
 export const LessonAnatomy = () => (
     <Box component="section" aria-labelledby="lesson-title">
         <SectionHeading id="lesson-title" eyebrow="WHAT YOU GET" title="Every topic is a full lesson">
-            Each topic teaches one idea all the way through, then checks that you have it.
+            Each topic teaches one idea all the way through, then lets you practise it and prove it: four exercises with answers, checked when you pass them without notes.
         </SectionHeading>
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(2, minmax(0, 1fr))', md: 'repeat(3, minmax(0, 1fr))' }, gap: 2 }}>
             {LESSON_PARTS.map(({ icon: Icon, colour, title, text }) => (
@@ -546,9 +546,9 @@ export const PathSection = ({ selected, onSelect, children }: { selected: Course
 // ============ SIGN IN ============
 
 const PERKS: { icon: ElementType; colour: string; text: string }[] = [
-    { icon: BoltRoundedIcon, colour: XP_GOLD, text: `${XP_PER_CHECK} XP for each check, ${XP_TOPIC_BONUS} more for mastering a topic` },
+    { icon: BoltRoundedIcon, colour: XP_GOLD, text: `XP for every practice, ${XP_PER_CHECK} for each check, ${XP_TOPIC_BONUS} more for mastering a topic` },
     { icon: LocalFireDepartmentRoundedIcon, colour: FLAME, text: 'A streak for every day you tick a check' },
-    { icon: FlagRoundedIcon, colour: '#82b1ff', text: `A daily goal of ${DAILY_GOALS.map(goal => goal.ticks).join(', ').replace(/, (\d+)$/, ' or $1')} checks` },
+    { icon: FlagRoundedIcon, colour: '#82b1ff', text: `A daily goal of ${DAILY_GOALS.map(goal => goal.xp).join(', ').replace(/, (\d+)$/, ' or $1')} XP` },
     { icon: DevicesRoundedIcon, colour: '#4dd0e1', text: 'The same progress on your phone and your laptop' },
 ];
 

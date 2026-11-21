@@ -1,4 +1,4 @@
-// Quick practice for a SQL lesson: a short run of cards that are checked by
+// The SQL cards of a practice session (the rest are in build.ts): checked by
 // the computer, not ticked on trust. Every card is made from what the lesson
 // already has (its worked examples and its practice answers, each with the
 // exact rows it returns), so practice never repeats or invents content.
@@ -6,6 +6,7 @@
 //   Predict the rows: read a query, pick how many rows it returns.
 //   Write the query / Solve the problem: write SQL; it runs on the practice
 //     database and its rows are compared with the answer's rows.
+//   Fix the query: a working answer with one small, real-world bug put in.
 //
 // Passing the cards proves the Predict and Write checks. Explain is spoken, and
 // most Edge cases exercises are questions to reason about, so those two stay
@@ -14,6 +15,7 @@
 
 import type { SqlCheckKey, SqlResultTable, SqlTopic, SqlTopicAnswers } from '../data/sql';
 import type { SqlCell } from '../data/sqlPracticeDb';
+import type { FixCard } from './cards';
 
 export interface PredictCard {
     kind: 'predict';
@@ -58,7 +60,7 @@ export const CARD_LABELS = {
 // ============ BUILDING A SESSION ============
 
 /** A small stable number from a string, so a card's choices don't move between visits. */
-const seedOf = (text: string) => [...text].reduce((hash, ch) => (hash * 31 + ch.charCodeAt(0)) >>> 0, 7);
+export const seedOf = (text: string) => [...text].reduce((hash, ch) => (hash * 31 + ch.charCodeAt(0)) >>> 0, 7);
 
 /** Four consecutive counts (never below 0) with the right one at a position set by the seed. */
 export const predictOptions = (rows: number, seed: string): number[] => {
@@ -274,4 +276,87 @@ export const checksProven = (cards: SqlCard[], outcomes: Record<string, CardOutc
         predict: predict.length > 0 && predict.every(card => outcomes[card.id]?.firstTry),
     };
     return checksCovered(cards).filter(check => proves[check]);
+};
+
+// ============ FIX THE QUERY ============
+
+export interface Mutation {
+    sql: string;
+    /** Where to look, without giving the fix away. */
+    hint: string;
+}
+
+/** Matches of a pattern that are not inside a 'string literal'. */
+const outsideStrings = (sql: string, pattern: RegExp) => {
+    const strings = [...sql.matchAll(/'(?:[^']|'')*'/g)].map(m => [m.index ?? 0, (m.index ?? 0) + m[0].length]);
+    return [...sql.matchAll(pattern)].filter(m => !strings.some(([from, to]) => (m.index ?? 0) >= from && (m.index ?? 0) < to));
+};
+
+const COMPARE_HINT = 'Look at the comparison: should the boundary value itself count?';
+const JOIN_HINT = 'Look at the kind of join: which rows should stay when there is no match?';
+
+/**
+ * Small bugs of the kind people really make, each put into a working query
+ * once: a comparison off by one, the sort turned round, a condition dropped,
+ * the wrong join, counting rows instead of values, a missing DISTINCT.
+ */
+export const queryMutations = (sql: string): Mutation[] => {
+    const out: Mutation[] = [];
+    const first = (pattern: RegExp, to: (match: RegExpMatchArray) => string, hint: string) => {
+        const match = outsideStrings(sql, pattern)[0];
+        if (match?.index !== undefined) out.push({ sql: sql.slice(0, match.index) + to(match) + sql.slice(match.index + match[0].length), hint });
+    };
+    first(/>=/g, () => '>', COMPARE_HINT);
+    first(/<=/g, () => '<', COMPARE_HINT);
+    first(/(?<![<>=!-])>(?!=)/g, () => '>=', COMPARE_HINT);
+    first(/(?<![<])<(?![=>])/g, () => '<=', COMPARE_HINT);
+    first(/\bDESC\b/gi, () => 'ASC', 'Look at the sort direction.');
+    first(/\bLEFT\s+JOIN\b/gi, () => 'JOIN', JOIN_HINT);
+    first(/(?<!\b(?:LEFT|RIGHT|FULL|OUTER|CROSS)\s+)\b(?:INNER\s+)?JOIN\b/gi, () => 'LEFT JOIN', JOIN_HINT);
+    first(/\bCOUNT\(\s*(?!\*|DISTINCT\b)[^()]+\)/gi, () => 'COUNT(*)', 'Look at what COUNT counts: every row, or only values that are not NULL?');
+    first(/\bDISTINCT\s+/gi, () => '', 'Look for rows that appear more than once.');
+    first(/\bCOALESCE\(\s*([^,()]+(?:\([^()]*\))?)\s*,\s*[^()]+\)/gi, match => match[1], 'What happens to NULL here?');
+    first(/\s+AND\s+[^;\n]+?(?=\s+(?:AND|OR|GROUP\s+BY|ORDER\s+BY|HAVING|LIMIT)\b|\s*\)|\s*;|\s*$)/gi, () => '', 'A condition is missing.');
+    first(/\bLIMIT\s+(\d+)/gi, match => `LIMIT ${Number(match[1]) + 1}`, 'Look at how many rows it keeps.');
+    first(/\bMAX\(/gi, () => 'MIN(', 'Does it want the largest value, or the smallest?');
+    first(/\bMIN\(/gi, () => 'MAX(', 'Does it want the smallest value, or the largest?');
+    first(/\bIS\s+NOT\s+NULL\b/gi, () => 'IS NULL', 'Look at the NULL check.');
+    first(/\bIS\s+NULL\b/gi, () => 'IS NOT NULL', 'Look at the NULL check.');
+    first(/\bNOT\s+(IN|EXISTS)\b/gi, match => match[1], 'Look for a NOT that went missing.');
+    first(/\bUNION\s+ALL\b/gi, () => 'UNION', 'Should rows that appear in both parts be kept twice?');
+    first(/((?:>=|<=|(?<![<>!=])<(?![=>])|(?<![<>!=-])>(?!=))\s*)(\d+)(?![\d.])/g, match => `${match[1]}${Number(match[2]) + 1}`, 'Look at the boundary: one more or one less changes which rows count.');
+    first(/\bOR\b/g, () => 'AND', 'Look at how the conditions are combined: AND or OR?');
+    return out.filter(mutation => mutation.sql !== sql);
+};
+
+/**
+ * A "fix the query" card from a writing card: the answer with one bug that
+ * still runs and gives different rows (a bug that changes nothing, or breaks
+ * the query outright, would not be a fair puzzle). Null when none qualifies.
+ */
+export const sqlFixCard = (card: WriteCard, run: (sql: string) => SqlResultTable): FixCard | null => {
+    // A bug in a recursive query can take away what stops it, and it would run until the page runs out of memory.
+    if (/\bRECURSIVE\b/i.test(card.answerSql)) return null;
+    const mutations = queryMutations(card.answerSql);
+    // Start somewhere different for each card, so sessions get different kinds of bug.
+    const start = seedOf(card.id) % Math.max(1, mutations.length);
+    for (const mutation of [...mutations.slice(start), ...mutations.slice(0, start)]) {
+        try {
+            const result = run(mutation.sql);
+            if (result.columns.length === 0 || compareResults(result, card.expected, card.order).ok) continue;
+            return {
+                kind: 'fix',
+                id: `${card.id}-fix`,
+                prompt: card.prompt,
+                brokenSql: mutation.sql,
+                answerSql: card.answerSql,
+                expected: card.expected,
+                order: card.order,
+                hint: mutation.hint,
+            };
+        } catch {
+            // It doesn't run: not a fair bug.
+        }
+    }
+    return null;
 };

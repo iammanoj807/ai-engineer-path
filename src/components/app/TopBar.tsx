@@ -178,7 +178,7 @@ const TopBar = () => {
                             icon={<LocalFireDepartmentRoundedIcon sx={{ color: streak > 0 && today > 0 ? FLAME : 'text.disabled' }} />}
                             value={streak}
                             colour={streak > 0 && today > 0 ? FLAME : '#90a4ae'}
-                            label={today > 0 ? 'Day streak' : 'Day streak (tick a check today to keep it)'}
+                            label={today > 0 ? 'Day streak' : 'Day streak (practise or tick a check today to keep it)'}
                         />
                     )}
                     {tracking && (

@@ -16,14 +16,11 @@ import {
     InputAdornment,
     ToggleButton,
     ToggleButtonGroup,
-    CircularProgress,
 } from '@mui/material';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
-import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
-import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import {
     sqlPhases,
     allSqlTopics,
@@ -88,8 +85,7 @@ import { useLoaded } from './learning/useLoaded';
 import { segmentSections, type Prose } from './learning/glossaryContext';
 import { AnswerQuery, ExampleBlock, ExampleOutcome, FloatingSqlBox, MONO, PracticeDatabase, SavedQueriesPanel, SqlRunBox } from './sql/SqlParts';
 import { roomForQuickBox } from './sql/quickBoxLayout';
-import SqlPracticeSession from './sql/SqlPracticeSession';
-import { checksCovered, sqlPracticeCards, type SqlCard } from '../utils/sqlPractice';
+import QuickPracticePanel from './practice/QuickPracticePanel';
 import { SqlQueriesContext, SqlTopicContext } from './sql/sqlContext';
 import PathLearn from './app/PathLearn';
 import { useTracksProgress } from '../services/account';
@@ -427,43 +423,6 @@ const ProblemBody = ({ topic, accent, marked }: { topic: SqlProblem; accent: str
 
 // ============ LEARN MODE: THE TOPIC CARD ============
 
-/** The way into a lesson's quick practice: cards checked by running them, which tick the checks they prove. */
-const QuickPracticePanel = ({ cards, accent, loading, onStart }: { cards: SqlCard[]; accent: string; loading: boolean; onStart: () => void }) => {
-    const proves = checksCovered(cards);
-    // A lesson about query plans has no rows to practise on.
-    if (!loading && cards.length === 0) return null;
-    return (
-        <Stack
-            direction="row"
-            spacing={2}
-            alignItems="center"
-            flexWrap="wrap"
-            useFlexGap
-            sx={{ p: 2, borderRadius: 2.5, border: `1px solid ${accent}55`, background: `linear-gradient(135deg, ${accent}1f, rgba(255,255,255,0.02) 70%)` }}
-        >
-            <Box sx={{ width: 44, height: 44, borderRadius: 2, bgcolor: `${accent}26`, color: accent, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-                <BoltRoundedIcon />
-            </Box>
-            <Box sx={{ flex: 1, minWidth: 220 }}>
-                <Typography sx={{ fontWeight: 800 }}>Quick practice{cards.length ? ` · ${cards.length} cards` : ''}</Typography>
-                <Typography variant="body2" color="text.secondary">
-                    Predict what queries return, then write your own. Each answer is run and checked straight away
-                    {proves.length > 0 && <>, and what you prove is ticked for you: {proves.map(check => SQL_CHECK_LABELS[check]).join(', ')}</>}.
-                </Typography>
-            </Box>
-            <Button
-                variant="contained"
-                onClick={onStart}
-                disabled={loading || cards.length === 0}
-                startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <PlayArrowRoundedIcon />}
-                sx={{ minHeight: TAP, px: 2.5, fontWeight: 800, textTransform: 'none', bgcolor: accent, color: '#0b0f14', '&:hover': { bgcolor: accent, filter: 'brightness(1.1)' } }}
-            >
-                Start
-            </Button>
-        </Stack>
-    );
-};
-
 const TopicCard = ({
     topic,
     number,
@@ -488,11 +447,8 @@ const TopicCard = ({
         (a, b) => SQL_RESOURCE_KIND_ORDER.indexOf(a.kind) - SQL_RESOURCE_KIND_ORDER.indexOf(b.kind)
     );
     const steps = topic.kind === 'lesson' ? LESSON_STEPS : PROBLEM_STEPS;
-    const loadedAnswers = useLoaded(loadAnswers, expanded);
-    const answers = loadedAnswers?.[topic.id];
+    const answers = useLoaded(loadAnswers, expanded)?.[topic.id];
     const where = useMemo(() => ({ topicId: topic.id, topicName: topic.name }), [topic]);
-    const practiceCards = useMemo(() => (loadedAnswers ? sqlPracticeCards(topic, answers) : []), [topic, answers, loadedAnswers]);
-    const [practising, setPractising] = useState(false);
     const marked = useMemo(() => segmentSections(sqlGlossary, learnSections(topic, answers)), [topic, answers]);
 
     return (
@@ -569,12 +525,9 @@ const TopicCard = ({
                         {/* ---- STEP 3 ---- */}
                         <SectionLabel color={accent} id={stepId(topic.id, 3)}>{steps[2].label}</SectionLabel>
                         <Stack spacing={2} sx={{ maxWidth: 760 }}>
-                            <QuickPracticePanel cards={practiceCards} accent={accent} loading={!loadedAnswers} onStart={() => setPractising(true)} />
-                            {practising && (
-                                <SqlPracticeSession topic={topic} cards={practiceCards} progress={progress} accent={accent} onClose={() => setPractising(false)} />
-                            )}
+                            <QuickPracticePanel course="sql" topicId={topic.id} accent={accent} />
                             <Typography color="text.secondary" sx={{ fontSize: px(t.small) }}>
-                                Or work through the four exercises below. Try each one yourself first: out loud, or written and run in the practice box below, which saves every query you run.
+                                Then work through the four exercises below. Try each one yourself first: out loud, or written and run in the practice box below, which saves every query you run.
                                 Then tap Show answer to check.
                             </Typography>
                             {SQL_CHECK_KEYS.map((key, index) => (

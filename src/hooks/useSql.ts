@@ -3,7 +3,7 @@ import { subscribeToSql, saveSqlCheck } from '../services/progress';
 import type { SqlProgress } from '../services/progress';
 import type { SqlCheckKey } from '../data/sql';
 
-const EMPTY: SqlProgress = { checks: {} };
+const EMPTY: SqlProgress = { checks: {}, practice: {} };
 
 /**
  * The moving part of the SQL course: which checks are ticked.

@@ -72,9 +72,9 @@ const App = () => (
                 sx={{ py: 3, px: 2, display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 1.5, borderTop: '1px solid rgba(255,255,255,0.06)' }}
             >
                 <Typography variant="body2" color="text.secondary">
-                    Free to use.{' '}
+                    Free and open source.{' '}
                     <Link href="https://github.com/iammanoj807/ai-engineer-path" target="_blank" rel="noreferrer" color="inherit">
-                        Source on GitHub
+                        Star it on GitHub
                     </Link>
                 </Typography>
                 {/* A plain link: nothing from Buy Me a Coffee loads on this site. */}

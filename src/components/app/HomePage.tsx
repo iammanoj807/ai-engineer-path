@@ -56,15 +56,18 @@ const DailyGoalCard = ({ today, streak, activity }: { today: number; streak: num
                         size={84}
                         thickness={5}
                         sx={{ color: done ? MASTERED : 'primary.main', '& circle': { strokeLinecap: 'round' } }}
-                        aria-label={`${today} of ${goal} checks today`}
+                        aria-label={`${today} of ${goal} XP today`}
                     />
                     <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
                         {done ? (
                             <CheckRoundedIcon sx={{ color: MASTERED, fontSize: 34 }} />
                         ) : (
-                            <Typography sx={{ fontWeight: 800, fontSize: '1.3rem' }}>
-                                {today}/{goal}
-                            </Typography>
+                            <>
+                                <Typography sx={{ fontWeight: 800, fontSize: '1.2rem', lineHeight: 1.1 }}>
+                                    {today}/{goal}
+                                </Typography>
+                                <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'text.secondary' }}>XP</Typography>
+                            </>
                         )}
                     </Box>
                 </Box>
@@ -75,17 +78,17 @@ const DailyGoalCard = ({ today, streak, activity }: { today: number; streak: num
                         </Typography>
                         <Tooltip title="Change your daily goal">
                             <Button size="small" startIcon={<TuneRoundedIcon />} onClick={event => setAnchor(event.currentTarget)} sx={{ color: 'text.secondary', minHeight: 32 }}>
-                                {DAILY_GOALS.find(g => g.ticks === goal)?.label}
+                                {DAILY_GOALS.find(g => g.xp === goal)?.label}
                             </Button>
                         </Tooltip>
                         <Menu anchorEl={anchor} open={!!anchor} onClose={() => setAnchor(null)}>
                             {DAILY_GOALS.map(option => (
                                 <MenuItem
-                                    key={option.ticks}
-                                    selected={option.ticks === goal}
+                                    key={option.xp}
+                                    selected={option.xp === goal}
                                     onClick={() => {
-                                        setGoal(option.ticks);
-                                        writeDailyGoal(option.ticks);
+                                        setGoal(option.xp);
+                                        writeDailyGoal(option.xp);
                                         setAnchor(null);
                                     }}
                                 >
@@ -98,7 +101,7 @@ const DailyGoalCard = ({ today, streak, activity }: { today: number; streak: num
                         </Menu>
                     </Stack>
                     <Typography sx={{ fontWeight: 700, mb: 1 }}>
-                        {done ? 'Goal done for today. Nice work!' : today === 0 ? 'Tick your first check today.' : `${goal - today} more check${goal - today === 1 ? '' : 's'} to hit today's goal.`}
+                        {done ? 'Goal done for today. Nice work!' : today === 0 ? 'Practise a lesson or tick a check to earn your first XP today.' : `${goal - today} more XP to hit today's goal.`}
                     </Typography>
                     <Stack direction="row" alignItems="center" spacing={1.5}>
                         <Stack direction="row" alignItems="center" spacing={0.5}>
@@ -108,10 +111,10 @@ const DailyGoalCard = ({ today, streak, activity }: { today: number; streak: num
                             </Typography>
                         </Stack>
                         <Stack direction="row" spacing={0.5} aria-label="The last 7 days">
-                            {week.map(({ day, count }) => (
-                                <Tooltip key={day} title={`${day}: ${count} check${count === 1 ? '' : 's'}`}>
+                            {week.map(({ day, xp }) => (
+                                <Tooltip key={day} title={`${day}: ${xp} XP`}>
                                     <Box sx={{ textAlign: 'center' }}>
-                                        <Box sx={{ width: 18, height: 18, borderRadius: '50%', bgcolor: count > 0 ? FLAME : 'rgba(255,255,255,0.1)' }} />
+                                        <Box sx={{ width: 18, height: 18, borderRadius: '50%', bgcolor: xp > 0 ? FLAME : 'rgba(255,255,255,0.1)' }} />
                                         <Typography sx={{ fontSize: '0.65rem', color: 'text.secondary' }}>{dayLetter(day)}</Typography>
                                     </Box>
                                 </Tooltip>

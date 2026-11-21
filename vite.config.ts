@@ -77,7 +77,13 @@ const sitePages = (): Plugin => ({
         `<meta property="og:title" content="${esc(page.title)}" />`,
         `<meta property="og:description" content="${esc(page.description)}" />`,
         `<meta property="og:url" content="${esc(url)}" />`,
-        `<meta name="twitter:card" content="summary" />`,
+        // The picture shown when a link is shared (public/og.png, drawn from scratchpad HTML: Bit and the headline).
+        `<meta property="og:image" content="${site}/og.png" />`,
+        `<meta property="og:image:width" content="1200" />`,
+        `<meta property="og:image:height" content="630" />`,
+        `<meta property="og:image:alt" content="AI Engineer Path: learn ML, SQL and system design, one step at a time, with Bit the robot" />`,
+        `<meta name="twitter:card" content="summary_large_image" />`,
+        `<meta name="twitter:image" content="${site}/og.png" />`,
         ...(page.trail.length > 1 ? [`<script type="application/ld+json">${JSON.stringify(breadcrumbs).replace(/</g, '\\u003c')}</script>`] : []),
       ].join('\n  ')
       let html = replaceOnce(template, /<title>[\s\S]*?<\/title>/, `<title>${esc(page.title)}</title>`)

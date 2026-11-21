@@ -74,6 +74,7 @@ import { GlossaryDrawer } from './learning/GlossaryDrawer';
 import { MermaidDiagram } from './learning/MermaidDiagram';
 import { segmentSections } from './learning/glossaryContext';
 import PathLearn from './app/PathLearn';
+import QuickPracticePanel from './practice/QuickPracticePanel';
 import { useTracksProgress } from '../services/account';
 import { useCourseNav } from '../game/useCourseNav';
 import { courseById } from '../game/courses';
@@ -322,8 +323,9 @@ const TopicCard = ({
                     {/* ---- STEP 3 ---- */}
                     <SectionLabel color={accent} id={stepId(topic.id, 3)}>{STEPS[2].label}</SectionLabel>
                     <Stack spacing={2} sx={{ maxWidth: 760 }}>
+                        <QuickPracticePanel course="foundations" topicId={topic.id} accent={accent} />
                         <Typography color="text.secondary" sx={{ fontSize: px(t.small) }}>
-                            Try each one yourself first: on paper, in code or out loud. Then tap Show answer to check.
+                            Then the four exercises below. Try each one yourself first: on paper, in code or out loud. Then tap Show answer to check.
                         </Typography>
                         {PRACTICE_ORDER.map(({ key, hint }, index) => (
                             <Stack key={key} direction="row" spacing={1.5} alignItems="flex-start">

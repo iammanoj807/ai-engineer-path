@@ -12,9 +12,12 @@ import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
+import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
 import type { CourseInfo, PathTopic, PathUnit } from '../../game/courses';
 import { checksPassedIn, type ChecksDoc } from '../../game/xp';
+import type { PracticeRecord } from '../../services/progress';
 import { useTracksProgress } from '../../services/account';
+import PracticeDialog from '../practice/PracticeDialog';
 import { MASTERED, XP_GOLD } from './colours';
 
 export const CARD = { p: { xs: 2, sm: 2.5 }, borderRadius: 3, bgcolor: 'background.paper', border: '1px solid rgba(255,255,255,0.08)' } as const;
@@ -69,6 +72,7 @@ const TopicNode = ({
     passed,
     accent,
     offset,
+    practised,
     onOpen,
 }: {
     topic: PathTopic;
@@ -76,6 +80,7 @@ const TopicNode = ({
     passed: number;
     accent: string;
     offset: number;
+    practised: boolean;
     onOpen: (el: HTMLElement) => void;
 }) => {
     const fill = {
@@ -149,9 +154,17 @@ const TopicNode = ({
                     </Box>
                 )}
                 {(state === 'current' || state === 'started') && <ProgressRing passed={passed} colour={state === 'current' ? '#fff' : accent} />}
+                {practised && (
+                    <Box
+                        aria-hidden
+                        sx={{ position: 'absolute', top: -4, right: -4, zIndex: 1, width: 22, height: 22, borderRadius: '50%', bgcolor: XP_GOLD, border: '2px solid #0B0E14', display: 'grid', placeItems: 'center' }}
+                    >
+                        <BoltRoundedIcon sx={{ fontSize: 14, color: '#0B0E14' }} />
+                    </Box>
+                )}
                 <ButtonBase
                     onClick={event => onOpen(event.currentTarget)}
-                    aria-label={`${topic.name}: ${passed} of 4 checks${state === 'mastered' ? ', mastered' : ''}`}
+                    aria-label={`${topic.name}: ${passed} of 4 checks${state === 'mastered' ? ', mastered' : ''}${practised ? ', practised' : ''}`}
                     sx={{
                         width: NODE,
                         height: NODE,
@@ -285,17 +298,21 @@ const TopicPopover = ({
     topic,
     passed,
     tracking,
+    practised,
     anchor,
     onClose,
     onStart,
+    onPractice,
 }: {
     course: CourseInfo;
     topic: PathTopic;
     passed: number;
     tracking: boolean;
+    practised: PracticeRecord | undefined;
     anchor: HTMLElement;
     onClose: () => void;
     onStart: () => void;
+    onPractice: () => void;
 }) => (
     <Popover
         open
@@ -310,8 +327,22 @@ const TopicPopover = ({
             {topic.definition}
         </Typography>
         {tracking && <CheckDots passed={passed} names={course.checkNames} colour={course.colour} />}
-        <Button fullWidth variant="contained" onClick={onStart} sx={{ mt: 2, fontWeight: 800, minHeight: 44 }}>
-            {passed >= 4 ? 'Review lesson' : passed > 0 ? 'Continue lesson' : 'Start lesson'}
+        {tracking && practised && (
+            <Typography variant="body2" sx={{ mt: 1, color: XP_GOLD, fontWeight: 700 }}>
+                Practised {practised.times === 1 ? 'once' : `${practised.times} times`} · best {practised.best}% right first time
+            </Typography>
+        )}
+        <Button
+            fullWidth
+            variant="contained"
+            startIcon={<BoltRoundedIcon />}
+            onClick={onPractice}
+            sx={{ mt: 2, fontWeight: 800, minHeight: 48, bgcolor: course.colour, color: '#0B0E14', '&:hover': { bgcolor: course.colour, filter: 'brightness(1.1)' } }}
+        >
+            {practised ? 'Practise again' : 'Practise'} · about 5 min
+        </Button>
+        <Button fullWidth variant="outlined" onClick={onStart} sx={{ mt: 1, fontWeight: 700, minHeight: 44, color: 'text.primary', borderColor: 'rgba(255,255,255,0.2)' }}>
+            {passed >= 4 ? 'Review the lesson' : passed > 0 ? 'Continue the lesson' : 'Read the lesson'}
         </Button>
     </Popover>
 );
@@ -333,6 +364,8 @@ const CoursePath = ({
 }) => {
     const tracking = useTracksProgress();
     const [popover, setPopover] = useState<{ topic: PathTopic; el: HTMLElement } | null>(null);
+    /** The lesson being practised, straight from the path. */
+    const [practising, setPractising] = useState<string | null>(null);
     const topics = course.units.flatMap(unit => unit.topics);
     const firstOpen = topics.find(topic => checksPassedIn(doc, topic.id) < 4)?.id;
     const order = new Map(topics.map((topic, i) => [topic.id, i]));
@@ -380,6 +413,7 @@ const CoursePath = ({
                                                 passed={passed}
                                                 accent={course.colour}
                                                 offset={WIND[(order.get(topic.id) ?? 0) % WIND.length]}
+                                                practised={tracking && !!doc?.practice?.[topic.id]}
                                                 onOpen={el => setPopover({ topic, el })}
                                             />
                                         </Box>
@@ -397,14 +431,20 @@ const CoursePath = ({
                     topic={popover.topic}
                     passed={checksPassedIn(doc, popover.topic.id)}
                     tracking={tracking}
+                    practised={doc?.practice?.[popover.topic.id]}
                     anchor={popover.el}
                     onClose={() => setPopover(null)}
                     onStart={() => {
                         setPopover(null);
                         onOpenTopic(popover.topic.id);
                     }}
+                    onPractice={() => {
+                        setPopover(null);
+                        setPractising(popover.topic.id);
+                    }}
                 />
             )}
+            {practising && <PracticeDialog course={course.id} topicId={practising} onClose={() => setPractising(null)} />}
         </Stack>
     );
 };

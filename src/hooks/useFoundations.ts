@@ -6,7 +6,7 @@ import {
 } from '../services/progress';
 import type { FoundationCheckKey, FoundationsProgress } from '../services/progress';
 
-const EMPTY: FoundationsProgress = { checks: {}, builds: {} };
+const EMPTY: FoundationsProgress = { checks: {}, builds: {}, practice: {} };
 
 /**
  * The moving part of ML Foundations: which checks and mini-builds are ticked.

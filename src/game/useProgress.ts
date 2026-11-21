@@ -8,7 +8,7 @@ import {
     type SystemDesignProgress,
 } from '../services/progress';
 import { allTopicsOf, COURSES, type CourseInfo, type PathTopic } from './courses';
-import { checksPassedIn, courseXp, streakDays, ticksToday, type ChecksDoc } from './xp';
+import { checksPassedIn, courseXp, practiceXp, streakDays, xpToday, type ChecksDoc } from './xp';
 
 export interface AllProgress {
     foundations?: FoundationsProgress;
@@ -63,7 +63,7 @@ export const courseStats = (progress: AllProgress, course: CourseInfo): CourseSt
     };
 };
 
-/** XP, streak and today's ticks, for the top bar and the home page. */
+/** XP (checks and practice), streak and today's XP, for the top bar and the home page. */
 export const useGameStats = () => {
     const progress = useAllProgress();
     return useMemo(() => {
@@ -71,9 +71,10 @@ export const useGameStats = () => {
         return {
             progress,
             stats,
-            xp: stats.reduce((sum, s) => sum + s.xp, 0),
+            xp: stats.reduce((sum, s) => sum + s.xp, 0) + practiceXp(progress.activity),
             streak: streakDays(progress.activity),
-            today: ticksToday(progress.activity),
+            /** Today's XP, for the daily goal. */
+            today: xpToday(progress.activity),
         };
     }, [progress]);
 };

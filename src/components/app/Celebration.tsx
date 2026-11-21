@@ -6,15 +6,16 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Confetti from 'react-confetti';
 import { Alert, Box, Button, Dialog, DialogContent, Snackbar, Stack, Typography } from '@mui/material';
-import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
+import IosShareRoundedIcon from '@mui/icons-material/IosShareRounded';
 import LocalFireDepartmentRoundedIcon from '@mui/icons-material/LocalFireDepartmentRounded';
 import { allTopicsOf, courseById, unitOf, type CourseInfo, type PathTopic, type PathUnit } from '../../game/courses';
-import { topicPath } from '../../game/addresses';
+import { SITE_URL, topicPath, unitPath } from '../../game/addresses';
 import { checksDocOf, useGameStats } from '../../game/useProgress';
 import { XP_PER_CHECK, XP_TOPIC_BONUS, checksPassedIn, readDailyGoal } from '../../game/xp';
-import { onCelebrate, onDayTick, type Celebration as CelebrationEvent } from '../../services/progress';
+import { onCelebrate, onDayXp, type Celebration as CelebrationEvent } from '../../services/progress';
 import { FLAME, XP_GOLD } from './colours';
+import Mascot from '../practice/Mascot';
 
 interface Shown {
     course: CourseInfo;
@@ -68,13 +69,32 @@ const Celebration = () => {
     }), []);
 
     // Today's goal: celebrate the tick that reaches it.
-    useEffect(() => onDayTick((ticksToday, added) => {
-        // Several checks can be ticked at once (a practice session), so look for crossing the goal.
+    useEffect(() => onDayXp((xpToday, added) => {
+        // XP comes in steps (10 for a check, more for a practice session), so look for crossing the goal.
         const goal = readDailyGoal();
-        if (ticksToday >= goal && ticksToday - added < goal) setGoalToast(true);
+        if (xpToday >= goal && xpToday - added < goal) setGoalToast(true);
     }), []);
 
-    const close = () => setShown(null);
+    const close = () => {
+        setShown(null);
+        setCopied(false);
+    };
+    const [copied, setCopied] = useState(false);
+
+    /** Share a finished unit: the phone's own share sheet, or the link copied. */
+    const shareUnit = async (course: CourseInfo, unit: PathUnit) => {
+        const text = `I just finished Unit ${unit.number}, "${unit.title}", of ${course.title} on AI Engineer Path: free lessons on ML, SQL and system design.`;
+        const url = `${SITE_URL}${unitPath(course, unit.id)}`;
+        try {
+            if (navigator.share) await navigator.share({ title: 'AI Engineer Path', text, url });
+            else {
+                await navigator.clipboard.writeText(`${text} ${url}`);
+                setCopied(true);
+            }
+        } catch {
+            // Closed the share sheet, or the clipboard is blocked: nothing to do.
+        }
+    };
 
     return (
         <>
@@ -86,7 +106,9 @@ const Celebration = () => {
             <Dialog open={!!shown} onClose={close} maxWidth="xs" fullWidth slotProps={{ paper: { sx: { borderRadius: 4, border: `1px solid ${XP_GOLD}55` } } }}>
                 {shown && (
                     <DialogContent sx={{ textAlign: 'center', p: { xs: 3, sm: 4 } }}>
-                        <EmojiEventsRoundedIcon sx={{ fontSize: 72, color: XP_GOLD }} />
+                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                            <Mascot mood="cheer" size={104} />
+                        </Box>
                         <Typography variant="h5" sx={{ fontWeight: 800, mt: 1 }}>
                             {shown.unitComplete && shown.unit ? `Unit ${shown.unit.number} complete!` : 'Topic mastered!'}
                         </Typography>
@@ -136,6 +158,16 @@ const Celebration = () => {
                                     sx={{ fontWeight: 800, minHeight: 48 }}
                                 >
                                     Keep going
+                                </Button>
+                            )}
+                            {shown.unitComplete && shown.unit && (
+                                <Button
+                                    variant="outlined"
+                                    startIcon={<IosShareRoundedIcon />}
+                                    onClick={() => void shareUnit(shown.course, shown.unit!)}
+                                    sx={{ fontWeight: 700, minHeight: 44, color: 'text.primary', borderColor: 'rgba(255,255,255,0.25)' }}
+                                >
+                                    {copied ? 'Link copied' : 'Share it'}
                                 </Button>
                             )}
                             <Button onClick={close} sx={{ color: 'text.secondary' }}>

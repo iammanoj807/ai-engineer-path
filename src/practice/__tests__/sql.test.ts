@@ -3,7 +3,7 @@ import initSqlJs, { type SqlJsStatic } from 'sql.js';
 import { allSqlTopics } from '../../data/sql';
 import { sqlAnswers } from '../../data/sqlAnswers';
 import { practiceTables } from '../../data/sqlPracticeDb';
-import { runOnPracticeDb } from '../sqlRunner';
+import { runOnPracticeDb } from '../../utils/sqlRunner';
 import {
     asksForOrder,
     checksProven,
@@ -14,7 +14,7 @@ import {
     sqlPracticeCards,
     type CardOutcome,
     type SqlCard,
-} from '../sqlPractice';
+} from '../sql';
 
 let SQL: SqlJsStatic;
 beforeAll(async () => {
