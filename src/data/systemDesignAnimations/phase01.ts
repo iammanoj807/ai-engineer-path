@@ -30,7 +30,7 @@ const buildingBlocks = (): AnimationSpec => {
     const frames = flow(nodes, edges, [
         { caption: 'Most web systems are built from the same dozen parts. Follow one photo upload through them — each box is a later topic, close up.' },
         { caption: 'DNS: the app asks for the address of api.example.com and gets back an IP address — like looking up a phone number.', lit: ['dns'], hot: ['client>dns'], packets: [{ id: 'q', label: 'IP?', at: ['client', 'dns', 0.6] }] },
-        { caption: 'The request reaches the load balancer, which picks one of many identical app servers that is healthy and not too busy.', lit: ['lb', 'app1'], hot: ['client>lb', 'lb>app1'], packets: [{ id: 'q', label: 'upload photo', at: ['lb', 'app1', 0.5] }] },
+        { caption: 'The request reaches the load balancer, which picks one of many identical app servers that is healthy and not too busy.', lit: ['lb', 'app1'], hot: ['client>lb', 'lb>app1'], packets: [{ id: 'q', label: 'upload photo', at: 'lb' }] },
         { caption: 'The app server runs your code: it checks who the user is, gets an upload link from object storage, and saves the caption and photo details in the database — the source of truth.', lit: ['app1'], ok: ['db', 'obj'], hot: ['app1>db', 'app1>obj'], packets: [{ id: 'q', label: 'save', at: ['app1', 'db', 0.6] }] },
         { caption: 'Slow work goes on a queue: "make thumbnails for photo 42". The app server replies straight away; a background worker does the job later.', lit: ['queue', 'worker'], hot: ['app1>queue', 'queue>worker'], packets: [{ id: 'q', label: 'thumbs 42', at: ['queue', 'worker', 0.5] }] },
         { caption: 'When friends open the post, the app server checks the cache (fast memory) first, and only reads the database on a miss.', lit: ['cache'], hot: ['app1>cache'], packets: [{ id: 'q', label: 'post 42?', at: ['app1', 'cache', 0.6] }], badges: { cache: 'hit' } },
@@ -173,7 +173,7 @@ const typeUrl = (): AnimationSpec => {
         { caption: 'You type example.com. The browser checks its own DNS cache, then the operating system\'s. Both miss.', lit: ['browser'], badges: { browser: 'cache miss' } },
         { caption: 'It asks a resolver, usually run by your internet provider.', hot: ['browser>resolver'], packets: [{ id: 'q', label: 'example.com?', at: ['browser', 'resolver', 0.5] }], lit: ['resolver'] },
         { caption: 'The resolver asks a root server: "who handles .com?" The root points it at the .com servers.', hot: ['resolver>root'], packets: [{ id: 'q', label: '.com?', at: ['resolver', 'root', 0.6] }], lit: ['root'] },
-        { caption: 'It asks a .com server: "who handles example.com?" It is pointed at example.com\'s own name server.', hot: ['resolver>tld'], packets: [{ id: 'q', label: 'example.com?', at: ['resolver', 'tld', 0.6] }], lit: ['tld'] },
+        { caption: 'It asks a .com server: "who handles example.com?" It is pointed at example.com\'s own name server.', hot: ['resolver>tld'], packets: [{ id: 'q', label: 'example.com?', at: 'tld' }], lit: ['tld'] },
         { caption: 'The name server returns the IP address: 203.0.113.10. Every answer along the way is cached for its TTL, so next time is much quicker.', hot: ['resolver>ns', 'browser>resolver'], packets: [{ id: 'q', label: '203.0.113.10', at: ['browser', 'resolver', 0.5] }], ok: ['ns', 'resolver'], badges: { resolver: 'cached (TTL)' } },
     ]);
     const netNodes: FNode[] = [
@@ -231,14 +231,15 @@ const realTime = (): AnimationSpec => {
         line('ls', 70, sy, 392, sy, { stroke: C.violet, sw: 2 }), text('lst', 8, sy, 'server', { size: 12, fill: C.violet, weight: 700, anchor: 'start' }),
         text('time', 392, 212, 'time →', { size: 10, fill: C.dim, anchor: 'end' }),
     ];
-    const msg = (id: string, x1: number, x2: number, up: boolean, color: string, label_?: string): Shape[] => [
+    /** `left`: write the label left of the arrow, for when the space on its right is taken. */
+    const msg = (id: string, x1: number, x2: number, up: boolean, color: string, label_?: string, left = false): Shape[] => [
         arrow(id, x1, up ? sy - 4 : cy + 4, x2, up ? cy + 4 : sy - 4, { stroke: color, sw: 2 }),
-        ...(label_ ? [text(`${id}-t`, (x1 + x2) / 2 + 6, (cy + sy) / 2, label_, { size: 9, fill: color, weight: 700, mono: true, anchor: 'start' })] : []),
+        ...(label_ ? [text(`${id}-t`, (x1 + x2) / 2 + (left ? -6 : 6), (cy + sy) / 2, label_, { size: 9, fill: color, weight: 700, mono: true, anchor: left ? 'end' : 'start' })] : []),
     ];
     const news = (x: number) => [rect('news', x - 22, sy + 10, 44, 18, { rx: 9, fill: tint(C.amber, 0.5), stroke: C.amber, sw: 1, text: 'news!', size: 9, weight: 700, mono: true })];
     const short: Part = [80, 150, 220, 290].map((x, i) => [msg(`q${i}`, x, x + 10, false, C.grey), msg(`a${i}`, x + 14, x + 24, true, i === 3 ? C.green : C.red, i === 3 ? 'yes' : 'no')]);
-    const long: Part = [msg('q0', 80, 90, false, C.grey), news(250), msg('a0', 252, 262, true, C.green, 'news'), msg('q1', 268, 278, false, C.grey), rect('held', 90, sy - 6, 160, 12, { rx: 6, fill: tint(C.amber, 0.25), stroke: 'none' }), text('held-t', 170, sy + 22, 'request held open', { size: 9, fill: C.amber })];
-    const ws: Part = [msg('up', 80, 90, false, C.grey, 'Upgrade'), rect('pipe', 96, cy + 14, 290, sy - cy - 28, { rx: 8, fill: tint(C.teal, 0.12), stroke: C.teal, sw: 1.5, dash: '5 4' }),
+    const long: Part = [msg('q0', 80, 90, false, C.grey), news(250), msg('a0', 252, 262, true, C.green, 'news', true), msg('q1', 268, 278, false, C.grey), rect('held', 90, sy - 6, 160, 12, { rx: 6, fill: tint(C.amber, 0.25), stroke: 'none' }), text('held-t', 170, sy + 22, 'request held open', { size: 9, fill: C.amber })];
+    const ws: Part = [msg('up', 80, 90, false, C.grey, 'Upgrade', true), rect('pipe', 96, cy + 14, 290, sy - cy - 28, { rx: 8, fill: tint(C.teal, 0.12), stroke: C.teal, sw: 1.5, dash: '5 4' }),
         msg('w1', 150, 160, true, C.teal), msg('w2', 210, 220, false, C.teal), msg('w3', 270, 280, true, C.teal), msg('w4', 330, 340, true, C.teal), text('ws-t', 230, 196, 'one open connection, both directions', { size: 10, fill: C.teal })];
     const sse: Part = [msg('s0', 80, 90, false, C.grey, 'GET'), msg('e1', 150, 160, true, C.pink), msg('e2', 220, 230, true, C.pink), msg('e3', 290, 300, true, C.pink), text('sse-t', 230, 196, 'server → client events only', { size: 10, fill: C.pink })];
     const frames: Frame[] = [
@@ -300,7 +301,7 @@ const gateway = (): AnimationSpec => {
         { caption: 'Clients send every request to one address, api.example.com, instead of knowing about every service.', hot: ['client>gw'], packets: [{ id: 'r', label: 'GET /orders/7', at: ['client', 'gw', 0.5] }] },
         { caption: 'The gateway handles TLS, then checks the token (who is this?)…', lit: ['gw'], packets: [{ id: 'r', label: 'GET /orders/7', at: 'gw' }], badges: { gw: 'TLS · token ✓' } },
         { caption: '…and the rate limit (are they allowed this many requests?).', lit: ['gw'], packets: [{ id: 'r', label: 'GET /orders/7', at: 'gw' }], badges: { gw: 'rate limit ✓' } },
-        { caption: 'It routes by path: /orders/… goes to the order service. (Behind it, a load balancer picks one copy of that service.)', hot: ['gw>orders'], ok: ['orders'], packets: [{ id: 'r', label: 'GET /orders/7', at: ['gw', 'orders', 0.55] }] },
+        { caption: 'It routes by path: /orders/… goes to the order service. (Behind it, a load balancer picks one copy of that service.)', hot: ['gw>orders'], ok: ['orders'], packets: [{ id: 'r', label: 'GET /orders/7', at: 'orders' }] },
         { caption: 'It waits for the answer, sends it back, and logs the request and how long it took. Business logic stays in the services, not the gateway.', hot: ['client>gw'], packets: [{ id: 'r', label: '200 · 42 ms', at: ['client', 'gw', 0.5] }], badges: { gw: 'logged' } },
     ]);
     return { title: 'One front door that checks, limits and routes every request', variants: [{ label: 'One request', frames }] };

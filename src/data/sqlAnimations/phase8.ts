@@ -91,8 +91,7 @@ const moreThanManager = (): AnimationSpec => {
         variants: steps([
             frame('Each employee row holds a manager_id: the emp_id of another row in the same table. Asha has none; she is at the top.', [start]),
             frame('Use the table twice: e is the employee, m is the manager. The join puts each manager\'s name and salary beside the employee. Asha has no manager, so the inner join drops her.', [tbl(false)]),
-            frame('WHERE e.salary > m.salary compares the two salaries on each row. Only Hana (80000) earns more than her manager, Ben (70000).', [tbl(true)]),
-            frame('"More than" is strictly greater: an employee who earns exactly the same as their manager would not be listed.', [tbl(true)]),
+            frame('WHERE e.salary > m.salary compares the two salaries on each row. Only Hana (80000) earns more than her manager, Ben (70000). "More than" is strictly greater: equal salaries would not be listed.', [tbl(true)]),
         ]),
     };
 };
@@ -111,10 +110,13 @@ const neverDelivered = (): AnimationSpec => {
         const other = orders().find(o => o.customer_id === c.customer_id);
         return other ? `none (${other.order_id} is ${other.status})` : 'none (no orders)';
     };
-    const tbl = (searched: boolean, filter: boolean) => table('nd', 20, 30, cols, customers().map(c => ({
+    // The customer who has ordered, but never had a delivery.
+    const hasOnlyUndelivered = customers().find(c => !deliveredOrders(c.customer_id).length && orders().some(o => o.customer_id === c.customer_id))?.customer_id;
+    /** `spot`: the customer the caption is talking about, in amber. */
+    const tbl = (searched: boolean, filter: boolean, spot?: SqlCell) => table('nd', 20, 30, cols, customers().map(c => ({
         id: `c${c.customer_id}`,
         values: { customer_id: c.customer_id, name: c.name, delivered: searched ? found(c) : '' },
-        look: filter ? (deliveredOrders(c.customer_id).length ? DROP : KEEP) : PLAIN,
+        look: c.customer_id === spot ? FOCUS : filter ? (deliveredOrders(c.customer_id).length ? DROP : KEEP) : PLAIN,
     })), { title: 'customers c' });
     return {
         title: 'Customers with no delivered order: start from customers, then look for an order',
@@ -123,7 +125,7 @@ const neverDelivered = (): AnimationSpec => {
             frame('Start from customers, so that people who have never ordered at all are still in the list.', [tbl(false, false)]),
             frame('For each customer, the subquery looks for an order of theirs with status = \'delivered\'.', [tbl(true, false)]),
             frame('NOT EXISTS keeps a customer when that search finds nothing: Omar, Zoe and the second Tom.', [tbl(true, true)]),
-            frame('Zoe has an order, but it is still pending. Omar and the second Tom have no orders, so a query that started from orders could never return them.', [tbl(true, true)]),
+            frame('Zoe has an order, but it is still pending, so Zoe stays in the answer. Omar and the second Tom have no orders at all: a query that started from orders could never return them.', [tbl(true, true, hasOnlyUndelivered)]),
         ]),
     };
 };
@@ -212,10 +214,11 @@ const aboveDeptAverage = (): AnimationSpec => {
     const rows = withDeptAverage().sort((a, b) => last(a.e.dept_id) - last(b.e.dept_id) || bySalaryDesc(a.e, b.e));
     const deptIds = [...new Set(rows.map(r => r.e.dept_id))];
     const cols: Column[] = [{ key: 'name', w: 56 }, { key: 'dept_id', w: 62 }, { key: 'salary', w: 58 }, { key: 'dept_avg', w: 70 }];
-    const tbl = (showAvg: boolean, filter: boolean) => table('ad', 20, 30, cols, rows.map(({ e, avg }) => ({
+    const alone = (e: Row) => rows.filter(r => r.e.dept_id === e.dept_id).length === 1;
+    const tbl = (showAvg: boolean, filter: boolean, spotAlone = false) => table('ad', 20, 30, cols, rows.map(({ e, avg }) => ({
         id: `e${e.emp_id}`,
         values: { name: e.name, dept_id: e.dept_id, salary: e.salary, dept_avg: showAvg ? avg : '' },
-        look: filter ? ((e.salary as number) > avg ? KEEP : DROP) : groupLook(deptIds.indexOf(e.dept_id)),
+        look: spotAlone && alone(e) ? FOCUS : filter ? ((e.salary as number) > avg ? KEEP : DROP) : groupLook(deptIds.indexOf(e.dept_id)),
     })), { title: 'employees, one colour per department' });
     return {
         title: 'Paid above the department average: put the average on every row, then compare',
@@ -224,7 +227,7 @@ const aboveDeptAverage = (): AnimationSpec => {
             frame('Eight employees, coloured by department. Gus has no department.', [tbl(false, false)]),
             frame('AVG(salary) OVER (PARTITION BY dept_id) writes each department\'s average on every one of its rows. No rows are collapsed, as GROUP BY would do.', [tbl(true, false)]),
             frame('WHERE salary > dept_avg, in the outer query, keeps Asha, Hana and Dara. A window function can\'t be used in the WHERE of the same SELECT.', [tbl(true, true)]),
-            frame('Fatima and Gus are each alone in their group, so each equals their own average and is not above it.', [tbl(true, true)]),
+            frame('Fatima and Gus are each alone in their group, so each equals their own average and is not above it.', [tbl(true, true, true)]),
         ]),
     };
 };

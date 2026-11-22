@@ -353,7 +353,8 @@ const lossCurves = (): AnimationSpec => {
         frame('The loss bounces up and down instead of falling. Spikes like these are the warning sign.', [axisBits(), growPath('train', spiky, 0.6, { stroke: C.amber })]),
         frame('Often it climbs and finally turns into NaN ("not a number"). The fix: divide the learning rate by 3 to 10 and try again.', [
             axisBits(), growPath('train', spiky, 1, { stroke: C.amber }),
-            text('nan', 352, a.y + 10, 'NaN!', { size: 16, fill: C.red, weight: 800 }),
+            // Below the last spikes, where the curve never comes.
+            text('nan', 352, a.y + 86, 'NaN!', { size: 16, fill: C.red, weight: 800 }),
         ]),
     ];
 
@@ -475,7 +476,8 @@ const testing = (): AnimationSpec => {
         frame('== asks "exactly the same?" The two numbers differ in the 17th decimal place, so the answer is False.', [numberLine, exact, sum, verdict('0.1 + 0.2 == 0.3  →  False', C.red)]),
         frame('np.allclose asks "close enough?" It allows a tiny gap (about 0.000003 near 0.3). This gap is far smaller, so the answer is True.', [
             rect('band', L.x0, L.y - 22, L.x1 - L.x0, 44, { fill: tint(C.green, 0.18), stroke: C.green, sw: 1, dash: '4 3' }),
-            text('bandl', 200, L.y - 34, 'allowed gap: the whole line, and far beyond', { size: 11, fill: C.green }),
+            // Above the amber "0.1 + 0.2" label, which sits at L.y − 28.
+            text('bandl', 200, L.y - 46, 'allowed gap: the whole line, and far beyond', { size: 11, fill: C.green }),
             numberLine, exact, sum, verdict('np.allclose(0.1 + 0.2, 0.3)  →  True', C.green),
         ]),
     ];

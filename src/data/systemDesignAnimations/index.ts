@@ -19,15 +19,15 @@ export const systemDesignAnimations: AnimationRegistry = {
 };
 
 /** Topics left without an animation on purpose, and why. */
-export const systemDesignNoAnimation: Record<string, string> = {
-    'sd5-t8': 'UML class diagrams: the static class diagram is the lesson, and nothing in it changes over time.',
-};
+export const systemDesignNoAnimation: Record<string, string> = {};
 
 /**
  * Words and numbers an animation must never show, because a practice question
  * asks the learner to work them out. A test checks every caption and label.
  */
 export const systemDesignForbidden: Record<string, string[]> = {
+    // "Draw a class diagram for a library" is this lesson's exercise.
+    'sd5-t8': ['Library', 'BookCopy', 'Member', 'Loan'],
     'sd0-t1': ['45-minute', '45 min', 'minutes each'],
     'sd0-t2': ['50 million', '2 MB'],
     'sd1-t3': ['stock price', 'nightly report', 'delivery-tracking', 'delivery tracking'],

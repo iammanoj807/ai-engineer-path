@@ -44,9 +44,9 @@ const vae = (): AnimationSpec => {
     }));
     const pipeline = (on: string) => [
         box('x', 10, 90, 44, 44, '✍︎ 3', C.grey, { size: 13 }),
-        box('enc', 64, 84, 60, 56, 'encoder', C.blue, on === 'enc' ? { fill: tint(C.blue, 0.55) } : { size: 11 }),
+        box('enc', 64, 84, 60, 56, 'encoder', C.blue, on === 'enc' ? { fill: tint(C.blue, 0.55), size: 11 } : { size: 11 }),
         box('z', 134, 84, 44, 56, on === 'z' ? 'μ, σ\n→ z' : 'z', C.yellow, on === 'z' ? { fill: tint(C.yellow, 0.45), size: 10 } : { size: 12 }),
-        box('dec', 188, 84, 52, 56, 'decoder', C.green, on === 'dec' ? { fill: tint(C.green, 0.55) } : { size: 11 }),
+        box('dec', 188, 84, 52, 56, 'decoder', C.green, on === 'dec' ? { fill: tint(C.green, 0.55), size: 11 } : { size: 11 }),
         arrow('a1', 54, 112, 62, 112, { stroke: C.grey }), arrow('a2', 124, 112, 132, 112, { stroke: C.grey }), arrow('a3', 178, 112, 186, 112, { stroke: C.grey }),
         label('ls', 320, 28, 'latent space (2-D)', C.grey, { anchor: 'middle', size: 10, mono: false }),
         rect('lsb', a.x, a.y, a.w, a.h, { fill: 'none', stroke: C.faint, sw: 1 }),

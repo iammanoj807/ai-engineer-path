@@ -207,17 +207,21 @@ const inverseRank = (): AnimationSpec => {
 const dotProduct = (): AnimationSpec => {
     const p = plane(150, 170, 26);
     const grid = planeGrid('g', p);
-    const scene = (ax: number, ay: number, caption: string, extra: Part[] = []) => {
+    const scene = (ax: number, ay: number, caption: string, extra: Part[] = [], shadow = true) => {
         const shadowColor = Math.abs(ax) < 0.01 ? C.grey : ax > 0 ? C.green : C.red;
         const [sx, sy] = toPx(p, ax, 0);
         return frame(caption, [
             grid,
             planeLine('bline', p, [-6, 0], [9, 0], { stroke: C.pink, sw: 1.5, dash: '6 4' }),
-            line('drop', ...toPx(p, ax, ay), sx, sy, { stroke: C.grey, sw: 1.5, dash: '4 3' }),
-            line('shadow', p.cx, p.cy, sx + 0.001, sy, { stroke: shadowColor, sw: 7, opacity: 0.85 }),
+            // The light and the shadow are drawn from the step that introduces them.
+            shadow && line('drop', ...toPx(p, ax, ay), sx, sy, { stroke: C.grey, sw: 1.5, dash: '4 3' }),
+            shadow && line('shadow', p.cx, p.cy, sx + 0.001, sy, { stroke: shadowColor, sw: 7, opacity: 0.85 }),
             vec('b', p, 1, 0, C.pink, { sw: 4 }),
             vec('a', p, ax, ay, C.cyan),
-            label('al', ...toPx(p, ax + 0.2, ay + 0.3), `a = [${round(ax, 1)}, ${round(ay, 1)}]`, C.cyan, { size: 12 }),
+            // Left of the axis the label sits above the arrow tip, so the axis does not run through it.
+            ax < 0
+                ? label('al', ...toPx(p, ax, ay + 0.5), `a = [${round(ax, 1)}, ${round(ay, 1)}]`, C.cyan, { size: 12, anchor: 'middle' })
+                : label('al', ...toPx(p, ax + 0.2, ay + 0.3), `a = [${round(ax, 1)}, ${round(ay, 1)}]`, C.cyan, { size: 12 }),
             label('bl', p.cx + 4, p.cy + 18, 'b = [1, 0]', C.pink, { size: 12 }),
             rect('panel', 262, 12, 130, 36, { rx: 8, fill: '#0d1117e6', stroke: shadowColor, sw: 1.5 }),
             label('dot', 327, 30, `a·b = ${round(ax, 1)}`, shadowColor, { anchor: 'middle', size: 15 }),
@@ -229,7 +233,7 @@ const dotProduct = (): AnimationSpec => {
         variants: [{
             label: 'Turning a',
             frames: [
-                scene(3, 4, 'a = [3, 4] and b = [1, 0]. Multiply matching entries and add: 3·1 + 4·0 = 3. Now see what that number means.'),
+                scene(3, 4, 'a = [3, 4] and b = [1, 0]. Multiply matching entries and add: 3·1 + 4·0 = 3. Now see what that number means.', [], false),
                 scene(3, 4, 'Shine a light straight down onto b\'s line. The shadow of a is its projection, [3, 0]. Because b has length 1, the shadow\'s length is the dot product: 3.'),
                 scene(4, 3, 'Turn a closer to b (still length 5) and the shadow grows: a = [4, 3], a·b = 4. The more two vectors point the same way, the bigger the dot product.'),
                 scene(0, 5, 'At 90° the shadow disappears: a·b = 0. The vectors are orthogonal (at right angles).', [rect('right', p.cx, p.cy - 14, 14, 14, { fill: 'none', stroke: C.ink, sw: 1.5 })]),
@@ -250,6 +254,11 @@ const eigen = (): AnimationSpec => {
         const r = (deg * Math.PI) / 180;
         return planeLine(`span${deg}`, p, [-9 * Math.cos(r), -9 * Math.sin(r)], [9 * Math.cos(r), 9 * Math.sin(r)], { stroke: isEigen(deg) ? C.yellow : C.grey, sw: 1.2, dash: '5 5', opacity: isEigen(deg) ? 0.8 : 0.45 });
     });
+    // Each label sits beside its arrow tip, clear of the dashed line the arrow lies on.
+    const eigenLabels = [
+        label('l3', ...toPx(p, 3.9, 3.36), 'λ = 3', C.yellow, { size: 14 }),
+        label('l1', ...toPx(p, -1.67, 0.75), 'λ = 1', C.yellow, { size: 14, anchor: 'end' }),
+    ];
     const arrows = (m: Mat2, highlight: boolean) => angles.map(deg => {
         const r = (deg * Math.PI) / 180;
         const [x, y] = apply(m, 1.5 * Math.cos(r), 1.5 * Math.sin(r));
@@ -265,13 +274,11 @@ const eigen = (): AnimationSpec => {
                 frame('Most arrows are knocked off their line: [1, 0] turns into [2, 1]. But two directions stay exactly on their dashed lines.', [planeGrid('g', p, A), spanLines, arrows(A, false), matLabel('A = [[2, 1], [1, 2]]')]),
                 frame('Along [1, 1] each arrow is simply stretched 3 times: an eigenvector with eigenvalue λ = 3. Along [1, −1] arrows don\'t change at all: λ = 1.', [
                     planeGrid('g', p, A), spanLines, arrows(A, true), matLabel('A = [[2, 1], [1, 2]]'),
-                    label('l3', ...toPx(p, 3.3, 3.6), 'λ = 3', C.yellow, { size: 14 }),
-                    label('l1', ...toPx(p, -3.6, 1.8), 'λ = 1', C.yellow, { size: 14 }),
+                    eigenLabels,
                 ]),
                 frame('So A is simple in disguise: stretch 3× along [1, 1] and leave [1, −1] alone. Apply it 10 times and the [1, 1] part grows by 3¹⁰ while the rest stays put.', [
                     planeGrid('g', p, A), spanLines.filter((_, i) => i % 2 === 1), arrows(A, true).filter(s => isEigen(Number(s.id.slice(1)))), matLabel('A = [[2, 1], [1, 2]]'),
-                    label('l3', ...toPx(p, 3.3, 3.6), 'λ = 3', C.yellow, { size: 14 }),
-                    label('l1', ...toPx(p, -3.6, 1.8), 'λ = 1', C.yellow, { size: 14 }),
+                    eigenLabels,
                 ]),
             ],
         }],
@@ -446,7 +453,7 @@ const learningRate = (): AnimationSpec => {
                 shown.slice(0, -1).map((v, i) => dot(`trail${i}`, ...pt(a, v, v * v), color, 3.5, { opacity: 0.55 })),
                 shown.slice(1).map((v, i) => arrow(`step${i}`, ...pt(a, shown[i], shown[i] * shown[i]), ...pt(a, v, v * v), { stroke: color, sw: 1.8, opacity: 0.8 })),
                 onChart && circle('ball', ...pt(a, w, w * w), 8, { fill: C.yellow, stroke: C.bg, sw: 2 }),
-                !onChart && label('off', px(a, 0), a.y + 30, 'off the chart!', C.red, { anchor: 'middle', size: 15 }),
+                !onChart && label('off', px(a, 0) - 18, a.y + 26, 'off the chart!', C.red, { anchor: 'middle', size: 15 }),
                 readout(onChart ? `w = ${round(w, 3)}` : `w = ${round(w, 2)}`, color),
             ], k === 0 ? undefined : 2200);
         });
@@ -802,7 +809,7 @@ const convex = (): AnimationSpec => {
     ], [-2.05, 1.95]);
     const p = plane(150, 150, 46);
     const value = (x: number, y: number) => x * x + y * y;
-    const lag = (x: number, caption: string) => {
+    const lag = (x: number, caption: string, extra: Part[] = []) => {
         const y = 1 - x;
         const r = Math.sqrt(value(x, y));
         return frame(caption, [
@@ -810,20 +817,24 @@ const convex = (): AnimationSpec => {
             [0.3, 0.6, 1, 1.5].map((rr, i) => path(`c${i}`, range(0, 2 * Math.PI, 60).map(t => toPx(p, rr * Math.cos(t), rr * Math.sin(t))), { stroke: '#2f6f7a', sw: 1.2, closed: true })),
             path('touch', range(0, 2 * Math.PI, 60).map(t => toPx(p, r * Math.cos(t), r * Math.sin(t))), { stroke: C.cyan, sw: 2.5, closed: true }),
             planeLine('constraint', p, [-3, 4], [4, -3], { stroke: C.pink, sw: 3 }),
-            label('cl', ...toPx(p, 2.1, -1.4), 'x + y = 1', C.pink, { size: 12 }),
+            label('cl', ...toPx(p, 2.7, -1.1), 'x + y = 1', C.pink, { size: 12 }),
             vec('gf', p, x + 0.3 * 2 * x, y + 0.3 * 2 * y, C.yellow, { from: [x, y], sw: 3 }),
             vec('gg', p, x + 0.3, y + 0.3, C.pink, { from: [x, y], sw: 2.5, dash: '4 3' }),
             dot('pt', ...toPx(p, x, y), C.yellow, 6),
             rect('panel', 266, 12, 126, 50, { rx: 8, fill: '#0d1117e6', stroke: C.faint, sw: 1 }),
             label('pv', 329, 28, `(${round(x, 2)}, ${round(y, 2)})`, C.yellow, { anchor: 'middle', size: 12 }),
             label('fv', 329, 48, `x² + y² = ${round(value(x, y), 2)}`, C.cyan, { anchor: 'middle', size: 12 }),
+            extra,
         ]);
     };
     const lagrange: Frame[] = [
         lag(-0.6, 'Minimise x² + y² (rings around the origin), but only on the pink line x + y = 1. At (−0.6, 1.6) the value is 2.92.'),
         lag(0, 'Slide along the line: at (0, 1) the value is 1. The yellow arrow (the gradient of x² + y²) still points across the line at an angle, so we can do better.'),
         lag(0.5, 'At (0.5, 0.5) the ring just touches the line, and the yellow gradient lines up with the pink one (the line\'s own gradient). Nowhere lower on the line: value 0.5.'),
-        lag(0.5, 'That is the Lagrange condition: ∇f = λ∇g. Solving 2x = λ, 2y = λ, x + y = 1 gives x = y = 0.5 and λ = 1.'),
+        lag(0.5, 'That is the Lagrange condition: ∇f = λ∇g. Solving 2x = λ, 2y = λ, x + y = 1 gives x = y = 0.5 and λ = 1.', [
+            label('cond', 329, 82, '∇f = λ∇g', C.green, { anchor: 'middle', size: 13 }),
+            label('lam', 329, 102, 'λ = 1', C.green, { anchor: 'middle', size: 12 }),
+        ]),
     ];
     return {
         title: 'Convex bowls have one bottom; constraints touch the rings',

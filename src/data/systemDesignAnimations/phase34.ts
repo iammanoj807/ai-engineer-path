@@ -35,7 +35,7 @@ const choosingDb = (): AnimationSpec => {
         card('kv', 138, 30, 'Key-value', C.pink, [mono('k1', 146, 54, 'cart:42 → {…}'), mono('k2', 146, 70, 'one key, one value'), mono('k3', 146, 86, 'very fast lookups', C.grey)], on === 1 || on === 9),
         card('doc', 268, 30, 'Document', C.amber, [mono('d1', 276, 54, '{name, specs: {…}}'), mono('d2', 276, 70, 'fields vary'), mono('d3', 276, 86, 'self-contained', C.grey)], on === 2 || on === 9),
         card('wide', 73, 126, 'Wide-column', C.cyan, [mono('w1', 81, 150, 'chat 9 | t1 t2 t3…'), mono('w2', 81, 166, 'huge write volume'), mono('w3', 81, 182, 'read by one key', C.grey)], on === 3 || on === 9),
-        card('graph', 203, 126, 'Graph', C.violet, [circle('g1', 236, 160, 7, { fill: C.violet }), circle('g2', 266, 148, 7, { fill: C.violet }), circle('g3', 290, 172, 7, { fill: C.violet }), line('ge1', 236, 160, 266, 148, { stroke: C.violet, sw: 1.5 }), line('ge2', 266, 148, 290, 172, { stroke: C.violet, sw: 1.5 }), mono('g4', 211, 192, 'friends of friends', C.grey)], on === 4 || on === 9),
+        card('graph', 203, 126, 'Graph', C.violet, [circle('g1', 236, 166, 7, { fill: C.violet }), circle('g2', 266, 155, 7, { fill: C.violet }), circle('g3', 290, 176, 7, { fill: C.violet }), line('ge1', 236, 166, 266, 155, { stroke: C.violet, sw: 1.5 }), line('ge2', 266, 155, 290, 176, { stroke: C.violet, sw: 1.5 }), mono('g4', 211, 192, 'friends of friends', C.grey)], on === 4 || on === 9),
     ];
     const frames: Frame[] = [
         frame('Start from the data and its main queries, not from the product names. There are five broad shapes of database.', [shapes(9)]),
@@ -189,8 +189,9 @@ const consistentHashing = (): AnimationSpec => {
     const shown = keys.slice(0, 16);
     const colors: Record<string, string> = { A: C.cyan, B: C.violet, C: C.pink, D: C.amber, E: C.green };
     const cx = 130;
-    const cy = 128;
-    const r = 90;
+    // Small enough that the server circles outside the ring stay inside the picture.
+    const cy = 124;
+    const r = 86;
     const at = (deg: number, rr = r): [number, number] => [cx + rr * Math.sin((deg * Math.PI) / 180), cy - rr * Math.cos((deg * Math.PI) / 180)];
     const ring = (list: { name: string; at: number }[], movedOnly: boolean): Part => [
         circle('ring', cx, cy, r, { fill: 'none', stroke: C.dim, sw: 2 }),
@@ -327,7 +328,7 @@ const microservices = (): AnimationSpec => {
         frame('A monolith: one app, deployed as one piece, with one database. Simple to build, test and deploy — a good place to start, if it is well organised inside.', [mono]),
         ...flow(nodes, edges, [
             { caption: 'Split gradually, around business capabilities. Carve out ONE service at a time — orders first — with its own database. Other services may only use its API or its events.', show: ['orders', 'odb'], lit: ['orders'] },
-            { caption: 'When an order is placed, the order service publishes "order placed" and moves on. Things that can happen later go through events…', hot: ['orders>bus'], packets: [{ id: 'e', label: 'order placed', at: ['orders', 'bus', 0.6] }] },
+            { caption: 'When an order is placed, the order service publishes "order placed" and moves on. Things that can happen later go through events…', hot: ['orders>bus'], packets: [{ id: 'e', label: 'order placed', at: 'orders' }] },
             { caption: '…and the payment and notification services react on their own. Each team deploys and scales its service independently.', hot: ['bus>pay', 'bus>note'], ok: ['pay', 'note'], packets: [{ id: 'e', label: 'order placed', at: 'bus' }] },
             { caption: 'The price: a function call is now a network call that can be slow or fail, data is spread across databases, and you need tracing, a gateway and a pipeline per service.', bad: ['pay'], packets: [{ id: 'e', label: 'timeout?', at: ['bus', 'pay', 0.5], color: C.red }] },
         ]),

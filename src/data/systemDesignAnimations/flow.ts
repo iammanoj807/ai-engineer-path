@@ -99,6 +99,9 @@ const ends = (a: FNode, b: FNode): [number, number, number, number] => {
 
 const chipWidth = (value: string) => Math.max(24, value.length * 5.6 + 10);
 
+/** Violet at half strength on the page background. Solid, so an edge behind a badge can't show through its words. */
+const BADGE_FILL = '#605779';
+
 export const flow = (nodes: FNode[], edges: FEdge[], steps: Step[], o: FlowOptions = {}): Frame[] => {
     const height = o.height ?? 240;
     const byId = new Map(nodes.map(n => [n.id, n]));
@@ -138,7 +141,20 @@ export const flow = (nodes: FNode[], edges: FEdge[], steps: Step[], o: FlowOptio
             const shapes: Shape[] = [line(`e-${e.from}-${e.to}`, x1, y1, x2, y2, { stroke, sw: on ? 2.5 : 1.5, arrow: !e.plain, dash: e.dashed ? '5 4' : undefined })];
             if (e.label) {
                 const len = Math.hypot(x2 - x1, y2 - y1) || 1;
-                shapes.push(text(`el-${e.from}-${e.to}`, (x1 + x2) / 2 + ((y2 - y1) / len) * 9, (y1 + y2) / 2 - ((x2 - x1) / len) * 9, e.label, { size: 9, fill: on ? C.amber : C.grey, weight: 700, mono: true }));
+                const nx = (y2 - y1) / len;
+                const ny = -(x2 - x1) / len;
+                const half = (e.label.length * 9 * 0.6) / 2;
+                // 9 px off the line suits a level edge. A long label on a slanted edge would have the line
+                // run through it, so it moves out until it is clear, on whichever side has no box in the way.
+                const crossed = (half - 2) * Math.abs(nx) + 3 * Math.abs(ny) > 9;
+                const reach = crossed ? 4 + half * Math.abs(nx) + 5 * Math.abs(ny) : 9;
+                const place = (side: 1 | -1) => ({ x: (x1 + x2) / 2 + nx * reach * side, y: (y1 + y2) / 2 + ny * reach * side });
+                const onBox = (at: { x: number; y: number }) => nodes.some(n => {
+                    const { w, h } = size(n);
+                    return visible.has(n.id) && at.x + half > n.x - 2 && at.x - half < n.x + w + 2 && at.y + 6 > n.y - 2 && at.y - 6 < n.y + h + 2;
+                });
+                const at = crossed && onBox(place(1)) && !onBox(place(-1)) ? place(-1) : place(1);
+                shapes.push(text(`el-${e.from}-${e.to}`, at.x, at.y, e.label, { size: 9, fill: on ? C.amber : C.grey, weight: 700, mono: true }));
             }
             return shapes;
         });
@@ -149,14 +165,20 @@ export const flow = (nodes: FNode[], edges: FEdge[], steps: Step[], o: FlowOptio
             const [color, strength, sw] = look(n.id, base);
             const faded = step.dim?.includes(n.id);
             const kind = n.kind ?? 'box';
+            const queue = kind === 'queue';
             const shapes: Shape[] = [rect(`n-${n.id}`, n.x, n.y, w, h, {
                 rx: kind === 'client' ? h / 2 : kind === 'store' ? 12 : 7,
                 fill: tint(color, strength), stroke: color, sw, opacity: faded ? 0.3 : 1,
-                text: n.label, textColor: C.ink, size: n.size ?? 11, weight: 700,
+                // A queue's name is drawn below, left of its slots.
+                ...(queue ? {} : { text: n.label, textColor: C.ink, size: n.size ?? 11, weight: 700 }),
             })];
             // A store has a lid; a queue has slots.
             if (kind === 'store') shapes.push(line(`nl-${n.id}`, n.x + 6, n.y + 7, n.x + w - 6, n.y + 7, { stroke: color, sw: 1, opacity: faded ? 0.3 : 0.8 }));
-            if (kind === 'queue') [0.72, 0.8, 0.88].forEach((f, i) => shapes.push(line(`nq-${n.id}-${i}`, n.x + w * f, n.y + 5, n.x + w * f, n.y + h - 5, { stroke: color, sw: 1, opacity: faded ? 0.3 : 0.8 })));
+            if (queue) {
+                // Three slots in the last 20 px, and the name centred in the space before them, so no slot cuts through it.
+                shapes.push(text(`nt-${n.id}`, n.x + (w - 20) / 2, n.y + h / 2, n.label, { size: n.size ?? 11, fill: C.ink, weight: 700, opacity: faded ? 0.3 : 1 }));
+                [17, 12, 7].forEach((fromRight, i) => shapes.push(line(`nq-${n.id}-${i}`, n.x + w - fromRight, n.y + 5, n.x + w - fromRight, n.y + h - 5, { stroke: color, sw: 1, opacity: faded ? 0.3 : 0.8 })));
+            }
             return shapes;
         });
 
@@ -165,7 +187,7 @@ export const flow = (nodes: FNode[], edges: FEdge[], steps: Step[], o: FlowOptio
             const { w, h } = size(n);
             const bw = chipWidth(value);
             // Bottom-right corner, so it never sits under a message resting on top of the box.
-            return rect(`b-${id}`, Math.min(n.x + w - bw / 2, 398 - bw), n.y + h - 7, bw, 16, { rx: 8, fill: tint(C.violet, 0.5), stroke: C.violet, sw: 1, text: value, size: 9, weight: 700, mono: true });
+            return rect(`b-${id}`, Math.min(n.x + w - bw / 2, 398 - bw), n.y + h - 7, bw, 16, { rx: 8, fill: BADGE_FILL, stroke: C.violet, sw: 1, text: value, size: 9, weight: 700, mono: true });
         });
 
         const atNode = new Map<string, number>();
@@ -194,6 +216,15 @@ export const flow = (nodes: FNode[], edges: FEdge[], steps: Step[], o: FlowOptio
         const notes = step.notes ?? [];
         const noteShapes: Shape[] = notes.map(([value, color], i) => text(`note${i}`, 10, height - 12 - (notes.length - 1 - i) * 16, value, { size: 11, fill: color ?? C.grey, weight: 700, anchor: 'start' }));
 
-        return frame(step.caption, [edgeShapes, nodeShapes, badgeShapes, flat(step.extra ?? []), packetShapes, noteShapes], step.hold);
+        // A message or a badge can land on an edge's label. The chip is what this step is about,
+        // so the label steps aside for the frame instead of being read through it.
+        const chips = [...badgeShapes, ...packetShapes].filter((shape): shape is Extract<Shape, { kind: 'rect' }> => shape.kind === 'rect');
+        const hidden = (shape: Shape) => {
+            if (shape.kind !== 'text' || !shape.id.startsWith('el-')) return false;
+            const half = (shape.text.length * 9 * 0.6) / 2;
+            return chips.some(chip => shape.x + half > chip.x - 2 && shape.x - half < chip.x + chip.w + 2 && shape.y + 6 > chip.y - 2 && shape.y - 6 < chip.y + chip.h + 2);
+        };
+
+        return frame(step.caption, [edgeShapes.filter(shape => !hidden(shape)), nodeShapes, badgeShapes, flat(step.extra ?? []), packetShapes, noteShapes], step.hold);
     });
 };

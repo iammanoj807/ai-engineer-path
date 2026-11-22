@@ -36,7 +36,7 @@ const parkingLot = (): AnimationSpec => {
         frame('A car arrives at the gate. The spot-assignment STRATEGY looks for the smallest free spot a car fits: M or L, so not spot 2.', [grid(taken, null), board(taken), vehicle(30, 'car')]),
         frame(`Spot ${carSpot} fits. It is marked taken in ONE atomic step — so a car at another gate can't be given the same spot at the same moment.`, [grid(taken, carSpot), board(taken), vehicle(30, 'car')]),
         frame(`A ticket is issued for spot ${carSpot}. The display board subscribes to spot changes (Observer), so its count updates by itself.`, [grid(after, null), board(after, true), ticket(true)]),
-        frame('Exit: scan the ticket. The PRICING strategy works out the fee from the time parked; after payment, the spot is freed and the board updates again.', [grid(taken, null, carSpot), board(taken, true), ticket(true), label('fee', 8, 154, 'fee = pricing(time parked)', C.amber, { size: 10 })]),
+        frame('Exit: scan the ticket. The PRICING strategy works out the fee from the time parked; after payment, the spot is freed and the board updates again.', [grid(taken, null, carSpot), board(taken, true), ticket(true), label('fee', 8, 154, 'fee = pricing(time)', C.amber, { size: 10 })]),
     ];
     return { title: 'Parking lot: strategies choose spots and prices; observers keep the boards right', variants: [{ label: 'Entry and exit', frames }] };
 };
@@ -74,7 +74,7 @@ const elevator = (): AnimationSpec => {
         ...order.map((f, i) => frame(i === order.findIndex(x => x < start)
             ? `No more stops above: turn around and sweep down to floor ${f}.`
             : `Stop at floor ${f}.`, [shaft(f, order.slice(0, i + 1), f), list(order.slice(0, i + 1))], 2200)),
-        frame('A controller hands each new hall call to the best lift — idle and near, or already moving towards that floor in the same direction. Each lift\'s state machine keeps the doors shut while moving.', [shaft(order[order.length - 1], order, null), list(order)]),
+        frame('A controller hands each new hall call to the best lift — idle and near, or already moving towards that floor in the same direction. Each lift\'s state machine keeps the doors shut while moving.', [shaft(order[order.length - 1], order, null), list(order), label('call-t', 250, 104, 'a new hall call', C.amber, { size: 11 }), label('call', 250, 124, 'goes to the best lift', C.amber, { size: 11 })]),
     ];
     return { title: 'An elevator using LOOK: sweep one way, then the other', variants: [{ label: 'One lift', frames }] };
 };
@@ -145,7 +145,7 @@ const splitwise = (): AnimationSpec => {
                 ? `Simplify: match the biggest debtor with the biggest creditor. ${from} pays ${to} £${amount.toFixed(0)}.`
                 : `Repeat: ${from} pays ${to} £${amount.toFixed(0)}.`, [axis, bars({ ...done })], 2600);
         }),
-        frame(`Everyone is at zero after ${transfers.length} payments, instead of a payment for every expense share.`, [axis, bars(Object.fromEntries(people.map(p => [p, 0])))]),
+        frame(`Everyone is at zero after ${transfers.length} payments, instead of a payment for every expense share.`, [axis, bars(Object.fromEntries(people.map(p => [p, 0]))), text('settled', 200, 218, `settled in ${transfers.length} payments`, { size: 12, fill: C.green, weight: 800 })]),
     ];
     return { title: 'Splitwise: one balance per person, then settle with few payments', variants: [{ label: 'Four friends', frames }] };
 };

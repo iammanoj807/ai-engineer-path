@@ -25,6 +25,15 @@ The Markdown pages in `lessons/` are written from these files. Don't edit them b
 - **A derivation.** An ML lesson can have an optional `deeper` block ("Go deeper"): a title, four to seven small steps, and the result. Use it for the proof the lesson states but does not show.
 - **A new lesson** needs the lesson itself (with its one false statement, see below), one answer for each of its four exercises, an animation, and glossary entries for the words it teaches. A SQL interview problem has a solution walk-through instead (`src/data/sqlAnimations/phase8.ts`), shown only once the solution is open. Code in a lesson or an answer must have been run, with the numbers it printed. Then run `npm run path-index` (it gives the lesson its address) and `npm run lessons`. The tests tell you what is missing.
 
+## Animations a beginner can follow
+
+An animation is a short run of steps: a picture and one caption each. The tests look at every step, so `npm test` tells you when one of these is broken:
+
+- **Each step changes the picture.** If only the caption changes, the eye has nothing to follow. Highlight the thing the caption is about.
+- **A caption has 50 words at most.** If it needs more, it is two steps.
+- **Nothing covers words.** No line through a label or through the name in a box, no label or message chip on top of another. Thin grid lines behind a label are fine.
+- **Nothing is cut off.** Boxes, dots and text stay inside the picture.
+
 ## Practice sessions build themselves
 
 The quick practice with Ada and Alan (match the pairs, fill the gap, put the steps in order, spot the mistake, and the SQL cards) is made automatically from what a lesson already has. Nothing is written twice. See `src/practice/build.ts`.

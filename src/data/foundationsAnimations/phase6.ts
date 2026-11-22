@@ -52,7 +52,8 @@ const gpu = (): AnimationSpec => {
         axisLines('ax', roofline, '', 'speed (FLOP/s)'),
         text('xl', roofline.x + roofline.w / 2, roofline.y + roofline.h + 14, 'arithmetic intensity: FLOPs per byte moved (log)', { size: 10.5, fill: C.grey }),
         path('roof', [0, 1, 2, 3, 4].map(v => pt(roofline, v, perf(v))), { stroke: C.cyan, sw: 3 }),
-        label('mem', px(roofline, 0.6), py(roofline, 2.3), 'memory-bound', C.cyan, { size: 11, mono: false }),
+        // Above the slope, ending before the line reaches it.
+        label('mem', 150, 50, 'memory-bound', C.cyan, { size: 11, mono: false, anchor: 'end' }),
         label('cmp', px(roofline, 2.05), py(roofline, 3) + 16, 'compute-bound', C.cyan, { size: 11, mono: false }),
         ops.slice(0, shown).map(([name, x, color], i) => [circle(`o${i}`, ...pt(roofline, x, perf(x)), 6, { fill: color }), label(`ol${i}`, px(roofline, x) + (x > 3 ? -8 : 8), py(roofline, perf(x)) + (x > 3 ? 34 : 14), name, color, { size: 11, mono: false, anchor: x > 3 ? 'end' : 'start' })]),
     ]);
@@ -107,7 +108,11 @@ const precision = (): AnimationSpec => {
                 frame('fp32 uses 32 bits: 1 sign bit, 8 exponent bits (how big or small the number can be) and 23 mantissa bits (how many significant digits).', [all([true, false, false])]),
                 frame('fp16 halves the memory: 5 exponent bits, 10 mantissa bits. Good precision, but its largest value is only about 65,504, so big gradients overflow to inf and tiny ones underflow to 0.', [all([true, true, false])]),
                 frame('bf16 keeps fp32\'s 8 exponent bits (range up to about 3.4 × 10³⁸) and keeps only 7 mantissa bits. Overflow is rare; the cost is coarse precision: in bf16, 1 + 0.001 rounds back to 1.', [all([true, true, true])]),
-                frame('Mixed precision does the heavy matrix maths in 16-bit (half the memory traffic, much faster on tensor cores) but keeps a 32-bit master copy of the weights and does the optimiser update in fp32, so small updates aren\'t rounded away. bf16 is the usual choice today.', [all([true, true, true])]),
+                frame('Mixed precision does the heavy matrix maths in 16-bit: half the memory traffic, and much faster on tensor cores. A 32-bit master copy of the weights takes the optimiser update, so small updates aren\'t rounded away. bf16 is the usual choice today.', [
+                    all([true, false, true]),
+                    text('m32', 60, 68, 'the master copy of the weights, and the optimiser update', { size: 10, fill: C.grey, anchor: 'start' }),
+                    text('m16', 60, 168, 'the heavy matrix maths', { size: 10, fill: C.grey, anchor: 'start' }),
+                ]),
             ],
         }],
     };
@@ -300,7 +305,8 @@ const fusion = (): AnimationSpec => {
     const sram = box('sram', 260, 60, 120, 110, 'on-chip\n(registers, SRAM)\nfast', C.green, { size: 11 });
     const trip = (i: number, dir: 'in' | 'out', note: string, color: string) => [
         dir === 'in' ? arrow(`t${i}`, 142, 72 + i * 20, 258, 72 + i * 20, { stroke: color, sw: 2.5 }) : arrow(`t${i}`, 258, 72 + i * 20, 142, 72 + i * 20, { stroke: color, sw: 2.5 }),
-        label(`tn${i}`, 200, 66 + i * 20, note, color, { anchor: 'middle', size: 9.5, mono: false }),
+        // Just above its own arrow, without touching it.
+        label(`tn${i}`, 200, 63.5 + i * 20, note, color, { anchor: 'middle', size: 9.5, mono: false }),
     ];
     const counter = (reads: number, writes: number, color: string) => panel([[`reads of x: ${reads}`, color], [`writes: ${writes}`, color]], 120, 190, 160);
     const frames: Frame[] = [
@@ -388,7 +394,7 @@ const speculative = (): AnimationSpec => {
                 scene(0, 'A big model normally generates one token per slow forward pass.'),
                 scene(1, 'A small, fast draft model quickly guesses the next 4 tokens: "the cat sat in".'),
                 scene(2, 'The big model checks all 4 guesses in a single pass (it can score every position at once). It agrees with "the cat sat" and disagrees with "in".'),
-                scene(3, 'Keep the accepted tokens, and use the big model\'s own choice ("on") at the first disagreement. 4 tokens for one big-model pass instead of 1. The output is exactly what the big model would have produced on its own; the gain depends on how often the draft is right.'),
+                scene(3, 'Keep the accepted tokens and, at the first disagreement, use the big model\'s own choice ("on"): 4 tokens from one pass instead of 1. The output is exactly what the big model would produce alone. The gain depends on how often the draft is right.'),
             ],
         }],
     };

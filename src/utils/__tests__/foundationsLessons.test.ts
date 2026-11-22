@@ -3,7 +3,7 @@ import { allFoundationTopics, foundationPhases, CHECK_KEYS } from '../../data/fo
 import { foundationAnswers } from '../../data/foundationsAnswers';
 import { foundationAnimations } from '../../data/foundationsAnimations';
 import { tweenShapes, type Shape } from '../../components/learning/anim/scene';
-import { animationProblems } from './animationChecks';
+import { animationProblems, readingProblems } from './animationChecks';
 
 const lessons = allFoundationTopics;
 
@@ -73,6 +73,10 @@ describe('foundations animations', () => {
 
     it('builds every frame from valid shapes that fit the picture', () => {
         expect(animationProblems(foundationAnimations)).toEqual([]);
+    });
+
+    it('keeps every step easy to read: something new each time, nothing cut off, crossed out or overlapping', () => {
+        expect(readingProblems(foundationAnimations)).toEqual([]);
     });
 });
 

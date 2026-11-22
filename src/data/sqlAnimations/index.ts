@@ -37,6 +37,5 @@ export const sqlSolutionChecks: Record<string, () => ResultRows> = phase8Solutio
 
 /** Topics left without an animation at the top of the lesson on purpose, and why. */
 export const sqlNoAnimation: Record<string, string> = {
-    'sql8-t2': 'Quick-fire theory: short spoken answers, with nothing that moves.',
     ...Object.fromEntries(Array.from({ length: 14 }, (_, i) => [`sql8-p${i + 1}`, 'Interview problem: an animation here would give away the hidden solution. Its walk-through is in sqlSolutionAnimations, shown with the solution.'])),
 };

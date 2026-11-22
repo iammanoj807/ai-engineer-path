@@ -323,7 +323,7 @@ const vitClip = (): AnimationSpec => {
     ];
     const clip: Frame[] = [
         frame('CLIP has two encoders: one for images, one for text. Each maps its input to a vector in the same space.', [clipLabels, matrix(false)]),
-        frame('Each cell is the similarity (dot product) between an image\'s vector and a caption\'s vector. Before training, it is noise.', [clipLabels, matrix(false)]),
+        frame('Each cell is the similarity (dot product) between an image\'s vector and a caption\'s vector. Before training, it is noise.', [clipLabels, matrix(false), rect('one', 128, 38, 44, 44, { fill: 'none', stroke: C.yellow, sw: 3, rx: 6 })]),
         frame('Training pushes each matching pair (the diagonal) together and every mismatch apart, over hundreds of millions of image–caption pairs. (Numbers are an illustration.)', [clipLabels, matrix(true)]),
         frame('Zero-shot classification: embed a new photo, embed the texts "a photo of a cat", "a photo of a dog", …, and pick the closest. No cat-versus-dog training needed.', [clipLabels, matrix(true), rect('hl', 130 - 2, 40 - 2, 4 * 43, 44, { fill: 'none', stroke: C.yellow, sw: 3, rx: 6 })]),
     ];
@@ -341,7 +341,8 @@ const vitClip = (): AnimationSpec => {
 const sampling = (): AnimationSpec => {
     const tokens = ['mat', 'floor', 'sofa', 'bed', 'roof', 'moon'];
     const logits = [3.0, 2.2, 1.6, 0.9, 0.4, -0.5];
-    const a = axes(40, 30, 330, 160, -0.5, 5.5, 0, 1);
+    // The axis goes a little above 1, so a bar of height 1 and its value stay below the axis title.
+    const a = axes(40, 30, 330, 160, -0.5, 5.5, 0, 1.12);
     const chart = (p: number[], kept: boolean[], caption: string, tag: string, color: string) => frame(caption, [
         axisLines('ax', a, '', 'probability'),
         bars('p', a, p, p.map((_, i) => (kept[i] ? color : '#3a434e'))),
@@ -414,18 +415,19 @@ const scalingLaws = (): AnimationSpec => {
     const a = axes(50, 20, 320, 168, 18, 24, 1.8, 4.2);
     const L = (logC: number) => 1.7 + 2.3 * 10 ** (-(logC - 18) * 0.16);
     const models: [string, number][] = [['small', 18.6], ['medium', 20], ['large', 21.4], ['huge', 22.8]];
-    const draw = (upTo: number, line_: boolean, caption: string) => frame(caption, [
+    const draw = (upTo: number, line_: boolean, caption: string, extra: Part[] = []) => frame(caption, [
         axisLines('ax', a, '', 'loss'),
         text('xl', a.x + a.w / 2, a.y + a.h + 30, 'compute used for training (log scale)', { size: 11, fill: C.grey }),
         [18, 20, 22, 24].map(v => text(`xt${v}`, px(a, v), a.y + a.h + 14, `10^${v}`, { size: 10, fill: C.dim })),
         line_ && fnPath('law', a, L, { stroke: C.green, sw: 2.5, dash: '6 4' }),
         models.slice(0, upTo).map(([name, c], i) => [dot(`m${i}`, ...pt(a, c, L(c)), C.amber, 7), text(`ml${i}`, px(a, c) + 10, py(a, L(c)) - 12, name, { size: 11, fill: C.amber, anchor: 'start' })]),
+        extra,
     ]);
     const frames: Frame[] = [
         draw(1, false, 'Illustration. Train a small model and record its final loss and the compute it used.'),
         draw(3, false, 'Train bigger models on more data with more compute. Each one reaches a lower loss.'),
         draw(4, true, 'On log scales the points fall on a smooth curve (a power law). You can fit it on small runs and predict the loss of a run 100 times bigger before paying for it.'),
-        draw(4, true, 'Chinchilla\'s finding: for a fixed compute budget, grow parameters and training tokens together — about 20 tokens per parameter. A 1B model "wants" about 20B tokens. Many modern models train far longer, because smaller models are cheaper to serve.'),
+        draw(4, true, 'Chinchilla\'s finding: for a fixed compute budget, grow parameters and training tokens together — about 20 tokens per parameter. A 1B model "wants" about 20B tokens. Many modern models train far longer, because smaller models are cheaper to serve.', [text('rule', a.x + a.w, a.y + 12, 'about 20 training tokens per parameter', { size: 11, fill: C.cyan, anchor: 'end', weight: 700 })]),
     ];
     return {
         title: 'Scaling laws: bigger models, more data, predictably lower loss',

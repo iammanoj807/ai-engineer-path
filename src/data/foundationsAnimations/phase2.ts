@@ -97,7 +97,7 @@ const linearRegression = (): AnimationSpec => {
             ];
         }),
     ];
-    const readout = (w: number, b: number, color: string) => panel([[`ŷ = ${round(w, 2)}x + ${round(b, 2)}`, color], [`MSE = ${round(mse(w, b), 2)}`, C.red]], 236, 154, 152);
+    const readout = (w: number, b: number, color: string) => panel([[`ŷ = ${round(w, 2)}x + ${round(b, 2)}`, color], [`MSE = ${round(mse(w, b), 2)}`, C.red]], 52, 18, 152);
     const squares: Frame[] = [
         frame('Ten data points. We want the straight line ŷ = wx + b that sits as close as possible to all of them.', [base]),
         frame(`A flat guess, ŷ = ${round(mean(ys), 1)}. Each red line is an error. Least squares turns each error into a square and adds up their areas.`, [base, fit(0, mean(ys), true, C.grey), readout(0, mean(ys), C.grey)]),
@@ -154,7 +154,8 @@ const logistic = (): AnimationSpec => {
         [0, 0.5, 1].map(v => [line(`g${v}`, a.x, py(a, v), a.x + a.w, py(a, v), { stroke: C.faint, sw: 1, dash: v === 0.5 ? '4 4' : undefined }), text(`yt${v}`, a.x - 6, py(a, v), String(v), { size: 11, fill: C.dim, anchor: 'end' })]),
         hours.map((h, i) => dot(`s${i}`, ...pt(a, h, passed[i]), passed[i] ? C.green : C.red, 6)),
         label('pass', a.x + 4, py(a, 1) - 12, 'passed = 1', C.green, { size: 11, mono: false }),
-        label('fail', a.x + 4, py(a, 0) + 12, 'failed = 0', C.red, { size: 11, mono: false }),
+        // On the right, where neither the straight line nor the S-curve comes near it.
+        label('fail', a.x + a.w - 4, py(a, 0) + 14, 'failed = 0', C.red, { size: 11, mono: false, anchor: 'end' }),
     ];
     return {
         title: 'Logistic regression: squash a score into a probability',
@@ -162,7 +163,7 @@ const logistic = (): AnimationSpec => {
             label: 'Pass or fail',
             frames: [
                 frame('Did a student pass (1) or fail (0), given hours studied? We want P(pass) for any number of hours.', [base]),
-                frame('A straight line (linear regression) gives a score, but it runs below 0 and above 1. That can\'t be a probability.', [base, lineInBox('line', a, lb1, lb0, { stroke: C.violet, sw: 3 }), label('bad', 300, py(a, 1.15), 'above 1?!', C.violet, { size: 12, mono: false })]),
+                frame('A straight line (linear regression) gives a score, but it runs below 0 and above 1. That can\'t be a probability.', [base, lineInBox('line', a, lb1, lb0, { stroke: C.violet, sw: 3 }), label('bad', 318, py(a, 1.15), 'above 1?!', C.violet, { size: 12, mono: false, anchor: 'end' })]),
                 frame('The sigmoid σ(z) = 1 / (1 + e⁻ᶻ) squashes the score z = wx + b into the range 0 to 1: an S-shaped curve, fitted by minimising cross-entropy.', [base, fnPath('line', a, sig, { stroke: C.cyan, sw: 3 })]),
                 frame(`Read off a probability: after ${round(boundary + 2, 1)} hours, P(pass) = ${round(sig(boundary + 2), 2)}. Far from the middle the curve flattens near 0 or 1: confident.`, [base, fnPath('line', a, sig, { stroke: C.cyan, sw: 3 }), line('read', px(a, boundary + 2), py(a, -0.25), px(a, boundary + 2), py(a, sig(boundary + 2)), { stroke: C.yellow, dash: '4 3' }), dot('rd', ...pt(a, boundary + 2, sig(boundary + 2)), C.yellow, 6)]),
                 frame(`Predict "pass" when P > 0.5. That happens where z = 0, at ${round(boundary, 1)} hours: the decision boundary. Points on the wrong side are the model's mistakes.`, [base, fnPath('line', a, sig, { stroke: C.cyan, sw: 3 }), line('bound', px(a, boundary), a.y, px(a, boundary), a.y + a.h, { stroke: C.yellow, sw: 2.5 }), label('bl', px(a, boundary) + 6, a.y + 10, 'boundary', C.yellow, { size: 12, mono: false })]),
@@ -231,9 +232,10 @@ const biasVariance = (): AnimationSpec => {
         fnPath('truth', a, truth, { stroke: C.grey, sw: 1.5, dash: '5 4' }),
         xs.map((x, i) => dot(`p${i}`, ...pt(a, x, ys[i]), C.amber, 5)),
     ];
+    // The readout sits top-left: the one corner that no fit, point or axis label reaches.
     const fitFrame = (deg: number, caption: (e: ReturnType<typeof errors>) => string, color: string) => {
         const e = errors(deg);
-        return frame(caption(e), [base, fnPath('fit', a, x => polyval(e.c, x), { stroke: color, sw: 3, n: 160 }), panel([[`degree ${deg}`, color], [`train ${round(e.train, 3)}`, C.cyan], [`validation ${round(e.val, 3)}`, C.pink]], 230, 150, 150)]);
+        return frame(caption(e), [base, fnPath('fit', a, x => polyval(e.c, x), { stroke: color, sw: 3, n: 160 }), panel([[`degree ${deg}`, color], [`train ${round(e.train, 3)}`, C.cyan], [`validation ${round(e.val, 3)}`, C.pink]], 84, 16, 132)]);
     };
     const degs = [1, 2, 3, 4, 5, 6, 7, 8, 9];
     const errs = degs.map(errors);
@@ -301,7 +303,8 @@ const metrics = (): AnimationSpec => {
             label('acc', 196, 216, `accuracy = ${round((tp + tn) / 80, 2)}`, C.grey, { size: 12 }),
         ];
     };
-    const at = (t: number, caption: string) => frame(caption, [stripes(t), matrix(t)]);
+    // The first step shows only the scores; the confusion matrix arrives with the step that explains it.
+    const at = (t: number, caption: string, counted = true) => frame(caption, [stripes(t), counted && matrix(t)]);
     // ROC: sweep the threshold from high to low.
     const r = axes(70, 20, 190, 190, 0, 1, 0, 1);
     const ts = range(1, 0, 41);
@@ -313,7 +316,9 @@ const metrics = (): AnimationSpec => {
         const points = roc.map((q, i) => pt(r, ...(i < shown ? q : roc[shown - 1])));
         const [fx, fy] = roc[shown - 1];
         return frame(caption, [
-            axisLines('rax', r, 'false positive rate', 'true positive rate'),
+            axisLines('rax', r, 'false positive rate'),
+            // The curve climbs into the top-left corner, so the y title sits beside the axis, not above it.
+            text('rax-yl', r.x - 8, r.y + r.h / 2, 'true\npositive\nrate', { anchor: 'end', size: 12, fill: C.grey }),
             line('diag', r.x, r.y + r.h, r.x + r.w, r.y, { stroke: C.dim, dash: '4 4' }),
             path('roc', points, { stroke: C.cyan, sw: 3 }),
             dot('now', ...pt(r, fx, fy), C.yellow, 6),
@@ -327,7 +332,7 @@ const metrics = (): AnimationSpec => {
             {
                 label: 'Moving the threshold',
                 frames: [
-                    at(0.5, 'The model gives each transaction a fraud score. Grey dots are innocent, green are real fraud. Everything right of the yellow threshold gets flagged.'),
+                    at(0.5, 'The model gives each transaction a fraud score. Grey dots are innocent, green are real fraud. Everything right of the yellow threshold gets flagged.', false),
                     at(0.5, 'The confusion matrix counts the four outcomes. Precision: of what we flagged, how much was fraud? Recall: of all fraud, how much did we catch?'),
                     at(0.3, 'Lower the threshold: we catch more fraud (recall up) but flag more innocent people (precision down).'),
                     at(0.7, 'Raise it: fewer false alarms (precision up), but more fraud slips through (recall down). The right threshold depends on which mistake costs more.'),
@@ -463,7 +468,8 @@ const knn = (): AnimationSpec => {
             A.map((p, i) => dot(`a${i}`, ...pt(a, ...p), C.cyan, 7)),
             B.map((p, i) => dot(`b${i}`, ...pt(a, ...p), C.pink, 7)),
             circle('q', ...pt(a, ...q), 8, { fill: verdict === 'A' ? C.cyan : verdict === 'B' ? C.pink : C.bg, stroke: C.yellow, sw: 3 }),
-            label('qa', ...pt(a, q[0] - 0.12, q[1] + 0.28), '?', C.yellow, { anchor: 'end', size: 14 }),
+            // Up and to the right: the one direction with no neighbour line.
+            label('qa', ...pt(a, q[0] + 0.12, q[1] + 0.28), '?', C.yellow, { anchor: 'start', size: 14 }),
             k > 0 && panel([[`k = ${k} · predict ${verdict}`, verdict === 'A' ? C.cyan : C.pink], [`votes A ${votesA} · B ${k - votesA}`, C.ink]], 250, 186, 144),
         ]);
     };

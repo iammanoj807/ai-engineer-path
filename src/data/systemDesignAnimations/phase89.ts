@@ -182,9 +182,10 @@ const videoStreaming = (): AnimationSpec => {
 const rideHailing = (): AnimationSpec => {
     const cols = 6;
     const rows = 4;
-    const cell = 52;
-    const gx = 40;
-    const gy = 26;
+    // 50 leaves a clear line under the grid for the note.
+    const cell = 50;
+    const gx = 50;
+    const gy = 22;
     const rider: [number, number] = [2, 1];
     const drivers: [string, number, number][] = [['d1', 3.6, 1.4], ['d2', 1.3, 2.2], ['d3', 2.4, 0.6], ['d4', 5.5, 3.5], ['d5', 0.4, 3.3]];
     const cellOf = (x: number, y: number) => [Math.floor(x), Math.floor(y)];
@@ -206,7 +207,7 @@ const rideHailing = (): AnimationSpec => {
         fill: tint(states[d[0]] ?? C.cyan, 0.8), stroke: C.bg, sw: 1.5, text: d[0].replace('d', ''), size: 9, weight: 800,
     }));
     const riderDot = circle('rider', gx + rx * cell, gy + ry * cell, 10, { fill: tint(C.pink, 0.9), stroke: C.bg, sw: 1.5, text: 'R', size: 10, weight: 800 });
-    const note = (value: string, color: string) => label('note', 10, 232, value, color, { size: 11 });
+    const note = (value: string, color: string) => label('note', 50, 232, value, color, { size: 11 });
     const [best, second] = ranked;
     const frames: Frame[] = [
         frame('Drivers send their location every few seconds. Only the LATEST position is kept, in an in-memory geo index that splits the city into cells (geohashes).', [grid(false), dots({})]),

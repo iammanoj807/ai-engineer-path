@@ -1,4 +1,4 @@
-import type { AnimationSpec, Frame } from '../../components/learning/anim/scene';
+import { lerpColor, type AnimationSpec, type Frame } from '../../components/learning/anim/scene';
 import {
     C,
     arrow,
@@ -35,7 +35,8 @@ const msg = (id: string, x: number, y: number, value: string, color: string, w =
     // Wide enough for the text, and kept inside the picture.
     const width = Math.min(380, Math.max(w, value.length * 6 + 16));
     const left = Math.max(10, Math.min(390 - width, x - width / 2));
-    return rect(id, left, y - 10, width, 20, { rx: 10, fill: tint(color, 0.45), stroke: color, sw: 1.5, text: value, size: 9.5, mono: true });
+    // A solid fill (the colour at 45% on the page background), so a line behind the chip can't show through its words.
+    return rect(id, left, y - 10, width, 20, { rx: 10, fill: lerpColor(C.bg, color, 0.45), stroke: color, sw: 1.5, text: value, size: 9.5, mono: true });
 };
 
 const block = (id: string, x: number, y: number, w: number, h: number, name: string, color: string, on: boolean) => {
@@ -114,12 +115,14 @@ const semanticSearch = (): AnimationSpec => {
         ['refund my order', 1.5, 1.2, C.amber], ['money back please', 1.9, 0.8, C.amber], ['cancel subscription', 1.1, 0.5, C.amber],
         ['app crashes on start', -0.6, -1.3, C.pink], ['screen goes black', -1.2, -1.8, C.pink], ['error code SKU-4471', 2.0, -0.8, C.grey],
     ];
-    const q: [number, number] = [-0.9, 0.6];
+    // Up and to the left of the login articles: the lines to them then cross no label.
+    const q: [number, number] = [-2.5, 1.7];
     const ranked = docs.map((d, i) => ({ i, d: Math.hypot(d[1] - q[0], d[2] - q[1]) })).sort((x, y) => x.d - y.d);
-    const scene = (showQ: boolean, topK: number, caption: string) => frame(caption, [
+    const scene = (showQ: boolean, topK: number, caption: string, extra: Part[] = []) => frame(caption, [
         docs.map(([t, x, y, c], i) => [dot(`d${i}`, ...pt(a, x, y), c, 6), text(`t${i}`, px(a, x) + 9, py(a, y), t, { size: 10.5, fill: c, anchor: 'start' })]),
-        showQ && [circle('q', ...pt(a, ...q), 8, { fill: C.yellow, stroke: C.bg, sw: 2, text: '?', textColor: C.bg, size: 11 }), label('ql', px(a, q[0]) + 12, py(a, q[1]) + 16, '"can\'t sign in"', C.yellow, { anchor: 'start', size: 11 })],
+        showQ && [circle('q', ...pt(a, ...q), 8, { fill: C.yellow, stroke: C.bg, sw: 2, text: '?', textColor: C.bg, size: 11 }), label('ql', 14, py(a, q[1]) - 18, '"can\'t sign in"', C.yellow, { anchor: 'start', size: 11 })],
         ranked.slice(0, topK).map(({ i }) => line(`l${i}`, ...pt(a, ...q), ...pt(a, docs[i][1], docs[i][2]), { stroke: C.yellow, sw: 2, dash: '4 3' })),
+        extra,
     ]);
     return {
         title: 'Semantic search: nearest meaning, not matching words',
@@ -129,7 +132,12 @@ const semanticSearch = (): AnimationSpec => {
                 scene(false, 0, 'An embedding model turns each help article into a vector (shown in 2-D). Articles about the same thing land close together, even with different words.'),
                 scene(true, 0, 'The user types "can\'t sign in". It shares no words with "I forgot my login", but it is embedded with the same model into the same space.'),
                 scene(true, 3, 'Find the closest vectors (by cosine similarity): the three login articles. That is semantic search: matching meaning, not keywords.'),
-                scene(true, 3, 'Its weakness: an exact code like "SKU-4471" has little meaning to embed, so a query for it may land nowhere near. Hybrid search adds keyword matching and combines the scores.'),
+                scene(true, 3, 'Its weakness: an exact code like "SKU-4471" has little meaning to embed, so a query for it may land nowhere near. Hybrid search adds keyword matching and combines the scores.', [
+                    // A query for the code lands far from the one article that mentions it.
+                    circle('q2', ...pt(a, -2.6, -0.4), 8, { fill: C.red, stroke: C.bg, sw: 2, text: '?', textColor: C.bg, size: 11 }),
+                    label('q2l', px(a, -2.6) - 8, py(a, -0.4) - 18, '"SKU-4471"', C.red, { anchor: 'start', size: 11 }),
+                    line('miss', ...pt(a, -2.6, -0.4), ...pt(a, 2.0, -0.8), { stroke: C.red, sw: 1.5, dash: '3 3' }),
+                ]),
             ],
         }],
     };
@@ -173,7 +181,7 @@ const ann = (): AnimationSpec => {
     const frames: Frame[] = [
         scene(0, 'An HNSW index links vectors into a graph with several layers. Search starts at an entry point on the sparse top layer and hops to whichever neighbour is closer to the query (yellow).'),
         scene(1, 'When no neighbour is closer, drop to the next, denser layer and keep hopping from there. Like zooming in on a map.'),
-        scene(2, `On the bottom layer, the walk ends next to the query${current === exact ? ', at the true nearest vector' : ', close to (but not exactly at) the true nearest vector'}. Only a handful of the 60 vectors were compared, instead of all of them. With millions of vectors that is the difference between milliseconds and seconds, at the price of occasionally missing the true best match.`),
+        scene(2, `On the bottom layer the walk ends next to the query${current === exact ? ', at the true nearest vector' : ', close to the true nearest vector but not exactly at it'}. Only a few of the 60 vectors were compared. With millions of vectors, that turns seconds into milliseconds, and sometimes misses the best match.`),
     ];
     return {
         title: 'Approximate nearest-neighbour search: hop through a graph instead of checking everything',
@@ -448,7 +456,7 @@ const cachingRouting = (): AnimationSpec => {
             mode === 'routed' && block('router', 10, 94, 80, 34, 'router', C.amber, false),
             mode === 'routed' && [arrow('ra', 90, 105, 108, 45, { stroke: C.grey }), arrow('rb', 90, 111, 108, 111, { stroke: C.grey }), arrow('rc', 90, 117, 108, 178, { stroke: C.grey })],
             shown,
-            panel([[`cost: ${cost} units`, cost > 60 ? C.red : C.green]], 260, 214, 134),
+            panel([[`cost: ${cost} units`, cost > 60 ? C.red : C.green]], 260, 206, 134),
         ]);
     };
     const bigOnly = reqs.length * 10;
@@ -478,11 +486,11 @@ const observability = (): AnimationSpec => {
         ['LLM call', 560, 2350, C.green, 1],
     ];
     const scale = (ms: number) => 130 + (ms / 2400) * 210;
-    const waterfall = (bad: boolean, detail: boolean) => [
+    const waterfall = (bad: boolean, detail: boolean, slowest = false) => [
         spans.map(([name, s, e, color, depth], i) => [
             text(`n${i}`, 14 + depth * 10, 40 + i * 30 + 9, name, { size: 11, fill: C.ink, anchor: 'start' }),
-            rect(`b${i}`, scale(s), 40 + i * 30, Math.max(3, scale(e) - scale(s)), 18, { rx: 4, fill: tint(bad && name === 'retrieve top 5' ? C.red : color, 0.75), stroke: bad && name === 'retrieve top 5' ? C.red : 'none', sw: 2 }),
-            text(`d${i}`, scale(e) + 4, 40 + i * 30 + 9, `${e - s} ms`, { size: 10, fill: C.grey, anchor: 'start' }),
+            rect(`b${i}`, scale(s), 40 + i * 30, Math.max(3, scale(e) - scale(s)), 18, { rx: 4, fill: tint(bad && name === 'retrieve top 5' ? C.red : color, 0.75), stroke: bad && name === 'retrieve top 5' ? C.red : slowest && name === 'LLM call' ? C.yellow : 'none', sw: 2 }),
+            text(`d${i}`, scale(e) + 4, 40 + i * 30 + 9, `${e - s} ms`, { size: 10, fill: slowest && name === 'LLM call' ? C.yellow : C.grey, anchor: 'start', weight: slowest && name === 'LLM call' ? 800 : 500 }),
         ]),
         detail && rect('detail', 14, 196, 372, 36, { rx: 6, fill: tint(C.red, 0.2), stroke: C.red, sw: 1.5, text: 'top result: "Refund policy (2023)" ← outdated', size: 10.5, mono: true }),
     ];
@@ -492,7 +500,7 @@ const observability = (): AnimationSpec => {
             label: 'A trace',
             frames: [
                 frame('A trace records one request as a tree of steps (spans), each with its inputs, outputs, time, tokens and cost.', [waterfall(false, false)]),
-                frame('Drawn as a waterfall, the LLM call dominates the 2.4 seconds. That tells you where speed work would pay off.', [waterfall(false, false)]),
+                frame('Drawn as a waterfall, the LLM call dominates the 2.4 seconds. That tells you where speed work would help most.', [waterfall(false, false, true)]),
                 frame('A user complains the bot quoted the wrong refund policy. Open that request\'s trace and inspect each span\'s output.', [waterfall(true, false)]),
                 frame('The retrieval span ranked an outdated 2023 policy first. The bug is in retrieval (add a date filter), not in the prompt. Turn this case into a new eval question so it stays fixed.', [waterfall(true, true)]),
             ],

@@ -24,7 +24,7 @@ const classBox = (id: string, x: number, y: number, w: number, name: string, lin
 
 const fourPillars = (): AnimationSpec => {
     const account = (on?: string) => classBox('acc', 120, 20, 160, 'BankAccount', ['- balance: £50', '+ deposit(amount)', '+ withdraw(amount)', '+ monthly_update()'], C.blue, { on });
-    const call = (value: string, color: string, y = 140): Part => [arrow('call-a', 70, y, 118, 70, { stroke: color, sw: 2 }), rect('call', 8, y - 10, 92, 20, { rx: 10, fill: tint(color, 0.5), stroke: color, sw: 1, text: value, size: 10, weight: 700, mono: true })];
+    const call = (value: string, color: string, y = 140): Part => [arrow('call-a', 70, y - 12, 118, 70, { stroke: color, sw: 2 }), rect('call', 8, y - 10, 92, 20, { rx: 10, fill: tint(color, 0.5), stroke: color, sw: 1, text: value, size: 10, weight: 700, mono: true })];
     const savings = (on?: string) => classBox('sav', 220, 140, 170, 'SavingsAccount', ['+ add_interest()', '+ monthly_update()'], C.green, { on });
     const current = (on?: string) => classBox('cur', 30, 140, 170, 'CurrentAccount', ['+ monthly_update()'], C.violet, { on });
     const isA: Part = [arrow('isa1', 305, 140, 240, 110, { stroke: C.grey, sw: 1.5 }), arrow('isa2', 115, 140, 160, 110, { stroke: C.grey, sw: 1.5 })];
@@ -184,6 +184,63 @@ const dip = (): AnimationSpec => {
     return { title: 'Dependency inversion: depend on an interface, pass the details in', variants: [{ label: 'Order repository', frames }] };
 };
 
+// ============ sd5-t8 · UML class diagrams and relationships ============
+
+const uml = (): AnimationSpec => {
+    type Kind = 'association' | 'aggregation' | 'composition' | 'inheritance' | 'realisation';
+    // The lesson's own parking-lot example, plus the team and its players for the one line it lacks.
+    const rows: { kind: Kind; left: string; right: string; reads: string; color: string; ends?: [string, string] }[] = [
+        { kind: 'association', left: 'Spot', right: 'Vehicle', reads: 'association: uses, or knows about', color: C.cyan, ends: ['1', '0..1'] },
+        { kind: 'aggregation', left: 'Team', right: 'Player', reads: 'aggregation: has; the part can exist alone', color: C.teal },
+        { kind: 'composition', left: 'ParkingLot', right: 'Floor', reads: 'composition: owns; the part dies with it', color: C.amber, ends: ['1', '*'] },
+        { kind: 'inheritance', left: 'Vehicle', right: 'Car', reads: 'inheritance: a Car is a kind of Vehicle', color: C.violet },
+        { kind: 'realisation', left: 'PaymentMethod', right: 'CardPayment', reads: 'realisation: implements the interface', color: C.pink },
+    ];
+    const top = (i: number) => 18 + i * 42;
+    /** One relationship: two class boxes, the line between them, and how to read it. */
+    const row = (i: number, on: boolean): Shape[] => {
+        const { kind, left, right, reads, color, ends } = rows[i];
+        const y = top(i) + 12;
+        const stroke = on ? color : C.grey;
+        const diamond = kind === 'aggregation' || kind === 'composition';
+        // The symbol sits at the left end: on the owner (a diamond) or on the parent (a triangle).
+        const symbol: Shape[] = kind === 'association'
+            ? []
+            : diamond
+                ? [path(`u${i}-end`, [[120, y], [128, y - 5], [136, y], [128, y + 5]], { closed: true, stroke, sw: 1.5, fill: kind === 'composition' ? stroke : C.bg })]
+                : [path(`u${i}-end`, [[120, y], [133, y - 6], [133, y + 6]], { closed: true, stroke, sw: 1.5, fill: C.bg })];
+        const classOf = (id: string, x: number, name: string) => rect(id, x, top(i), 104, 24, { rx: 5, fill: tint(color, on ? 0.4 : 0.12), stroke, sw: on ? 2 : 1.2, text: name, size: 11, weight: 800 });
+        return [
+            classOf(`u${i}-l`, 16, left),
+            classOf(`u${i}-r`, 280, right),
+            line(`u${i}-line`, kind === 'association' ? 120 : diamond ? 136 : 133, y, 280, y, { stroke, sw: 1.8, arrow: kind === 'association', dash: kind === 'realisation' ? '5 4' : undefined }),
+            ...symbol,
+            text(`u${i}-reads`, 200, top(i) + 33, reads, { size: 10, fill: on ? C.ink : C.grey, weight: 600 }),
+            // How many: one number at each end, clear of the arrowhead.
+            ...(ends ? [text(`u${i}-n1`, 146, y - 8, ends[0], { size: 9, fill: stroke, weight: 700 }), text(`u${i}-n2`, 264, y - 8, ends[1], { size: 9, fill: stroke, weight: 700, anchor: 'end' })] : []),
+        ];
+    };
+    const upTo = (count: number) => rows.slice(0, count).flatMap((_, i) => row(i, i === count - 1));
+    const part = (id: string, y: number, name: string) => [line(`${id}-tick`, 262, y, 272, y, { stroke: C.amber, sw: 1.5 }), text(id, 278, y, name, { size: 11, fill: C.amber, weight: 700, anchor: 'start' })];
+    const anatomy = [
+        classBox('cls', 110, 50, 150, 'Spot', ['size', 'vehicle', 'park(vehicle)', 'leave()'], C.cyan),
+        line('cls-div', 110, 104, 260, 104, { stroke: C.dim, sw: 1 }),
+        part('cls-name', 61, 'name'),
+        part('cls-fields', 89, 'fields'),
+        part('cls-methods', 119, 'methods'),
+    ];
+    const frames: Frame[] = [
+        frame('A class is a box: its name at the top, its key fields in the middle, its key methods at the bottom. In an interview, show only the ones that matter.', [anatomy]),
+        frame('Now the lines between boxes. Association, a plain arrow: one class uses or knows about another. A Spot holds 0 or 1 Vehicle; the numbers at the ends say how many.', [upTo(1)]),
+        frame('Aggregation, an empty diamond on the side that has the parts: a Team has Players, but a Player can exist without the Team.', [upTo(2)]),
+        frame('Composition, a filled diamond: the owner controls the part\'s lifetime. A Floor does not exist without its ParkingLot, and one lot has many (*) floors.', [upTo(3)]),
+        frame('Inheritance, a hollow triangle pointing at the parent: a Car is a kind of Vehicle.', [upTo(4)]),
+        frame('Realisation, the same triangle on a dashed line: CardPayment implements the PaymentMethod interface.', [upTo(5)]),
+        frame('To check a diagram, read each line aloud: "a ParkingLot owns many Floors", "a Car is a Vehicle". If the sentence sounds wrong, the line is wrong.', [rows.flatMap((_, i) => row(i, true))]),
+    ];
+    return { title: 'Reading a class diagram: a box for each class, then five kinds of line', variants: [{ label: 'The five lines', frames }] };
+};
+
 // ============ sd5-t9 · Concurrency: race conditions and locks ============
 
 const concurrency = (): AnimationSpec => {
@@ -272,9 +329,10 @@ const builder = (): AnimationSpec => {
 
 const adapter = (): AnimationSpec => {
     const nodes: FNode[] = [
-        { id: 'code', x: 6, y: 96, w: 84, h: 42, label: 'your code\npay(pounds)', color: C.blue, size: 10 },
-        { id: 'adp', x: 160, y: 90, w: 96, h: 54, label: 'Payment\nAdapter', color: C.amber, size: 10 },
-        { id: 'sdk', x: 318, y: 96, w: 76, h: 42, label: 'bank SDK\nmake_payment(\npence, currency)', color: C.violet, size: 8 },
+        { id: 'code', x: 6, y: 96, w: 80, h: 42, label: 'your code\npay(pounds)', color: C.blue, size: 10 },
+        { id: 'adp', x: 152, y: 90, w: 92, h: 54, label: 'Payment\nAdapter', color: C.amber, size: 10 },
+        // Wide enough for its three lines at a size that can be read on a phone.
+        { id: 'sdk', x: 304, y: 96, w: 90, h: 42, label: 'bank SDK\nmake_payment(\npence, currency)', color: C.violet, size: 9 },
     ];
     const edges: FEdge[] = [{ from: 'code', to: 'adp' }, { from: 'adp', to: 'sdk' }];
     const frames = flow(nodes, edges, [
@@ -447,6 +505,7 @@ export const phase56Animations: Record<string, () => AnimationSpec> = {
     'sd5-t5': lsp,
     'sd5-t6': isp,
     'sd5-t7': dip,
+    'sd5-t8': uml,
     'sd5-t9': concurrency,
     'sd6-t1': singleton,
     'sd6-t2': factory,

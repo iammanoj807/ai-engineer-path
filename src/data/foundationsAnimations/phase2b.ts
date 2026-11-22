@@ -196,7 +196,8 @@ const ensembles = (): AnimationSpec => {
 // ============ f2-t12 · Support vector machines ============
 
 const svm = (): AnimationSpec => {
-    const a = axes(30, 10, 210, 210, 0, 7, 0, 7);
+    // 16 px above and 24 below keep both axis titles inside the picture.
+    const a = axes(34, 16, 200, 200, 0, 7, 0, 7);
     const neg: [number, number][] = [[2, 3], [3, 2], [1, 1], [0.6, 3.2], [2.1, 0.6], [1.2, 2.1]];
     const pos: [number, number][] = [[3, 4], [4, 3], [5, 5], [6, 3.6], [4, 6], [5.6, 5.8]];
     const points = (sv: boolean) => [
@@ -217,6 +218,8 @@ const svm = (): AnimationSpec => {
     ];
     const h = axes(40, 20, 320, 180, -2.5, 3, 0, 3.5);
     const hinge = (s: number) => Math.max(0, 1 - s);
+    // The loss label starts right of the point, but never across one of the two dashed lines.
+    const labelStart = (s: number, value: string) => [px(h, 0), px(h, 1)].reduce((x, guide) => (x < guide && x + value.length * 12 * 0.6 > guide ? guide + 6 : x), px(h, s) + 10);
     const probe = (s: number, caption: string) => frame(caption, [
         axisLines('hax', h, 'y · score', 'hinge loss'),
         fnPath('hinge', h, hinge, { stroke: C.pink, sw: 3 }),
@@ -225,7 +228,7 @@ const svm = (): AnimationSpec => {
         text('onel', px(h, 1), h.y + h.h + 14, '1', { size: 11, fill: C.dim }),
         text('zerol', px(h, 0), h.y + h.h + 14, '0', { size: 11, fill: C.dim }),
         dot('pt', ...pt(h, s, hinge(s)), C.yellow, 7),
-        label('v', px(h, s) + 10, py(h, hinge(s)) - 12, `loss ${round(hinge(s), 2)}`, C.yellow, { size: 12 }),
+        label('v', labelStart(s, `loss ${round(hinge(s), 2)}`), py(h, hinge(s)) - 12, `loss ${round(hinge(s), 2)}`, C.yellow, { size: 12 }),
     ]);
     const hingeFrames: Frame[] = [
         probe(2, 'The hinge loss is max(0, 1 − y·score), with labels y = ±1. A point on the right side, past the margin (y·score = 2): loss 0.'),
@@ -269,8 +272,9 @@ const naiveBayes = (): AnimationSpec => {
             ]),
             rect('barS', 30, 170, w * share, 26, { fill: tint(C.pink, 0.8) }),
             rect('barH', 30 + w * share, 170, w * (1 - share), 26, { fill: tint(C.green, 0.8) }),
-            label('ps', 36, 183, `spam ${Math.round(share * 1000) / 10}%`, C.ink, { size: 12 }),
-            label('ph', 364, 183, `ham ${Math.round((1 - share) * 1000) / 10}%`, C.ink, { size: 12, anchor: 'end' }),
+            // A share too narrow to hold its own label gets the label above the bar.
+            label('ps', 36, w * share >= 84 ? 183 : 160, `spam ${Math.round(share * 1000) / 10}%`, w * share >= 84 ? C.ink : C.pink, { size: 12 }),
+            label('ph', 364, w * (1 - share) >= 84 ? 183 : 160, `ham ${Math.round((1 - share) * 1000) / 10}%`, w * (1 - share) >= 84 ? C.ink : C.green, { size: 12, anchor: 'end' }),
             label('calc', 30, 216, `${round(s, 6)} vs ${round(h, 6)}`, C.grey, { size: 11 }),
         ]);
     };
@@ -454,8 +458,8 @@ const generalisation = (): AnimationSpec => {
     const curve = (upTo: number) => path('dd', xsF.map((x, i) => pt(d, i < upTo ? x : xsF[upTo - 1], i < upTo ? ysF[i] : ysF[upTo - 1])), { stroke: C.violet, sw: 3 });
     const dbl: Frame[] = [
         frame('Illustration: test error as a model gets more features (parameters), trained on 100 points. Classical regime first.', [axisLines('ax', d, '', 'test error'), [100, 500, 1000].map(v => text(`xt${v}`, px(d, v), d.y + d.h + 14, String(v), { size: 11, fill: C.dim })), curve(4)]),
-        frame('Classical U-shape: error falls, then rises as the model starts fitting noise. At 100 features (= 100 training points) it can fit them exactly, and error spikes.', [axisLines('ax', d, '', 'test error'), [100, 500, 1000].map(v => text(`xt${v}`, px(d, v), d.y + d.h + 14, String(v), { size: 11, fill: C.dim })), curve(7), line('interp', px(d, 100), d.y, px(d, 100), d.y + d.h, { stroke: C.red, dash: '4 4' })]),
-        frame('Keep growing, and test error falls again, below the classical best. This second descent is "double descent", seen in linear models and deep networks alike.', [axisLines('ax', d, '', 'test error'), [100, 500, 1000].map(v => text(`xt${v}`, px(d, v), d.y + d.h + 14, String(v), { size: 11, fill: C.dim })), curve(15), line('interp', px(d, 100), d.y, px(d, 100), d.y + d.h, { stroke: C.red, dash: '4 4' })]),
+        frame('Classical U-shape: error falls, then rises as the model starts fitting noise. At 100 features (= 100 training points) it can fit them exactly, and error spikes.', [axisLines('ax', d, '', 'test error'), [100, 500, 1000].map(v => text(`xt${v}`, px(d, v), d.y + d.h + 14, String(v), { size: 11, fill: C.dim })), curve(7), line('interp', px(d, 100), d.y + 12, px(d, 100), d.y + d.h, { stroke: C.red, dash: '4 4' })]),
+        frame('Keep growing, and test error falls again, below the classical best. This second descent is "double descent", seen in linear models and deep networks alike.', [axisLines('ax', d, '', 'test error'), [100, 500, 1000].map(v => text(`xt${v}`, px(d, v), d.y + d.h + 14, String(v), { size: 11, fill: C.dim })), curve(15), line('interp', px(d, 100), d.y + 12, px(d, 100), d.y + d.h, { stroke: C.red, dash: '4 4' })]),
     ];
     return {
         title: 'Capacity and the surprise of double descent',

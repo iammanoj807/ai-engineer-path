@@ -415,6 +415,46 @@ const interviewMethod = (): AnimationSpec => {
     return { title: 'Five steps for any SQL question', variants: [{ label: 'The city question', frames }] };
 };
 
+// ============ sql8-t2 · Quick-fire SQL theory questions ============
+
+const quickFire = (): AnimationSpec => {
+    const parts = ['1 Define both', '2 Key difference', '3 When to use each'];
+    const slots = (on: number) => parts.map((part, i) => rect(`p${i}`, 8 + i * 130, 30, 124, 24, {
+        rx: 6, fill: tint(i === on ? C.amber : i < on ? C.green : C.grey, i === on ? 0.5 : i < on ? 0.22 : 0.08), stroke: i === on ? C.amber : C.faint, sw: 1.5, text: part, size: 10, weight: 700, mono: true,
+    }));
+    const question = label('q', 8, 14, '"What is the difference between WHERE and HAVING?"', C.cyan, { size: 12, mono: false });
+    /** How far into a thirty-second answer you are. */
+    const clock = (seconds: number) => [
+        rect('clock-bg', 8, 62, 384, 8, { rx: 4, fill: tint(C.grey, 0.15), stroke: 'none' }),
+        rect('clock', 8, 62, (384 * seconds) / 30, 8, { rx: 4, fill: seconds >= 30 ? C.green : C.amber, stroke: 'none' }),
+        label('clock-t', 392, 82, seconds >= 30 ? '30 seconds: stop' : seconds === 0 ? 'the clock starts' : `about ${seconds} seconds`, C.grey, { size: 10, anchor: 'end', mono: false }),
+    ];
+    const said = (lines: string[]) => lines.map((value, i) => label(`say${i}`, 14, 106 + i * 22, value, C.ink, { size: 12, mono: false }));
+    // The tiny example, on the practice database: delivered orders, then customers with 100 or more in total.
+    const delivered = orders().filter(o => o.status === 'delivered');
+    const totals = [...new Set(delivered.map(o => o.customer_id))].map(id => delivered.filter(o => o.customer_id === id).reduce((s, o) => s + (o.amount as number), 0));
+    const example = [
+        box('e1', 8, 150, 80, 40, `orders\n${orders().length} rows`, C.grey, { size: 10 }),
+        arrow('ea1', 90, 170, 108, 170, { stroke: C.grey }),
+        box('e2', 110, 150, 84, 40, `delivered\n${delivered.length} rows`, C.cyan, { size: 10 }),
+        arrow('ea2', 196, 170, 214, 170, { stroke: C.grey }),
+        box('e3', 216, 150, 84, 40, `per customer\n${totals.length} groups`, C.cyan, { size: 10 }),
+        arrow('ea3', 302, 170, 320, 170, { stroke: C.grey }),
+        box('e4', 322, 150, 70, 40, `100 or more\n${totals.filter(total => total >= 100).length} groups`, C.green, { size: 10 }),
+        label('ew', 99, 204, 'WHERE', C.amber, { size: 10, anchor: 'middle' }),
+        label('eg', 205, 204, 'GROUP BY', C.grey, { size: 10, anchor: 'middle' }),
+        label('eh', 311, 204, 'HAVING', C.amber, { size: 10, anchor: 'middle' }),
+    ];
+    const frames: Frame[] = [
+        frame('A question that opens many interviews. Answer every question like it with the same three parts, in under thirty seconds.', [question, slots(-1), clock(0)]),
+        frame('One: define both sides, a sentence each.', [question, slots(0), clock(8), said(['"WHERE filters rows.', 'HAVING filters groups."'])]),
+        frame('Two: give the difference that matters. Not every difference: the one an interviewer is listening for.', [question, slots(1), clock(18), said(['"WHERE runs before grouping, so it can\'t use aggregates.', 'HAVING runs after grouping, so it can."'])]),
+        frame('Three: say when you would use each.', [question, slots(2), clock(25), said(['"A condition on a row goes in WHERE.', 'A condition on a total goes in HAVING."'])]),
+        frame('Offer a tiny example from tables you know, then stop talking. Here: WHERE keeps the delivered orders, and HAVING keeps the customers whose total is 100 or more.', [question, slots(3), clock(30), said(['"Delivered orders only: WHERE.', 'Customers with 100 or more in total: HAVING."']), example]),
+    ];
+    return { title: 'A thirty-second answer in three parts', variants: [{ label: 'WHERE vs HAVING', frames }] };
+};
+
 export const phase678Animations: Record<string, () => AnimationSpec> = {
     'sql6-t1': createAlter,
     'sql6-t2': constraints,
@@ -428,6 +468,7 @@ export const phase678Animations: Record<string, () => AnimationSpec> = {
     'sql7-t3': sargable,
     'sql7-t4': joinMethods,
     'sql8-t1': interviewMethod,
+    'sql8-t2': quickFire,
 };
 
 export const phase678Checks: Record<string, () => { example: number; rows: ResultRows }[]> = {

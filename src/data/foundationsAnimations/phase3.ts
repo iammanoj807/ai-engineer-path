@@ -52,7 +52,8 @@ const neuron = (): AnimationSpec => {
     const inputs = (on: boolean) => xs.map((x, i) => circle(`x${i}`, 50, inY[i], 22, { fill: tint(C.cyan, on ? 0.55 : 0.3), stroke: C.cyan, sw: 2, text: `x${i + 1}=${x}`, size: 11 }));
     const edges = (show: 'w' | 'p' | 'none') => xs.map((_, i) => [
         line(`e${i}`, 72, inY[i], 178, 120, { stroke: ws[i] > 0 ? C.green : C.pink, sw: 1.5 + Math.abs(ws[i]) * 3 }),
-        show !== 'none' && label(`el${i}`, 118, (inY[i] + 120) / 2 - 10, show === 'w' ? `w=${ws[i]}` : `${round(products[i], 2)}`, ws[i] > 0 ? C.green : C.pink, { anchor: 'middle', size: 11 }),
+        // Beside each line, never on it: above the top and middle lines, below the bottom one.
+        show !== 'none' && label(`el${i}`, i === 1 ? 118 : 130, [70, 110, 170][i], show === 'w' ? `w=${ws[i]}` : `${round(products[i], 2)}`, ws[i] > 0 ? C.green : C.pink, { anchor: 'middle', size: 11 }),
     ]);
     const sum = (value: string, on: boolean) => {
         const s = circle('sum', 200, 120, 26, { fill: tint(C.violet, on ? 0.6 : 0.3), stroke: C.violet, sw: 2, text: value, size: 12 });
@@ -214,7 +215,7 @@ const autograd = (): AnimationSpec => {
     const d = e + vals.c;
     const L = d * vals.f;
     const grads = { L: 1, d: vals.f, f: d, e: vals.f, c: vals.f, a: vals.f * vals.b, b: vals.f * vals.a };
-    const P: Record<string, [number, number]> = { a: [40, 50], b: [40, 130], e: [150, 90], c: [150, 175], d: [255, 130], f: [255, 205], L: [355, 165] };
+    const P: Record<string, [number, number]> = { a: [40, 50], b: [40, 130], e: [150, 90], c: [150, 175], d: [255, 130], f: [255, 200], L: [355, 165] };
     const leaves = ['a', 'b', 'c', 'f'];
     const order = ['a', 'b', 'e', 'c', 'd', 'f', 'L'];
     const value = (k: string) => ({ ...vals, e, d, L } as Record<string, number>)[k];
@@ -314,13 +315,13 @@ const optimisers = (): AnimationSpec => {
             path(`p-${name}`, ps.map((q, i) => pt(a, ...(i <= steps ? q : ps[steps]))), { stroke: color, sw: 2.5 }),
             circle(`b-${name}`, ...pt(a, ...ps[steps]), 6, { fill: color, stroke: C.bg, sw: 1.5 }),
         ]),
-        panel(runs.map(([name, ps, color]) => [`${name}: f = ${round(f(...ps[steps]), 2)}`, color] as [string, string]), 220, 178, 172),
+        panel(runs.map(([name, ps, color]) => [`${name}: f = ${round(f(...ps[steps]), 2)}`, color] as [string, string]), 220, 170, 172),
     ], 2600);
     const raceFrames: Frame[] = [
         race(0, 'A long, narrow valley: steep across, gentle along. All three optimisers start at the same point (left) and aim for the yellow minimum.'),
         race(4, 'SGD (red) bounces across the steep walls, because the gradient points mostly across the valley, not along it.'),
         race(12, 'Momentum (orange) averages its recent steps: the side-to-side parts cancel and speed builds up along the valley.'),
-        race(40, 'Adam (green) scales each direction by its typical gradient size, so its path is straighter early on. Here all three end near the bottom, but only because SGD\'s learning rate was set just under the value where it would blow up. Adam works well across many problems with little tuning, which is why AdamW is the usual default.'),
+        race(40, 'Adam (green) scales each direction by its typical gradient size, so its path is straighter early on. All three end near the bottom here, but SGD needed a carefully chosen learning rate. Adam needs little tuning, so AdamW is the usual default.'),
     ];
     const s = axes(46, 20, 330, 180, 0, 1000, 0, 1.1);
     const lr = (t: number) => (t < 100 ? t / 100 : 0.5 * (1 + Math.cos((Math.PI * (t - 100)) / 900)));
@@ -581,8 +582,9 @@ const convolution = (): AnimationSpec => {
         return frame(caption, [
             cells('g', 60, 20, 9, 9, 20, () => '', (r, c) => (Math.abs(r - centre) <= layer && Math.abs(c - centre) <= layer ? tint(C.cyan, 0.25 + 0.15 * (3 - layer)) : '#11161d'), { gap: 2 }),
             rect('one', 60 + centre * 22 - 2, 20 + centre * 22 - 2, 24, 24, { fill: 'none', stroke: C.amber, sw: 3, rx: 3 }),
-            label('rf', 290, 100, `${span} × ${span}`, C.cyan, { anchor: 'middle', size: 22 }),
-            label('rf2', 290, 130, layer === 0 ? 'one pixel' : `after ${layer} layer${layer === 1 ? '' : 's'} of 3 × 3`, C.grey, { anchor: 'middle', size: 12, mono: false }),
+            // Centred in the free space right of the grid (which ends at x = 256).
+            label('rf', 328, 100, `${span} × ${span}`, C.cyan, { anchor: 'middle', size: 22 }),
+            label('rf2', 328, 134, layer === 0 ? 'one pixel' : `after ${layer} layer${layer === 1 ? '' : 's'}\nof 3 × 3`, C.grey, { anchor: 'middle', size: 12, mono: false }),
         ]);
     };
     const field: Frame[] = [
@@ -659,7 +661,7 @@ const rnn = (): AnimationSpec => {
             text(`hl${t}`, x + 18, 44, `h${t + 1}`, { size: 11, fill: shown ? C.grey : C.faint }),
         ];
     };
-    const scene = (upTo: number, caption: string) => frame(caption, [Array.from({ length: tokens.length }, (_, t) => cell(t, upTo)), label('key', 20, 206, 'colour = how much of each letter the memory still holds', C.grey, { size: 11, mono: false })]);
+    const scene = (upTo: number, caption: string, extra: Part[] = []) => frame(caption, [Array.from({ length: tokens.length }, (_, t) => cell(t, upTo)), label('key', 20, 206, 'colour = how much of each letter the memory still holds', C.grey, { size: 11, mono: false }), extra]);
     return {
         title: 'An RNN reads one step at a time, with a fading memory',
         variants: [{
@@ -668,7 +670,11 @@ const rnn = (): AnimationSpec => {
                 scene(0, 'An RNN reads "the cat" one character at a time. After "t", the hidden state h₁ (its memory) is all about "t".'),
                 scene(2, 'Each step mixes the new character into the memory using the same weights: hₜ = tanh(W·hₜ₋₁ + U·xₜ). Older characters take up less and less room.'),
                 scene(6, 'By the last "t", the first "t" is a thin sliver. Information from far back fades, because it has been squeezed through the same small memory again and again.'),
-                scene(6, 'Training has the same problem in reverse: the gradient to early steps is multiplied by W at every step. If that factor is 0.9, after 100 steps it is 0.9¹⁰⁰ ≈ 0.00003: vanished. LSTMs and then transformers were invented to fix this.'),
+                scene(6, 'Training has the same problem in reverse: the gradient to early steps is multiplied by W at every step. If that factor is 0.9, after 100 steps it is 0.9¹⁰⁰ ≈ 0.00003: vanished. LSTMs and then transformers were invented to fix this.', [
+                    // The gradient travels back the way the reading came.
+                    arrow('back', 356, 30, 44, 30, { stroke: C.red, sw: 2 }),
+                    text('backl', 200, 16, 'the gradient goes back through every step, × W each time', { size: 10, fill: C.red, weight: 700 }),
+                ]),
             ],
         }],
     };
