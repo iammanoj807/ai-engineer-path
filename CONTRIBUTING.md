@@ -47,6 +47,8 @@ So when you improve a lesson, its practice improves too:
 - **Key points and the lesson's false statements** become spot-the-mistake cards, together with the sentences of the one-line definition. Each one is shown on its own, so write it so that it makes sense alone, and say what a formula's letters stand for.
 - **Common mistakes** are read in the lesson and in "Learn it step by step". They are not quizzed, because "Forgetting to…" gives itself away. Still say why each one is a mistake.
 
+The coaches read each question aloud from recordings. A new or changed line is spoken by the device's own voice until it is recorded: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#the-guides-voices) shows how, and how to check a name is said correctly.
+
 ## Every lesson has a false statement
 
 A lesson's `myths` holds one or two statements that sound right and are wrong, each with what is true instead:

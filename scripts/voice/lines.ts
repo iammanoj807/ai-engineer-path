@@ -9,7 +9,7 @@
 // "eta"), code hints left out, and SQL keywords in lower case so they are read
 // as words, not spelled. The bubble still shows the line as written.
 
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import initSqlJs from 'sql.js';
 import { allFoundationTopics } from '../../src/data/foundations';
 import { allSqlTopics } from '../../src/data/sql';
@@ -190,4 +190,15 @@ const words = list.reduce((n, line) => n + line.say.split(' ').length, 0);
 const changed = list.filter(line => line.say !== line.text);
 console.log(`${list.length} lines (${GUIDES.map(g => `${g} ${list.filter(l => l.guide === g).length}`).join(', ')}), ${words} words, about ${Math.round(words / 2.6 / 60)} minutes of speech.`);
 console.log(`${changed.length} said differently from how they are written, ${changed.filter(line => line.say === SAID_INSTEAD).length} replaced by a short invitation.`);
+
+// What scripts/voice/record.py would record now: lines with no recording, and lines whose spoken words have changed since.
+const recordedKeys = new Set<string>(existsSync('public/voice/manifest.json') ? Object.keys((JSON.parse(readFileSync('public/voice/manifest.json', 'utf8')) as { clips: Record<string, unknown> }).clips) : []);
+const saidWhenRecorded: Record<string, string> = existsSync('scripts/voice/said.json') ? JSON.parse(readFileSync('scripts/voice/said.json', 'utf8')) : {};
+const unrecorded = list.filter(line => !recordedKeys.has(line.key));
+const reworded = list.filter(line => recordedKeys.has(line.key) && saidWhenRecorded[line.key] !== undefined && saidWhenRecorded[line.key] !== line.say);
+if (unrecorded.length + reworded.length === 0) console.log('Every line has an up-to-date recording.');
+else {
+    console.log(`To record: ${unrecorded.length} line${unrecorded.length === 1 ? '' : 's'} with no recording yet, ${reworded.length} whose spoken words changed. Run scripts/voice/record.py (see docs/DEVELOPMENT.md).`);
+    for (const line of [...unrecorded, ...reworded].slice(0, 12)) console.log(`   ${line.guide}: ${line.say}`);
+}
 if (process.env.SHOW) for (const line of changed) console.log(`  ${line.text}\n   → ${line.say}`);

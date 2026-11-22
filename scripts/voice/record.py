@@ -9,6 +9,10 @@ mouth while they talk. Only lines without a recording are recorded, and
 recordings no longer used are deleted, so a re-run after a small change is
 quick and leaves the other files alone.
 
+A line is also recorded again when the words it is spoken with have changed
+(a new rule in lines.ts, say). scripts/voice/said.json keeps the words each
+recording was made from, so that is noticed without anyone deleting files.
+
 Needs Python 3.10 to 3.13 with kokoro-onnx, soundfile and numpy, and ffmpeg.
 The model: https://github.com/thewh1teagle/kokoro-onnx/releases (model-files-v1.0).
 Kokoro is Apache-2.0 licensed, so its recordings can ship with the site.
@@ -26,6 +30,8 @@ import soundfile as sf
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 OUT = os.path.join(ROOT, "public", "voice")
+# The words each recording was made from: a line whose spoken form changes is recorded again.
+SAID = os.path.join(ROOT, "scripts", "voice", "said.json")
 FPS = 20
 # A little slower than the model's own pace: clear for beginners, still lively.
 SPEED = 0.95
@@ -97,12 +103,17 @@ def main():
     if os.path.exists(manifest_path):
         with open(manifest_path) as f:
             old = json.load(f).get("clips", {})
+    said = {}
+    if os.path.exists(SAID):
+        with open(SAID, encoding="utf-8") as f:
+            said = json.load(f)
 
     kokoro = Kokoro(os.path.join(args.model, "kokoro-v1.0.onnx"), os.path.join(args.model, "voices-v1.0.bin"))
     clips, made = {}, 0
     for n, line in enumerate(lines, 1):
         key, path = line["key"], os.path.join(OUT, f"{line['key']}.mp3")
-        if key in old and os.path.exists(path):
+        # A recording with no entry in said.json is taken to be up to date.
+        if key in old and os.path.exists(path) and said.get(key, line["say"]) == line["say"]:
             clips[key] = old[key]
             continue
         y, sr = kokoro.create(line["say"], voice=line["voice"], speed=SPEED, lang="en-us")
@@ -123,6 +134,9 @@ def main():
         os.remove(os.path.join(OUT, name))
     with open(manifest_path, "w") as f:
         json.dump({"voices": data["voices"], "fps": FPS, "clips": clips}, f, separators=(",", ":"))
+    with open(SAID, "w", encoding="utf-8") as f:
+        json.dump({line["key"]: line["say"] for line in lines}, f, ensure_ascii=False, indent=0, sort_keys=True)
+        f.write("\n")
     size = sum(os.path.getsize(os.path.join(OUT, name)) for name in os.listdir(OUT))
     print(f"Recorded {made}, kept {len(clips) - made}, removed {len(removed)}. public/voice is {size / 1e6:.1f} MB.")
 

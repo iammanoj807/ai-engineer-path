@@ -6,7 +6,8 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // Built or generated files, and the voice model's Python environment (docs/DEVELOPMENT.md).
+  globalIgnores(['dist', 'generated', '.voice']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

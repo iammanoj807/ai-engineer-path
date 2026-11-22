@@ -67,17 +67,42 @@ For local development, put the same values in `.env.local` (see `.env.example`).
 
 Ada and Alan say every practice line out loud, and their mouths move in step. The lines are recorded ahead of time with [Kokoro](https://github.com/thewh1teagle/kokoro-onnx), a free open-source voice model (Apache-2.0), into `public/voice/`: one small MP3 per line, and `manifest.json` with each line's mouth shapes. The voices are set in `scripts/voice/lines.ts` (`VOICE_MODELS`).
 
-After lessons change, record the new lines (only new or changed lines are recorded; unused recordings are deleted):
+After lessons change, see what needs recording, then record it:
 
 ```bash
-npx vite-node scripts/voice/lines.ts          # every line, to generated/voice-lines.json
-# once: Python 3.12, the model and ffmpeg
-uv venv --python 3.12 .voice && uv pip install --python .voice/bin/python kokoro-onnx soundfile numpy
-#   download kokoro-v1.0.onnx and voices-v1.0.bin from the kokoro-onnx releases (model-files-v1.0) into a folder
-.voice/bin/python scripts/voice/record.py --model <that folder>
+npx vite-node scripts/voice/lines.ts                              # writes every line to generated/voice-lines.json, and says how many need recording
+.voice/bin/python scripts/voice/record.py --model .voice/model    # records them
+```
+
+Only new lines are recorded, and lines whose spoken words have changed; recordings that no line uses are deleted. `scripts/voice/said.json` keeps the words each recording was made from, which is how a change is noticed. Commit it together with `public/voice/`.
+
+Set up once (it needs [uv](https://docs.astral.sh/uv/) and ffmpeg; the folder is git-ignored and takes about 500 MB):
+
+```bash
+uv venv --python 3.12 .voice                                      # kokoro-onnx needs Python 3.10 to 3.13
+uv pip install --python .voice/bin/python kokoro-onnx soundfile numpy
+mkdir -p .voice/model
+for f in kokoro-v1.0.onnx voices-v1.0.bin; do
+  curl -L --fail -o .voice/model/$f https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/$f
+done
 ```
 
 A line that has no recording yet is still spoken, by the device's own voice, but only in a voice of the guide's gender.
+
+### How a line is said
+
+A line is not read exactly as it is written. `spokenForm` in `scripts/voice/lines.ts` turns symbols into words ("x²" is said "x squared", "`COUNT(*)`" is "count star"), and replaces code that can't be read aloud with a short invitation to work it out. The voice model also gets some names wrong, so the `SOUNDS_LIKE` table there respells them the way they sound: "vs" as "versus", "Redis" as "reddiss", "VAEs" as "V eh Es".
+
+You can see how the model will say something without listening to it. Ask for its sounds (phonemes):
+
+```bash
+.voice/bin/python -c "
+from kokoro_onnx import Kokoro
+k = Kokoro('.voice/model/kokoro-v1.0.onnx', '.voice/model/voices-v1.0.bin')
+print(k.tokenizer.phonemize('Why use RAG instead of fine-tuning?', 'en-us'))"
+```
+
+Check the whole sentence, not the word alone. By itself "RAG" comes out as "rag", but inside that sentence the model spells it out, R, A, G, which is why the table writes it in lower case. Try a respelling the same way before you add it.
 
 ## Welcome and reminder emails
 
