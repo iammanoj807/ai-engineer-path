@@ -36,19 +36,73 @@ const SQL_WORDS = /\b(SELECT|FROM|WHERE|GROUP BY|ORDER BY|HAVING|LEFT JOIN|RIGHT
 
 const SAID_INSTEAD = "Here's one to work out. Take your time, then show the answer.";
 
+/**
+ * Names and short forms the voice model gets wrong, written the way they sound.
+ * Each one was checked against the sounds the model makes for it (its phonemes:
+ * `kokoro.tokenizer.phonemize(text, 'en-us')`), before and after, not guessed.
+ */
+const SOUNDS_LIKE: [RegExp, string][] = [
+    // Read letter by letter as "V S" and "N T H".
+    [/\bvs\.?(?=\s)/g, 'versus'],
+    [/\b[Nn]th\b/g, 'enth'],
+    // "eigen" with a hard g.
+    [/\b([Ee])igen(?=value|vector)/g, '$1igan'],
+    // Plurals of spelled-out names: the model drops the s, or reads the name as one word ("vee", "groo").
+    [/\bVAEs\b/g, 'V eh Es'],
+    [/\bGRUs\b/g, "G R U's"],
+    [/\bCTEs\b/g, "C T E's"],
+    [/\bLLMs\b/g, "L L M's"],
+    [/\bLSTMs\b/g, "L S T M's"],
+    [/\bRNNs\b/g, "R N N's"],
+    [/\bGANs\b/g, 'gans'],
+    [/\bNULLs\b/g, 'nulls'],
+    // Letters the model would read as a word ("ap", "em", "oop", "umul").
+    [/\bAP\b/g, 'A-P'],
+    [/\bEM\b/g, 'E M'],
+    [/\bOOP\b/g, 'O O P'],
+    [/\bUML\b/g, 'U M L'],
+    // Said as a word. (Alone the model says "rag", but inside a sentence it spells out R, A, G.)
+    [/\bRAG\b/g, 'rag'],
+    // Products and libraries.
+    [/\bViT\b/g, 'vit'],
+    [/\bLoRA\b/g, 'Lora'],
+    [/\bRedis\b/g, 'reddiss'],
+    [/\bMemcached\b/g, 'memcache dee'],
+    [/\bpytest\b/g, 'py test'],
+    [/\bUber\b/g, 'Oober'],
+    [/\bbit\.ly\b/g, 'bitly'],
+    [/\bnp\.allclose\b/g, 'np dot all close'],
+    [/\benum\b/g, 'eenum'],
+    [/(\d) GB\b/g, '$1 gigabytes'],
+    // People in the practice tables.
+    [/\bAsha\b/g, 'Ahsha'],
+    [/\bEli\b/g, 'Eelye'],
+    // A matrix or an array called A: the letter's name ("eh" is how the model says it), not the word "a".
+    [/\bA(?= (?:has shape|dot |x equals))/g, 'Eh'],
+];
+
 /** How a line is said: the same words, made speakable. */
 export const spokenForm = (text: string): string => {
     let said = tidyLine(text)
         // A code hint at the end is for reading, not hearing.
         .replace(/\s*\(Hint:[\s\S]*$/, '')
+        // A short call in code is said, so the sentence keeps its subject: `COUNT(*)` is "count star", `MAX(salary)` is "max of salary".
+        .replace(/`([A-Za-z_]+)\(\*\)`/g, '$1 star')
+        .replace(/`([A-Za-z_]+)\(([\w.]+)\)`/g, '$1 of $2')
         .replace(/`[^`]*`/g, '')
         .replace(/(\w+)\.(\w+)\(\)/g, '$1 dot $2')
         .replace(/\bP\(([^|()]+?)\s*\|\s*([^()]+?)\)/g, 'the probability of $1 given $2')
         .replace(/\bP\(([^()]+)\)/g, 'the probability of $1')
         .replace(/\|(\w+)\|/g, 'the absolute value of $1')
         .replace(/\b([a-zA-Z])\((\w+), (\w+)\)/g, '$1 of $2 and $3')
+        .replace(/(\w)⁴/g, '$1 to the fourth')
         .replace(/(\w)³/g, '$1 cubed')
         .replace(/(\w)²/g, '$1 squared')
+        .replace(/(\w)\^\(([^()]+)\)/g, '$1 to the power of $2')
+        .replace(/(\w)\^(-?\w+)/g, '$1 to the power of $2')
+        // An attribute of a one-letter array, A.ndim, and the product Ax: said letter by letter, not as one word.
+        .replace(/\b([A-Z])\.([a-z_]\w*)\b/g, '$1 dot $2')
+        .replace(/\bAx\b/g, 'A x')
         .replace(/η/g, 'eta')
         .replace(/∇/g, 'the gradient of ')
         .replace(/σ/g, 'sigma')
@@ -66,11 +120,18 @@ export const spokenForm = (text: string): string => {
         .replace(/[—–]/g, ', ')
         .replace(/…/g, '...')
         .replace(/’/g, "'")
-        .replace(/\s==\s/g, ' equals ')
+        // A slash between words is not said: "train/validation/test" is a list, "Open/Closed" and "pub/sub" are names.
+        .replace(/\btrue\/false\b/gi, 'true or false')
+        .replace(/(\w+)\/(\w+)\/(\w+)/g, '$1, $2, $3')
+        .replace(/([A-Za-z])\/(?=[A-Za-z])/g, '$1 ')
+        // The two signs named as things, as in "the difference between = and ==": said apart, or both would be "equals".
+        .replace(/\s=\s+and\s+==(?=[\s?.,!]|$)/g, ' a single equals sign and a double equals sign')
+        .replace(/\s==(?=[\s?.,!]|$)/g, ' equals')
         .replace(/\s=\s/g, ' equals ')
         .replace(/\s\+\s/g, ' plus ')
         .replace(/\[(-?[\d.]+(?:,\s*-?[\d.]+)+)\]/g, 'the vector $1')
         .replace(SQL_WORDS, word => word.toLowerCase().replace(/_/g, ' '));
+    for (const [pattern, sound] of SOUNDS_LIKE) said = said.replace(pattern, sound);
     said = tidyLine(said.replace(/\s+([,.?!])/g, '$1'));
     said = said.charAt(0).toUpperCase() + said.slice(1);
     // Matrices and leftover code can't be read aloud sensibly: say something short instead.
