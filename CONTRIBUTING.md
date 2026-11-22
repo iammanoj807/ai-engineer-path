@@ -18,12 +18,12 @@ Thank you for helping. AI Engineer Path is a free way to learn ML, SQL and syste
 
 Each file is plain TypeScript data. The comments at the top of `src/data/foundations.ts`, `src/data/sql.ts` and `src/data/systemDesign.ts` describe every field.
 
-The Markdown pages in `lessons/` are written from these files. Don't edit them by hand: change the lesson, then run `npm run lessons`.
+The Markdown pages in `lessons/` are written from these files. Don't edit them by hand: change the lesson, then run `npm run lessons` and `npm run site-pages` (the second notes the day the page changed, for the sitemap). `npm run build` runs both.
 
 ## Adding to a lesson, or adding a lesson
 
 - **A derivation.** An ML lesson can have an optional `deeper` block ("Go deeper"): a title, four to seven small steps, and the result. Use it for the proof the lesson states but does not show.
-- **A new lesson** needs the lesson itself (with its one false statement, see below), one answer for each of its four exercises, an animation, and glossary entries for the words it teaches. A SQL interview problem has a solution walk-through instead (`src/data/sqlAnimations/phase8.ts`), shown only once the solution is open. Code in a lesson or an answer must have been run, with the numbers it printed. Then run `npm run path-index` (it gives the lesson its address) and `npm run lessons`. The tests tell you what is missing.
+- **A new lesson** needs the lesson itself (with its one false statement, see below), one answer for each of its four exercises, an animation, and glossary entries for the words it teaches. A SQL interview problem has a solution walk-through instead (`src/data/sqlAnimations/phase8.ts`), shown only once the solution is open. Code in a lesson or an answer must have been run, with the numbers it printed. Then run `npm run path-index` (it gives the lesson its address), `npm run lessons` and `npm run site-pages`, or `npm run build`, which runs all three. The tests tell you what is missing.
 
 ## Animations a beginner can follow
 
@@ -89,7 +89,8 @@ Run `npm test` before you open a pull request. The tests make sure that:
 - glossary words are not underlined where they are everyday words;
 - every link between lessons points to a page that exists;
 - the site's pages, addresses and glossary stay in step with the lessons;
-- the Markdown pages in `lessons/` and the lesson counts in the README are up to date.
+- the Markdown pages in `lessons/` and the lesson counts in the README are up to date;
+- the sitemap knows the day each page last changed (`src/game/pageDates.json`).
 
 ## Run it locally
 

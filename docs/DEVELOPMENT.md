@@ -8,7 +8,7 @@ How to run, build and deploy the site, for anyone working on it or forking it. T
 npm install
 npm run dev        # http://localhost:5173/
 npm test           # lesson, animation, glossary and answer checks
-npm run build      # regenerates the path index and lessons/, type-checks, builds to dist/
+npm run build      # regenerates the path index, lessons/ and the sitemap's dates, type-checks, builds to dist/
 ```
 
 `src/game/pathIndex.json` is a small index of topic names that the home page uses, so the first visit doesn't download every lesson. `npm run build` regenerates it, and a test fails if it is out of date (`npm run path-index` to fix).
@@ -39,7 +39,7 @@ A test fails when a page is out of date, so run it after changing a lesson and c
 
 The site is served at its own domain, **learn.hamropedia.com**: a DNS `CNAME` record (`learn` → `iammanoj807.github.io`) at the domain's DNS host, plus the custom domain in **Settings → Pages**. Old `iammanoj807.github.io/ai-engineer-path/` links are forwarded to the custom domain by GitHub, and old `/#/sql?topic=…` links are moved to the lesson's own address when the page opens.
 
-GitHub Pages has no fallback for unknown paths, so the build writes a real HTML page for every address (`vite.config.ts`): the home page, each course, unit guide and lesson, with its own title, description, canonical address and text. Search engines read those pages, and the app takes over once it loads. The build also writes `sitemap.xml`, `robots.txt` and a `404.html`. The page text comes from `npm run site-pages` (run by `npm run build`), which leaves out practice answers and SQL solutions, as the site does.
+GitHub Pages has no fallback for unknown paths, so the build writes a real HTML page for every address (`vite.config.ts`): the home page, each course, unit guide and lesson, with its own title, description, canonical address and text. Search engines read those pages, and the app takes over once it loads. The build also writes `sitemap.xml`, `robots.txt` and a `404.html`. Each page in the sitemap carries the day its text last changed (`<lastmod>`), which tells a search engine what to read again. Those days are kept in `src/game/pageDates.json`: `npm run site-pages` sets today's date on every page whose words have changed, a test fails while the file is behind, and you commit it with the lesson. The page text comes from `npm run site-pages` (run by `npm run build`), which leaves out practice answers and SQL solutions, as the site does.
 
 If you change the custom domain, run the deploy workflow again afterwards: until a new deploy, GitHub can keep answering "Site not found" to browsers.
 

@@ -18,6 +18,8 @@ interface SitePage {
   description: string
   trail: { name: string; path: string }[]
   body: string
+  /** The day the page's text last changed (src/game/pageDates.json), for the sitemap. */
+  lastmod?: string
 }
 
 const PAGES_FILE = 'generated/site-pages.json'
@@ -107,7 +109,7 @@ const sitePages = (): Plugin => ({
     writeFileSync(
       join(outDir, 'sitemap.xml'),
       `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${pages
-        .map(page => `  <url><loc>${esc(`${site}${page.path}`)}</loc></url>`)
+        .map(page => `  <url><loc>${esc(`${site}${page.path}`)}</loc>${page.lastmod ? `<lastmod>${page.lastmod}</lastmod>` : ''}</url>`)
         .join('\n')}\n</urlset>\n`,
     )
     writeFileSync(join(outDir, 'robots.txt'), `User-agent: *\nAllow: /\n\nSitemap: ${site}/sitemap.xml\n`)

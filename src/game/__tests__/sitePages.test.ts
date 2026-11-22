@@ -5,7 +5,8 @@
 // Practice answers and SQL solutions are left out: the site hides them until
 // asked for, and so do these pages.
 
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -19,6 +20,9 @@ import { SITE_LINK } from '../../utils/glossaryEngine';
 import { HERO, HERO_GRADIENT, HERO_STATS } from '../homeCopy';
 
 const OUT = fileURLToPath(new URL('../../../generated/site-pages.json', import.meta.url));
+// The day each page's text last changed, for <lastmod> in the sitemap. Kept in the repository,
+// because the day can't be worked out again later: `npm run site-pages` updates it.
+const DATES = fileURLToPath(new URL('../pageDates.json', import.meta.url));
 
 const esc = (text: string) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 /** Escaped text, with `code` in backticks shown as code and [label](/path/) as a link, as the lessons show them. */
@@ -143,6 +147,30 @@ const body = (meta: PageMeta, course?: CourseInfo, unit?: PathUnit, topic?: Path
 
 const pages = allPages().map(({ meta, course, unit, topic }) => ({ ...meta, body: body(meta, course, unit, topic) }));
 
+/** For each page: a stamp of its text, and the day that text last changed. */
+type PageDates = Record<string, [stamp: string, day: string]>;
+
+/** A short stamp of what a reader sees on the page: its title, description and words, not its markup. */
+const stampOf = (page: { title: string; description: string; body: string }) =>
+    createHash('sha1')
+        .update(`${page.title}\n${page.description}\n${page.body.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()}`)
+        .digest('hex')
+        .slice(0, 12);
+
+const savedDates = (): PageDates => (existsSync(DATES) ? (JSON.parse(readFileSync(DATES, 'utf8')) as PageDates) : {});
+
+/** The saved days, with `today` for every page that is new or whose text has changed since. */
+const datesFor = (saved: PageDates, today: string): PageDates =>
+    Object.fromEntries(
+        pages.map(page => {
+            const stamp = stampOf(page);
+            const before = saved[page.path];
+            return [page.path, before && before[0] === stamp ? before : [stamp, today]];
+        }),
+    );
+
+const pageDates = datesFor(savedDates(), new Date().toISOString().slice(0, 10));
+
 describe('site pages', () => {
     it('has a page for the home page, every course, unit and lesson', () => {
         const units = COURSES.reduce((n, c) => n + c.units.length, 0);
@@ -171,6 +199,16 @@ describe('site pages', () => {
     it('writes the pages for the build', () => {
         if (!process.env.WRITE_SITE_PAGES) return;
         mkdirSync(dirname(OUT), { recursive: true });
-        writeFileSync(OUT, JSON.stringify({ site: SITE_URL, pages }));
+        writeFileSync(OUT, JSON.stringify({ site: SITE_URL, pages: pages.map(page => ({ ...page, lastmod: pageDates[page.path][1] })) }));
+        // One page a line, so a change shows up as one line in a diff.
+        writeFileSync(DATES, `{\n${Object.entries(pageDates).map(([path, entry]) => `${JSON.stringify(path)}: ${JSON.stringify(entry)}`).join(',\n')}\n}\n`);
+    });
+
+    it('knows the day each page last changed (run `npm run site-pages` after changing a lesson, and commit pageDates.json)', () => {
+        const saved = savedDates();
+        const changed = pages.filter(page => saved[page.path]?.[0] !== stampOf(page)).map(page => page.path);
+        const gone = Object.keys(saved).filter(path => !(path in pageDates));
+        expect({ changed, gone }).toEqual({ changed: [], gone: [] });
+        for (const [, day] of Object.values(saved)) expect(day).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     });
 });
