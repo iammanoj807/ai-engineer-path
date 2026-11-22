@@ -108,7 +108,8 @@ const gan = (): AnimationSpec => {
 // ============ f7-t2 · Diffusion ============
 
 const diffusion = (): AnimationSpec => {
-    const a = axes(60, 20, 280, 200, -2.6, 2.6, -2.6, 2.6);
+    // The plot sits right of the readout, so no point is hidden under it.
+    const a = axes(148, 20, 244, 200, -2.6, 2.6, -2.6, 2.6);
     const rand = seeded(27);
     const x0 = Array.from({ length: 80 }, (_, i) => {
         const t = 0.5 + (i / 80) * 3.4 * Math.PI;
@@ -121,7 +122,7 @@ const diffusion = (): AnimationSpec => {
     const draw = (abar: number, color: string, caption: string, tag: string) => frame(caption, [
         rect('box', a.x, a.y, a.w, a.h, { fill: 'none', stroke: C.faint, sw: 1 }),
         at(abar).map((p, i) => dot(`p${i}`, ...pt(a, Math.max(-2.55, Math.min(2.55, p[0])), Math.max(-2.55, Math.min(2.55, p[1]))), color, 3.5)),
-        panel([[tag, color], [`ᾱ = ${round(abar, 2)}`, C.grey]], 8, 8, 130),
+        panel([[tag, color], [`ᾱ = ${round(abar, 2)}`, C.grey]], 8, 20, 130),
     ]);
     const forward: Frame[] = [
         draw(1, C.cyan, 'Training data: 80 points on a spiral (think of each point as one whole image).', 'clean data x₀'),

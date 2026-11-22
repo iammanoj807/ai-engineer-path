@@ -234,7 +234,8 @@ const realTime = (): AnimationSpec => {
     /** `left`: write the label left of the arrow, for when the space on its right is taken. */
     const msg = (id: string, x1: number, x2: number, up: boolean, color: string, label_?: string, left = false): Shape[] => [
         arrow(id, x1, up ? sy - 4 : cy + 4, x2, up ? cy + 4 : sy - 4, { stroke: color, sw: 2 }),
-        ...(label_ ? [text(`${id}-t`, (x1 + x2) / 2 + (left ? -6 : 6), (cy + sy) / 2, label_, { size: 9, fill: color, weight: 700, mono: true, anchor: left ? 'end' : 'start' })] : []),
+        // Anchored at its start on both sides, so a label that changes side glides there.
+        ...(label_ ? [text(`${id}-t`, (x1 + x2) / 2 + (left ? -6 - label_.length * 9 * 0.6 : 6), (cy + sy) / 2, label_, { size: 9, fill: color, weight: 700, mono: true, anchor: 'start' })] : []),
     ];
     const news = (x: number) => [rect('news', x - 22, sy + 10, 44, 18, { rx: 9, fill: tint(C.amber, 0.5), stroke: C.amber, sw: 1, text: 'news!', size: 9, weight: 700, mono: true })];
     const short: Part = [80, 150, 220, 290].map((x, i) => [msg(`q${i}`, x, x + 10, false, C.grey), msg(`a${i}`, x + 14, x + 24, true, i === 3 ? C.green : C.red, i === 3 ? 'yes' : 'no')]);

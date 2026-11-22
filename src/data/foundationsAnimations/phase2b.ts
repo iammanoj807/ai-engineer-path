@@ -440,7 +440,7 @@ const generalisation = (): AnimationSpec => {
     ]);
     const four: [number, number][] = [[1, 1], [3, 3], [1, 3], [3, 1]];
     const vc: Frame[] = [
-        shatter([1, 1, 1], -0.2, 0.3, 'Capacity: how many points can a model separate in every possible way? Three points, all one colour: any line that leaves them on one side works.'),
+        shatter([1, 1, 1], -0.1, 0.6, 'Capacity: how many points can a model separate in every possible way? Three points, all one colour: any line that leaves them on one side works.'),
         shatter([1, 0, 0], -1.4, 3.6, 'One different from the other two: a line can cut it off.'),
         shatter([0, 1, 0], 2.6, -4.6, 'Any single point can be cut off like this.'),
         shatter([0, 0, 1], 0, 2.2, 'All 8 labellings of 3 points can be separated by some line. Lines "shatter" 3 points.'),

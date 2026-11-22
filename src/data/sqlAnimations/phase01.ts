@@ -1,4 +1,4 @@
-import type { AnimationSpec, Frame, Shape } from '../../components/learning/anim/scene';
+import { lerpColor, type AnimationSpec, type Frame, type Shape } from '../../components/learning/anim/scene';
 import { C, arrow, box, frame, line, lit, path, rect, text, tint, type Part } from '../../components/learning/anim/kit';
 import {
     DROP, FOCUS, GONE, KEEP, PLAIN, compare, customers, departments, employees, label, orderItems, orders, products, rowMid, sqlBlock, table,
@@ -304,7 +304,8 @@ const inBetweenLike = (): AnimationSpec => {
         const x = day(r.order_date as string);
         const y = 110 - (i % 3) * 22;
         return [
-            rect(`d${r.order_id}`, x - 15, y - 9, 30, 18, { rx: 9, fill: tint(on ? (inside ? C.green : C.grey) : C.blue, on && !inside ? 0.1 : 0.35), stroke: on ? (inside ? C.green : C.faint) : C.blue, sw: 1.5, text: String(r.order_id), size: 10, weight: 700, mono: true }),
+            // A solid fill (the colour mixed into the background): the range box is drawn behind the chips and must not show through their numbers.
+            rect(`d${r.order_id}`, x - 15, y - 9, 30, 18, { rx: 9, fill: lerpColor(C.bg, on ? (inside ? C.green : C.grey) : C.blue, on && !inside ? 0.1 : 0.35), stroke: on ? (inside ? C.green : C.faint) : C.blue, sw: 1.5, text: String(r.order_id), size: 10, weight: 700, mono: true }),
         ];
     });
     const axis: Part = [
@@ -312,14 +313,15 @@ const inBetweenLike = (): AnimationSpec => {
         ['Jan', 'Feb', 'Mar'].map((m, i) => text(`m${i}`, x0 + ((i * 30.5 + 15) / 90) * (x1 - x0), 148, m, { size: 11, fill: C.grey })),
     ];
     const bracket = (color: string) => [
-        rect('feb', day('2024-02-01') - 2, 64, day('2024-02-29') - day('2024-02-01') + 4, 80, { rx: 6, fill: tint(color, 0.08), stroke: color, sw: 2, dash: '5 4' }),
+        // From above the top row of chips down to the axis: it crosses neither a chip's top edge nor the month names.
+        rect('feb', day('2024-02-01') - 2, 48, day('2024-02-29') - day('2024-02-01') + 4, 86, { rx: 6, fill: tint(color, 0.08), stroke: color, sw: 2, dash: '5 4' }),
         text('feb-a', day('2024-02-01'), 172, "'2024-02-01'", { size: 10, fill: color, mono: true }),
         text('feb-b', day('2024-02-29'), 188, "'2024-02-29'", { size: 10, fill: color, mono: true }),
     ];
     const betweenFrames: Frame[] = [
         frame('The 10 orders on a timeline from January to March.', [sqlBlock(["WHERE order_date BETWEEN '2024-02-01' AND '2024-02-29'"]), axis, dots(false)]),
-        frame("BETWEEN a AND b means >= a AND <= b: both ends are included. The range is the 1st to the 29th of February.", [sqlBlock(["WHERE order_date BETWEEN '2024-02-01' AND '2024-02-29'"]), axis, dots(false), bracket(C.amber)]),
-        frame(`Orders ${between.map(r => r.order_id).join(', ')} fall inside. 106 has no amount, but its date is in range, so it is kept — the filter only looks at order_date.`, [sqlBlock(["WHERE order_date BETWEEN '2024-02-01' AND '2024-02-29'"]), axis, dots(true), bracket(C.green)]),
+        frame("BETWEEN a AND b means >= a AND <= b: both ends are included. The range is the 1st to the 29th of February.", [sqlBlock(["WHERE order_date BETWEEN '2024-02-01' AND '2024-02-29'"]), axis, bracket(C.amber), dots(false)]),
+        frame(`Orders ${between.map(r => r.order_id).join(', ')} fall inside. 106 has no amount, but its date is in range, so it is kept — the filter only looks at order_date.`, [sqlBlock(["WHERE order_date BETWEEN '2024-02-01' AND '2024-02-29'"]), axis, bracket(C.green), dots(true)]),
     ];
 
     // LIKE patterns

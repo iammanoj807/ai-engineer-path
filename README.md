@@ -88,7 +88,7 @@ Each course is drawn as a winding path. Tap a lesson to read it or practise it. 
 
 Every lesson teaches one idea all the way through:
 
-1. **An animation** you can play, pause and step through.
+1. **An animation** you can play, pause and step through. It waits long enough for you to read each step, and one tap opens it full-screen (on a phone it turns sideways, so the picture is nearly twice the size).
 2. **The idea, step by step:** why it exists, how it works, and the mistakes people make. Each lesson ends that part with one or two statements that sound right and are wrong, each marked **Not true**, with what is true straight under it.
 3. **A worked example** with code that has been run.
 4. **Four checks with answers.** In ML Foundations they are Explain, Derive, Build and Break. Pass all four without notes and the lesson is mastered.
@@ -542,7 +542,7 @@ Yes. Every lesson is open to read, with no account and no paywall.
 No. ML Foundations teaches the maths it needs in Unit 1, and its second lesson teaches the Python it uses, in a free notebook with nothing to install. SQL and System Design start from zero.
 
 **Does it work on my phone?**<br>
-Yes. The lessons and the practice are made for phone screens too.
+Yes. The lessons and the practice are made for phone screens too. Every animation has a **Bigger picture** button that opens it full-screen and turns it sideways, so the labels are easy to read.
 
 **Is my progress private?**<br>
 Yes. No other learner can see it, and you can delete it with your account at any time.

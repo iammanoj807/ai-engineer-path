@@ -20,7 +20,7 @@ Most databases use B-tree indexes: sorted, balanced trees that find a value in a
 
 1. Without an index, WHERE email = 'a@b.com' reads every row: a full table scan.
 2. CREATE INDEX on email builds a B-tree: a sorted tree where each step down cuts the search space enormously.
-3. With 100 million rows the tree is only about 4–5 levels deep, so finding the row takes a handful of reads instead of millions.
+3. With 100 million rows the tree is only about 3–4 levels deep, so finding the row takes a handful of reads instead of millions.
 4. The index stores the email plus a pointer to the row, and the database follows that pointer.
 5. Every INSERT, or UPDATE of the email, must also update the tree, which costs time.
 6. EXPLAIN shows the plan: 'Index Scan' is good; 'Seq Scan' on a big table means no useful index was found.

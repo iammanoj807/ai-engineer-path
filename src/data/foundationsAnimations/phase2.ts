@@ -149,6 +149,8 @@ const logistic = (): AnimationSpec => {
     const sig = (h: number) => 1 / (1 + Math.exp(-(w * h + b)));
     const boundary = -b / w;
     const [lb0, lb1] = polyfit(hours, passed, 1);
+    // The straight line, as many points as the S-curve of the next step, so it bends into the curve instead of snapping to it.
+    const straight = fnPath('line', a, h => lb1 * h + lb0, { from: Math.max(a.xMin, (a.yMin - lb0) / lb1), to: Math.min(a.xMax, (a.yMax - lb0) / lb1), stroke: C.violet, sw: 3 });
     const base: Part[] = [
         axisLines('ax', a, 'hours studied', ''),
         [0, 0.5, 1].map(v => [line(`g${v}`, a.x, py(a, v), a.x + a.w, py(a, v), { stroke: C.faint, sw: 1, dash: v === 0.5 ? '4 4' : undefined }), text(`yt${v}`, a.x - 6, py(a, v), String(v), { size: 11, fill: C.dim, anchor: 'end' })]),
@@ -163,7 +165,7 @@ const logistic = (): AnimationSpec => {
             label: 'Pass or fail',
             frames: [
                 frame('Did a student pass (1) or fail (0), given hours studied? We want P(pass) for any number of hours.', [base]),
-                frame('A straight line (linear regression) gives a score, but it runs below 0 and above 1. That can\'t be a probability.', [base, lineInBox('line', a, lb1, lb0, { stroke: C.violet, sw: 3 }), label('bad', 318, py(a, 1.15), 'above 1?!', C.violet, { size: 12, mono: false, anchor: 'end' })]),
+                frame('A straight line (linear regression) gives a score, but it runs below 0 and above 1. That can\'t be a probability.', [base, straight, label('bad', 318, py(a, 1.15), 'above 1?!', C.violet, { size: 12, mono: false, anchor: 'end' })]),
                 frame('The sigmoid σ(z) = 1 / (1 + e⁻ᶻ) squashes the score z = wx + b into the range 0 to 1: an S-shaped curve, fitted by minimising cross-entropy.', [base, fnPath('line', a, sig, { stroke: C.cyan, sw: 3 })]),
                 frame(`Read off a probability: after ${round(boundary + 2, 1)} hours, P(pass) = ${round(sig(boundary + 2), 2)}. Far from the middle the curve flattens near 0 or 1: confident.`, [base, fnPath('line', a, sig, { stroke: C.cyan, sw: 3 }), line('read', px(a, boundary + 2), py(a, -0.25), px(a, boundary + 2), py(a, sig(boundary + 2)), { stroke: C.yellow, dash: '4 3' }), dot('rd', ...pt(a, boundary + 2, sig(boundary + 2)), C.yellow, 6)]),
                 frame(`Predict "pass" when P > 0.5. That happens where z = 0, at ${round(boundary, 1)} hours: the decision boundary. Points on the wrong side are the model's mistakes.`, [base, fnPath('line', a, sig, { stroke: C.cyan, sw: 3 }), line('bound', px(a, boundary), a.y, px(a, boundary), a.y + a.h, { stroke: C.yellow, sw: 2.5 }), label('bl', px(a, boundary) + 6, a.y + 10, 'boundary', C.yellow, { size: 12, mono: false })]),
@@ -195,7 +197,7 @@ const regularisation = (): AnimationSpec => {
                 label: 'L2 (ridge)',
                 frames: [0, 0.5, 1.5, 4].map((lam, k) => frame([
                     'Eight weights from an ordinary fit, with no penalty (λ = 0).',
-                    'Add an L2 penalty, λ·Σw². Every weight shrinks by the same factor, 1 / (1 + λ).',
+                    'Add an L2 penalty, λ·Σw². With uncorrelated, equally scaled features, every weight shrinks by the same factor, 1 / (1 + λ).',
                     'Bigger λ, smaller weights. The big ones shrink the most in absolute terms, because the penalty grows with w².',
                     'Even at λ = 4, no weight reaches exactly 0. L2 makes everything small, but keeps every feature in play.',
                 ][k], [chart(l2(lam), lam, C.cyan)])),
@@ -285,7 +287,8 @@ const metrics = (): AnimationSpec => {
         neg.map((s, i) => dot(`n${i}`, px(a, s), 54 - (i % 4) * 9, C.grey, 4, { opacity: s >= t ? 1 : 0.45 })),
         pos.map((s, i) => dot(`q${i}`, px(a, s), 86 + (i % 3) * 9, C.green, 4.5, { opacity: s >= t ? 1 : 0.45 })),
         line('t', px(a, t), 18, px(a, t), 116, { stroke: C.yellow, sw: 2.5 }),
-        label('tl', t > 0.8 ? px(a, t) - 5 : px(a, t) + 5, 12, t > 1 ? 'threshold above every score' : `threshold ${t}`, C.yellow, { size: 11, mono: false, anchor: t > 0.8 ? 'end' : 'start' }),
+        // Right of the line, or left of it near the right edge. Always anchored at its start, so it glides between the two.
+        label('tl', t > 0.8 ? px(a, t) - 5 - (t > 1 ? 'threshold above every score' : `threshold ${t}`).length * 11 * 0.58 : px(a, t) + 5, 12, t > 1 ? 'threshold above every score' : `threshold ${t}`, C.yellow, { size: 11, mono: false }),
         label('negl', 8, 42, 'innocent', C.grey, { size: 11, mono: false }),
         label('posl', 8, 92, 'fraud', C.green, { size: 11, mono: false }),
     ];
@@ -379,7 +382,7 @@ const crossValidation = (): AnimationSpec => {
         box('stats', 196, 100, 150, 50, leak ? 'mean & std\nof ALL rows' : 'mean & std\nof TRAIN rows', leak ? C.red : C.green, { size: 12 }),
         leak ? arrow('a1', 130, 58, 196, 116, { stroke: C.red, sw: 2.5 }) : arrow('a1', 130, 140, 196, 130, { stroke: C.green, sw: 2.5 }),
         leak && arrow('a2', 130, 190, 196, 140, { stroke: C.red, sw: 2.5, dash: '5 4' }),
-        label('note', 196, 186, leak ? 'test rows leaked into training ✗' : 'test rows only use them ✓', leak ? C.red : C.green, { size: 12, mono: false }),
+        label('note', 184, 186, leak ? 'test rows leaked into training ✗' : 'test rows only use them ✓', leak ? C.red : C.green, { size: 12, mono: false }),
     ];
     const leakage: Frame[] = [
         frame('A common leak: scaling with the mean and standard deviation of ALL the data, test rows included. Information about the test set has crept into training.', [flow(true)]),
@@ -412,7 +415,7 @@ const scaling = (): AnimationSpec => {
     const before = run(0.6, 6, 0.15, 14);
     const after = run(1, 1, 0.25, 14);
     const gd: Frame[] = [
-        frame('One feature is in thousands (size in m²·10), the other in single digits (rooms). The loss surface becomes a long, narrow valley.', [ellipses(0.6, 6)]),
+        frame('One feature is in the thousands (floor area in square feet, say), the other in single digits (rooms). The loss surface becomes a long, narrow valley.', [ellipses(0.6, 6)]),
         frame('Gradient descent zig-zags across the steep direction and crawls along the shallow one. One learning rate can\'t suit both.', [ellipses(0.6, 6), trail(before, C.red)]),
         frame('Standardise each feature: (value − mean) / std. The valley becomes round.', [ellipses(1, 1)]),
         frame('Now the gradient points straight at the bottom, and the same number of steps gets much closer.', [ellipses(1, 1), trail(after, C.green)]),
@@ -421,7 +424,7 @@ const scaling = (): AnimationSpec => {
     const oneHot: Frame[] = [
         frame('A category, like colour, is not a number. Coding red = 1, green = 2, blue = 3 invents an order and a distance: it says green sits between red and blue.', [
             line('nl', 60, 120, 340, 120, { stroke: C.dim, sw: 2 }),
-            colours.map(([name, c], i) => [dot(`c${i}`, 100 + i * 100, 120, c, 10), label(`n${i}`, 100 + i * 100, 146, `${name} = ${i + 1}`, c, { anchor: 'middle', size: 13 })]),
+            colours.map(([name, c], i) => [dot(`c${i}`, 100 + i * 100, 120, c, 10), label(`n${i}`, 100 + i * 100 - (`${name} = ${i + 1}`.length * 13 * 0.6) / 2, 146, `${name} = ${i + 1}`, c, { size: 13 })]),
             label('warn', 200, 80, 'blue − red = 2 × (green − red)?!', C.amber, { anchor: 'middle', size: 13, mono: false }),
         ]),
         frame('One-hot encoding gives each category its own column with a single 1. Every pair of colours is now equally far apart, and no order is invented.', [

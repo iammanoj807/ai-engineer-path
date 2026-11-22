@@ -1396,7 +1396,7 @@ export const systemDesignPhases: SDPhase[] = [
                 howItWorks: [
                     'Without an index, WHERE email = \'a@b.com\' reads every row: a full table scan.',
                     'CREATE INDEX on email builds a B-tree: a sorted tree where each step down cuts the search space enormously.',
-                    'With 100 million rows the tree is only about 4–5 levels deep, so finding the row takes a handful of reads instead of millions.',
+                    'With 100 million rows the tree is only about 3–4 levels deep, so finding the row takes a handful of reads instead of millions.',
                     'The index stores the email plus a pointer to the row, and the database follows that pointer.',
                     'Every INSERT, or UPDATE of the email, must also update the tree, which costs time.',
                     'EXPLAIN shows the plan: \'Index Scan\' is good; \'Seq Scan\' on a big table means no useful index was found.',

@@ -41,6 +41,8 @@ import {
 // Phase 1 · Math. Numbers in captions are either worked out here from the same
 // formulas, or were checked by running them (see the lesson notes).
 
+import { num } from './common';
+
 const label = (id: string, x: number, y: number, value: string, color: string = C.ink, o: { size?: number; anchor?: 'start' | 'middle' | 'end'; mono?: boolean } = {}) =>
     text(id, x, y, value, { size: o.size ?? 13, fill: color, weight: 700, anchor: o.anchor ?? 'start', mono: o.mono ?? true });
 
@@ -218,9 +220,10 @@ const dotProduct = (): AnimationSpec => {
             shadow && line('shadow', p.cx, p.cy, sx + 0.001, sy, { stroke: shadowColor, sw: 7, opacity: 0.85 }),
             vec('b', p, 1, 0, C.pink, { sw: 4 }),
             vec('a', p, ax, ay, C.cyan),
-            // Left of the axis the label sits above the arrow tip, so the axis does not run through it.
+            // Left of the axis the label sits centred above the arrow tip, so the axis does not run through it.
+            // Its start is worked out by hand: changing the anchor instead would make it jump mid-move.
             ax < 0
-                ? label('al', ...toPx(p, ax, ay + 0.5), `a = [${round(ax, 1)}, ${round(ay, 1)}]`, C.cyan, { size: 12, anchor: 'middle' })
+                ? label('al', toPx(p, ax, ay + 0.5)[0] - (`a = [${round(ax, 1)}, ${round(ay, 1)}]`.length * 12 * 0.6) / 2, toPx(p, ax, ay + 0.5)[1], `a = [${round(ax, 1)}, ${round(ay, 1)}]`, C.cyan, { size: 12 })
                 : label('al', ...toPx(p, ax + 0.2, ay + 0.3), `a = [${round(ax, 1)}, ${round(ay, 1)}]`, C.cyan, { size: 12 }),
             label('bl', p.cx + 4, p.cy + 18, 'b = [1, 0]', C.pink, { size: 12 }),
             rect('panel', 262, 12, 130, 36, { rx: 8, fill: '#0d1117e6', stroke: shadowColor, sw: 1.5 }),
@@ -343,7 +346,8 @@ const derivative = (): AnimationSpec => {
     const a = axes(46, 14, 330, 186, -2.5, 2.5, -1, 6.25);
     const f = (x: number) => x * x;
     const base: Part[] = [axisLines('ax', a, 'x', 'f(x) = x²'), fnPath('curve', a, f, { stroke: C.cyan, sw: 3 })];
-    const readout = (value: string, color: string) => [rect('panel', 250, 14, 140, 30, { rx: 8, fill: '#0d1117e6', stroke: color, sw: 1.5 }), label('read', 320, 29, value, color, { anchor: 'middle', size: 12 })];
+    // Top centre: the curve climbs out of both top corners, and no slope line reaches the middle of the top edge.
+    const readout = (value: string, color: string) => [rect('panel', 130, 14, 140, 30, { rx: 8, fill: '#0d1117e6', stroke: color, sw: 1.5 }), label('read', 200, 29, value, color, { anchor: 'middle', size: 12 })];
     const secant = (x0: number, h: number, caption: string) => {
         const slope = (f(x0 + h) - f(x0)) / h;
         return frame(caption, [
@@ -454,7 +458,7 @@ const learningRate = (): AnimationSpec => {
                 shown.slice(1).map((v, i) => arrow(`step${i}`, ...pt(a, shown[i], shown[i] * shown[i]), ...pt(a, v, v * v), { stroke: color, sw: 1.8, opacity: 0.8 })),
                 onChart && circle('ball', ...pt(a, w, w * w), 8, { fill: C.yellow, stroke: C.bg, sw: 2 }),
                 !onChart && label('off', px(a, 0) - 18, a.y + 26, 'off the chart!', C.red, { anchor: 'middle', size: 15 }),
-                readout(onChart ? `w = ${round(w, 3)}` : `w = ${round(w, 2)}`, color),
+                readout(onChart ? `w = ${num(round(w, 3))}` : `w = ${num(round(w, 2))}`, color),
             ], k === 0 ? undefined : 2200);
         });
     };
@@ -480,11 +484,11 @@ const learningRate = (): AnimationSpec => {
             },
             {
                 label: 'η = 0.9 (zig-zag)',
-                frames: frames(0.9, 6, (w, k) => (k === 0 ? 'Learning rate 0.9. Now each step multiplies w by 1 − 1.8 = −0.8.' : k < 6 ? `w = ${round(w, 3)}: it jumps across the valley every step, but lands a little lower each time.` : `w = ${round(w, 3)}. It does converge, but it wastes steps bouncing from side to side.`), C.violet),
+                frames: frames(0.9, 6, (w, k) => (k === 0 ? 'Learning rate 0.9. Now each step multiplies w by 1 − 1.8 = −0.8.' : k < 6 ? `w = ${num(round(w, 3))}: it jumps across the valley every step, but lands a little lower each time.` : `w = ${num(round(w, 3))}. It does converge, but it wastes steps bouncing from side to side.`), C.violet),
             },
             {
                 label: 'η = 1.1 (explodes)',
-                frames: frames(1.1, 4, (w, k) => (k === 0 ? 'Learning rate 1.1: each step multiplies w by 1 − 2.2 = −1.2.' : k < 4 ? `w = ${round(w, 2)}: it overshoots to the other side and lands higher than before.` : `w = ${round(w, 2)}: off the chart. Every step makes it worse; the loss explodes to infinity, then NaN.`), C.red),
+                frames: frames(1.1, 4, (w, k) => (k === 0 ? 'Learning rate 1.1: each step multiplies w by 1 − 2.2 = −1.2.' : k < 4 ? `w = ${num(round(w, 3))}: it overshoots to the other side and lands higher than before.` : `w = ${num(round(w, 2))}: off the chart. Every step makes it worse; the loss explodes to infinity, then NaN.`), C.red),
             },
         ],
     };
@@ -530,7 +534,8 @@ const distributions = (): AnimationSpec => {
         return frame(caption, [
             axisLines('ax', g, 'value', 'density'),
             showSigma && rect('sigma', px(g, -1), g.y, px(g, 1) - px(g, -1), g.h, { fill: tint(C.violet, 0.16) }),
-            showSigma && label('sigl', px(g, 0), g.y + 10, '68% within ±1σ', C.violet, { anchor: 'middle', size: 12 }),
+            // Above the shaded band, which is narrower than the words.
+            showSigma && label('sigl', px(g, 0), g.y - 8, '68% within ±1σ', C.violet, { anchor: 'middle', size: 12 }),
             counts.map((c, i) => rect(`h${i}`, g.x + i * slot + 1, py(g, Math.min(0.5, c)), slot - 2, g.y + g.h - py(g, Math.min(0.5, c)), { rx: 2, fill: tint(C.cyan, 0.7) })),
             showCurve && fnPath('bell', g, density, { stroke: C.yellow, sw: 3 }),
             [-2, -1, 0, 1, 2].map(v => text(`xt${v}`, px(g, v), g.y + g.h + 14, v === 0 ? 'μ' : `${v > 0 ? '+' : '−'}${Math.abs(v)}σ`, { size: 11, fill: C.dim })),
@@ -611,7 +616,8 @@ const mle = (): AnimationSpec => {
         curve && fnPath('curve', a, L, { stroke: C.cyan, sw: 3 }),
         line('stick', px(a, q), py(a, 0), px(a, q), py(a, L(q)), { stroke: C.yellow, sw: 4 }),
         dot('tip', px(a, q), py(a, L(q)), C.yellow, 6),
-        label('val', px(a, q) + (q > 0.6 ? -8 : 8), py(a, L(q)) - 10, `L(${q}) = ${L(q).toFixed(5)}`, C.yellow, { size: 12, anchor: q > 0.6 ? 'end' : 'start' }),
+        // Right of the line, or left of it near the right edge. Always anchored at its start, so it glides between the two.
+        label('val', q > 0.6 ? px(a, q) - 8 - `L(${q}) = ${L(q).toFixed(5)}`.length * 12 * 0.6 : px(a, q) + 8, py(a, L(q)) - 10, `L(${q}) = ${L(q).toFixed(5)}`, C.yellow, { size: 12 }),
     ]);
     const coin: Frame[] = [
         frame('10 coin flips: 7 heads and 3 tails. Which value of p, the chance of heads, explains this data best?', [base]),
@@ -679,9 +685,11 @@ const statistics = (): AnimationSpec => {
         label('truthl', px(a, truth) + 6, a.y - 12, 'true accuracy (unknown)', C.yellow, { size: 11, mono: false }),
     ];
     const first = runs[0];
+    // The same sum the green bar is drawn from, so the caption and the picture agree.
+    const firstSe = Math.sqrt((first.est * (1 - first.est)) / n);
     const ci: Frame[] = [
         frame('A model\'s true accuracy is 85%, but in real life you never get to see that. You only see its score on a test set of 200 examples.', [base]),
-        frame(`One test set: ${Math.round(first.est * 100)}% correct. Standard error √(p(1 − p)/n) ≈ 2.5%, so the 95% interval is about ±5%: the green bar.`, [base, intervals(1)]),
+        frame(`One test set: ${Math.round(first.est * 100)}% correct. With p = ${first.est.toFixed(2)} and n = ${n}, the standard error √(p(1 − p)/n) is about ${(firstSe * 100).toFixed(1)}%, so the 95% interval is about ±${(1.96 * firstSe * 100).toFixed(1)}%: the green bar.`, [base, intervals(1)]),
         frame('A different test set gives a different score and a different interval. Each one is a little off.', [base, intervals(5)]),
         frame(`Twenty test sets: ${20 - misses} of the 20 intervals catch the true value${misses ? ` and ${misses} miss${misses === 1 ? 'es' : ''} (red)` : ''}. That is what "95% confidence" means: the method catches the truth about 95% of the time.`, [base, intervals(20)]),
     ];

@@ -90,7 +90,7 @@ export interface Frame {
     /** What to notice in this frame. Shown under the picture. */
     caption: string;
     shapes: Shape[];
-    /** How long to stay on this frame when playing, in ms. Defaults to time to read the caption. */
+    /** The least time to stay on this frame when playing, in ms. It always stays long enough to read the caption. */
     hold?: number;
 }
 
@@ -112,9 +112,13 @@ export interface AnimationSpec {
 export const DEFAULT_WIDTH = 400;
 export const DEFAULT_HEIGHT = 240;
 
-/** Time on a frame: long enough to read its caption, never shorter than 2.5 s. */
+/**
+ * Time on a frame before it moves on by itself: long enough for a beginner to read the caption
+ * (65 ms a letter is about 140 words a minute) and to look at the picture. A frame's own `hold`
+ * can make it longer, never shorter: a caption nobody had time to read teaches nothing.
+ */
 export const holdFor = (frame: Frame) =>
-    frame.hold ?? Math.min(9000, Math.max(2500, 1500 + frame.caption.length * 45));
+    Math.min(30000, Math.max(frame.hold ?? 2500, 1200 + frame.caption.length * 65));
 
 // ============ TWEENING ============
 

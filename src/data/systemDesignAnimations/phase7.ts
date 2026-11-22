@@ -121,7 +121,8 @@ const splitwise = (): AnimationSpec => {
             rect(`b${p}`, v >= 0 ? zero : zero - w, 48 + i * 38, Math.max(2, w), 24, { rx: 4, fill: tint(v >= 0 ? C.green : C.red, 0.55), stroke: 'none' }),
             Math.abs(v) < 0.005
                 ? text(`v${p}`, zero + 8, 60 + i * 38, '£0', { size: 11, fill: C.grey, weight: 700, mono: true, anchor: 'start' })
-                : text(`v${p}`, v > 0 ? zero + w + 6 : zero - w - 6, 60 + i * 38, `${v > 0 ? '+' : '−'}£${Math.abs(v).toFixed(0)}`, { size: 11, fill: v > 0 ? C.green : C.red, weight: 700, mono: true, anchor: v > 0 ? 'start' : 'end' }),
+                // Beyond the end of the bar. Anchored at its start on both sides, so it glides across when a balance changes sign.
+                : text(`v${p}`, v > 0 ? zero + w + 6 : zero - w - 6 - `−£${Math.abs(v).toFixed(0)}`.length * 11 * 0.6, 60 + i * 38, `${v > 0 ? '+' : '−'}£${Math.abs(v).toFixed(0)}`, { size: 11, fill: v > 0 ? C.green : C.red, weight: 700, mono: true, anchor: 'start' }),
         ];
     });
     const axis = line('zero', zero, 40, zero, 196, { stroke: C.dim, sw: 1.5 });

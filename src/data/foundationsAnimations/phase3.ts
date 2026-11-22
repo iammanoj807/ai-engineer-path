@@ -15,6 +15,7 @@ import {
     fnPath,
     frame,
     gaussian,
+    growPath,
     layerEdges,
     layerPositions,
     line,
@@ -31,7 +32,7 @@ import {
     tint,
     type Part,
 } from '../../components/learning/anim/kit';
-import { label, panel } from './common';
+import { label, num, panel } from './common';
 
 // Phase 3 · Deep learning. Forward values, gradients, activations and
 // optimiser paths are all computed here, from the formulas in the lessons.
@@ -66,7 +67,7 @@ const neuron = (): AnimationSpec => {
         frame('One neuron. Three inputs arrive (features, or the outputs of the layer before).', [inputs(true), edges('none'), sum('Σ', false), act(false), links, output('?')]),
         frame('Each input has its own weight. Green weights push the output up, pink ones push it down; thicker means bigger.', [inputs(false), edges('w'), sum('Σ', false), act(false), links, output('?')]),
         frame(`Multiply each input by its weight: ${products.map(p => round(p, 2)).join(', ')}.`, [inputs(false), edges('p'), sum('Σ', false), act(false), links, output('?')]),
-        frame(`Add them up, plus the bias (${b}): z = w·x + b = ${round(z, 2)}.`, [inputs(false), edges('p'), sum(`z=${round(z, 2)}`, true), act(false), links, output('?')]),
+        frame(`Add them up, plus the bias (${num(b)}): z = w·x + b = ${round(z, 2)}.`, [inputs(false), edges('p'), sum(`z=${round(z, 2)}`, true), act(false), links, output('?')]),
         frame(`Apply the activation: ReLU(z) = max(0, ${round(z, 2)}) = ${round(out, 2)}. That one number is the neuron's output. Logistic regression is exactly this, with a sigmoid instead of ReLU.`, [inputs(false), edges('p'), sum(`z=${round(z, 2)}`, false), act(true), links, output(String(round(out, 2)))]),
     ];
     // A small MLP forward pass with seeded weights.
@@ -196,12 +197,12 @@ const backprop = (): AnimationSpec => {
             frames: [
                 scene(0, `Start with weight w = ${w}, input x = ${x} and target y = ${y}.`),
                 scene(1, `Forward: ŷ = w·x = ${yhat}.`),
-                scene(2, `e = ŷ − y = ${e}.`),
+                scene(2, `e = ŷ − y = ${num(e)}.`),
                 scene(3, `L = e² = ${L}. Now go backwards to find dL/dw.`),
                 scene(4, 'Start at the end: dL/dL = 1.'),
-                scene(5, `L = e², so its local derivative is 2e = ${dL_de}. Gradient so far: 1 × ${dL_de} = ${dL_de}.`),
-                scene(6, `e = ŷ − y, so de/dŷ = 1. Pass ${dL_de} × 1 = ${dL_dyhat} back to ŷ.`),
-                scene(7, `ŷ = w·x, so dŷ/dw = x = ${x}. dL/dw = ${dL_dyhat} × ${x} = ${dL_dw}. Negative, so increasing w lowers the loss. That is all backprop is: local derivatives multiplied from the end backwards.`),
+                scene(5, `L = e², so its local derivative is 2e = ${num(dL_de)}. Gradient so far: 1 × ${num(dL_de)} = ${num(dL_de)}.`),
+                scene(6, `e = ŷ − y, so de/dŷ = 1. Pass ${num(dL_de)} × 1 = ${num(dL_dyhat)} back to ŷ.`),
+                scene(7, `ŷ = w·x, so dŷ/dw = x = ${x}. dL/dw = ${num(dL_dyhat)} × ${x} = ${num(dL_dw)}. Negative, so increasing w lowers the loss. That is all backprop is: local derivatives multiplied from the end backwards.`),
             ],
         }],
     };
@@ -277,7 +278,7 @@ const softmaxCE = (): AnimationSpec => {
                 frame(`Exponentiate each: e² = ${round(ex[0], 2)}, e¹ = ${round(ex[1], 2)}, e⁰·¹ = ${round(ex[2], 2)}. Everything is now positive, and the leader pulls further ahead.`, [zero(-0.5, 8), chart(ex, 8, -0.5, [C.amber, C.amber, C.amber]), panelBox([['exp(z)', C.amber], [`sum ${round(sum, 2)}`, C.ink]])]),
                 frame(`Divide by the total (${round(sum, 2)}): ${p.map(v => round(v, 2)).join(', ')}. These are probabilities that add up to 1. That is softmax.`, [zero(0, 1), chart(p, 1, 0, [C.violet, C.violet, C.violet]), panelBox([['softmax', C.violet], ['sums to 1', C.ink]])]),
                 frame(`The true answer is "cat". Cross-entropy loss = −log(p_cat) = −log ${round(p[0], 2)} = ${round(-Math.log(p[0]), 2)}.`, [zero(0, 1), chart(p, 1, 0, cols), panelBox([['true: cat', C.green], [`loss ${round(-Math.log(p[0]), 2)}`, C.yellow]])]),
-                frame(`And the gradient of the loss with respect to the logits is simply p − y: [${p.map((v, i) => round(v - (i === 0 ? 1 : 0), 2)).join(', ')}]. Push the cat score up, the others down.`, [zero(-0.5, 0.5), chart(p.map((v, i) => v - (i === 0 ? 1 : 0)), 0.5, -0.5, [C.green, C.pink, C.pink]), panelBox([['gradient p − y', C.pink]])]),
+                frame(`And the gradient of the loss with respect to the logits is simply p − y: [${p.map((v, i) => num(round(v - (i === 0 ? 1 : 0), 2))).join(', ')}]. Push the cat score up, the others down.`, [zero(-0.5, 0.5), chart(p.map((v, i) => v - (i === 0 ? 1 : 0)), 0.5, -0.5, [C.green, C.pink, C.pink]), panelBox([['gradient p − y', C.pink]])]),
             ],
         }],
     };
@@ -325,10 +326,13 @@ const optimisers = (): AnimationSpec => {
     ];
     const s = axes(46, 20, 330, 180, 0, 1000, 0, 1.1);
     const lr = (t: number) => (t < 100 ? t / 100 : 0.5 * (1 + Math.cos((Math.PI * (t - 100)) / 900)));
+    // The whole curve as 161 points, one every 6.25 steps. The warm-up step draws the first 17 (up to step 100),
+    // so the cosine part then grows out of the end of the ramp instead of the line snapping to a new shape.
+    const schedulePoints = fnPath('lr', s, lr, { n: 161 }).points;
     const schedule: Frame[] = [
         frame('A learning-rate schedule changes the step size during training. Plot learning rate (as a share of its peak) against training step.', [axisLines('ax', s, 'step', 'learning rate')]),
-        frame('Warm-up: start tiny and ramp up over the first steps, while Adam\'s running averages are still unreliable and the weights are random.', [axisLines('ax', s, 'step', 'learning rate'), fnPath('lr', s, lr, { to: 100, stroke: C.amber, sw: 3 })]),
-        frame('Then cosine decay: big steps early to make progress, small steps late to settle into a good minimum. Warm-up then cosine is the standard recipe for transformers.', [axisLines('ax', s, 'step', 'learning rate'), fnPath('lr', s, lr, { stroke: C.amber, sw: 3, n: 160 })]),
+        frame('Warm-up: start tiny and ramp up over the first steps, while Adam\'s running averages are still unreliable and the weights are random.', [axisLines('ax', s, 'step', 'learning rate'), growPath('lr', schedulePoints, 17 / 161, { stroke: C.amber, sw: 3 })]),
+        frame('Then cosine decay: big steps early to make progress, small steps late to settle into a good minimum. Warm-up then cosine is the standard recipe for transformers.', [axisLines('ax', s, 'step', 'learning rate'), growPath('lr', schedulePoints, 1, { stroke: C.amber, sw: 3 })]),
     ];
     return {
         title: 'SGD, momentum and Adam racing down a narrow valley',
@@ -358,7 +362,8 @@ const initialisation = (): AnimationSpec => {
         }
         return stds;
     };
-    const a = axes(46, 24, 330, 170, 0, layers, 0, 1);
+    // The plot starts below the readout, so bars that shoot off the top are not hidden behind it.
+    const a = axes(46, 56, 330, 138, 0, layers, 0, 1);
     const chart = (stds: number[], color: string, caption: string, title: string) => {
         const shown = stds.map(v => Math.log10(Math.max(1e-12, v)));
         const lo = -8;

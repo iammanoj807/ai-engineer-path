@@ -54,8 +54,8 @@ const prompting = (): AnimationSpec => {
         ['ex', 'Example: "Refund failed…" → {"product":"billing","urgency":"high"}', C.amber],
         ['fmt', 'Format: return JSON {product, urgency}.', C.green],
     ];
-    const prompt = (n: number) => parts.slice(0, n).map(([id, value, color], i) => rect(`p-${id}`, 14, 30 + i * 30, 372, 24, { rx: 6, fill: tint(color, 0.25), stroke: color, sw: 1.5, text: value, size: 10.5 }));
-    const answer = (good: boolean) => rect('ans', 14, 190, 372, 34, { rx: 8, fill: tint(good ? C.green : C.red, 0.3), stroke: good ? C.green : C.red, sw: 2, text: good ? '{"product": "billing", "urgency": "high"}  ✓ parses' : '"Sure! This ticket seems to be about some kind of issue…"  ✗', size: 11, mono: true });
+    const prompt = (n: number) => parts.slice(0, n).map(([id, value, color], i) => rect(`p-${id}`, 14, 30 + i * 30, 372, 24, { rx: 6, fill: tint(color, 0.25), stroke: color, sw: 1.5, text: value, size: 10 }));
+    const answer = (good: boolean) => rect('ans', 14, 190, 372, 34, { rx: 8, fill: tint(good ? C.green : C.red, 0.3), stroke: good ? C.green : C.red, sw: 2, text: good ? '{"product": "billing", "urgency": "high"}  ✓ parses' : '"Sure! This ticket is about some kind of issue…"  ✗', size: 11, mono: true });
     return {
         title: 'A good prompt is a complete briefing',
         variants: [{
@@ -174,7 +174,8 @@ const ann = (): AnimationSpec => {
             label('ln', 16, 16, ['top layer: few points, long links', 'middle layer: more points', 'bottom layer: every point'][layer], C.grey, { size: 11, mono: false }),
             ids.flatMap(i => neighbours(ids, i, 2).map(j => line(`e${i}-${j}`, ...pt(a, ...pts[i]), ...pt(a, ...pts[j]), { stroke: C.faint, sw: 1 }))),
             pts.map((p, i) => dot(`p${i}`, ...pt(a, ...p), visited.includes(i) ? C.amber : C.cyan, ids.includes(i) ? 4.5 : 2, { opacity: ids.includes(i) ? 1 : 0.25 })),
-            path('walk', walk.slice(0, layer + 1).flat().map(i => pt(a, ...pts[i])), { stroke: C.amber, sw: 2.5 }),
+            // Always as many points as the whole walk (the end is repeated), so each new hop grows out of the last one.
+            path('walk', walk.flat().map((_, k) => pt(a, ...pts[visited[Math.min(k, visited.length - 1)]])), { stroke: C.amber, sw: 2.5 }),
             circle('q', ...pt(a, ...query), 7, { fill: C.yellow, stroke: C.bg, sw: 2, text: 'q', textColor: C.bg, size: 10 }),
         ]);
     };

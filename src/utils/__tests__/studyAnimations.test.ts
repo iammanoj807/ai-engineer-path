@@ -3,8 +3,9 @@ import { allSqlTopics } from '../../data/sql';
 import { sqlAnimationChecks, sqlAnimations, sqlNoAnimation, sqlSolutionAnimations, sqlSolutionChecks } from '../../data/sqlAnimations';
 import { systemDesignPhases } from '../../data/systemDesign';
 import { systemDesignAnimations, systemDesignForbidden, systemDesignNoAnimation } from '../../data/systemDesignAnimations';
-import type { AnimationSpec } from '../../components/learning/anim/scene';
-import { animationProblems, readingProblems } from './animationChecks';
+import { holdFor, type AnimationSpec } from '../../components/learning/anim/scene';
+import { foundationAnimations } from '../../data/foundationsAnimations';
+import { animationProblems, movingProblems, readingProblems } from './animationChecks';
 
 describe('SQL animations', () => {
     it('animates every topic, or says why not — and nothing else', () => {
@@ -151,7 +152,66 @@ describe('the easy-to-read check', () => {
         expect(problemsOf([{ caption, shapes: [box, { ...chip, y: 68 }] }])).toEqual([]);
     });
 
+    it('catches the outline of one box running through the words in another', () => {
+        const chip = { kind: 'rect' as const, id: 'chip', x: 140, y: 91, w: 30, h: 18, fill: '#64b5f659', stroke: '#64b5f6', text: '105', size: 10, mono: true };
+        const range = { kind: 'rect' as const, id: 'range', x: 155, y: 40, w: 120, h: 100, fill: '#ffb74d14', stroke: '#ffb74d', sw: 2, dash: '5 4' };
+        // The left edge of the range runs down through the chip's number, whichever is drawn first…
+        expect(problemsOf([{ caption, shapes: [chip, range] }])).toEqual(['t/v#1: the outline of range runs through the words "105" in chip']);
+        expect(problemsOf([{ caption, shapes: [range, chip] }])).toEqual(['t/v#1: the outline of range runs through the words "105" in chip']);
+        // …unless the chip is solid and drawn on top, which hides the edge behind it.
+        expect(problemsOf([{ caption, shapes: [range, { ...chip, fill: '#2b4a66' }] }])).toEqual([]);
+        // A frame that goes right round the chip crosses nothing.
+        expect(problemsOf([{ caption, shapes: [chip, { ...range, x: 130, w: 150 }] }])).toEqual([]);
+    });
+
     it('catches two labels on top of each other', () => {
         expect(problemsOf([{ caption, shapes: [label, { ...label, id: 'other', x: 210, text: 'another one' }] }])).toEqual(['t/v#1: the labels "a label here" and "another one" overlap']);
+    });
+});
+
+describe('time on a step when the animation plays by itself', () => {
+    const words = (caption: string) => caption.trim().split(/\s+/).length;
+
+    it('grows with the caption, and a frame\'s own time can only add to it', () => {
+        const long = 'word '.repeat(40).trim();
+        expect(holdFor({ caption: 'w = 1.6.', shapes: [] })).toBe(2500);
+        expect(holdFor({ caption: long, shapes: [] })).toBe(1200 + long.length * 65);
+        // A hand-set time shorter than the reading time does not cut the reading short…
+        expect(holdFor({ caption: long, shapes: [], hold: 2200 })).toBe(1200 + long.length * 65);
+        // …and a longer one is kept.
+        expect(holdFor({ caption: 'Watch.', shapes: [], hold: 6000 })).toBe(6000);
+        expect(holdFor({ caption: 'word '.repeat(200), shapes: [] })).toBe(30000);
+    });
+
+    it('never asks a beginner to read faster than 260 words a minute', () => {
+        const rushed: string[] = [];
+        for (const registry of [foundationAnimations, sqlAnimations, sqlSolutionAnimations, systemDesignAnimations]) {
+            for (const [id, build] of Object.entries(registry)) {
+                for (const variant of build().variants) {
+                    variant.frames.forEach((frame, index) => {
+                        const perMinute = words(frame.caption) / (holdFor(frame) / 60000);
+                        if (perMinute > 260) rushed.push(`${id}/${variant.label}#${index + 1}: ${Math.round(perMinute)} words a minute`);
+                    });
+                }
+            }
+        }
+        expect(rushed).toEqual([]);
+    });
+});
+
+describe('moving from one step to the next', () => {
+    it('lets every label and line glide, in every animation', () => {
+        expect([foundationAnimations, sqlAnimations, sqlSolutionAnimations, systemDesignAnimations].flatMap(movingProblems)).toEqual([]);
+    });
+
+    it('catches a label that changes its anchor and a line that changes its number of points', () => {
+        const caption = 'A step.';
+        const label = { kind: 'text' as const, id: 'label', x: 100, y: 100, text: 'here', anchor: 'start' as const };
+        const curve = { kind: 'path' as const, id: 'curve', points: [[0, 0], [10, 10]] as [number, number][] };
+        const moved = { ...label, x: 200 };
+        const spec = (second: AnimationSpec['variants'][number]['frames'][number]['shapes']): AnimationSpec => ({ title: 'T', variants: [{ label: 'v', frames: [{ caption, shapes: [label, curve] }, { caption, shapes: second }] }] });
+        expect(movingProblems({ t: () => spec([moved, curve]) })).toEqual([]);
+        expect(movingProblems({ t: () => spec([{ ...moved, anchor: 'end' }, curve]) })).toEqual(['t/v#2: the label label changes its anchor from the step before, so it jumps instead of gliding']);
+        expect(movingProblems({ t: () => spec([moved, { ...curve, points: [[0, 0], [5, 5], [10, 10]] }]) })).toEqual(['t/v#2: the line curve has 3 points but had 2 the step before, so it snaps instead of moving']);
     });
 });

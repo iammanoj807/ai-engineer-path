@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Box, ButtonBase, IconButton, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material';
+import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { Box, ButtonBase, Dialog, IconButton, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography, type SxProps, type Theme } from '@mui/material';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import PauseRoundedIcon from '@mui/icons-material/PauseRounded';
 import NavigateBeforeRoundedIcon from '@mui/icons-material/NavigateBeforeRounded';
 import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
 import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
+import OpenInFullRoundedIcon from '@mui/icons-material/OpenInFullRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { TAP, px, useTextSize } from '../learning';
 import {
     DEFAULT_HEIGHT,
@@ -20,12 +22,19 @@ import {
 // controls to play, pause and step. It starts by itself the first time it
 // scrolls into view (unless the reader prefers reduced motion), pauses when it
 // leaves the screen, and stops on the last frame.
+//
+// "Bigger picture" opens the same animation full-screen. On a phone held upright the
+// labels of an inline picture are only about 7 px tall; the big view turns sideways
+// there, so the picture uses the long side of the screen and its text is twice the size.
 
 const TRANSITION_MS = 750;
 const MONO = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
 
 const prefersReducedMotion = () =>
     typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
+
+/** A device you hold and can turn: a phone or a tablet, not a narrow window on a desk. */
+const heldInTheHand = () => typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches === true;
 
 /** An arrowhead at (x2, y2), pointing away from (x1, y1). */
 const arrowHead = (x1: number, y1: number, x2: number, y2: number, size: number) => {
@@ -140,16 +149,17 @@ const ShapeView = ({ shape }: { shape: Shape }) => {
     }
 };
 
-const ControlButton = ({ label, onClick, disabled, children }: { label: string; onClick: () => void; disabled?: boolean; children: ReactNode }) => (
-    <Tooltip title={label} arrow>
+/** `tip`: show the label as a tooltip too. Off in the big view, where a turned picture would get an upright tooltip. */
+const ControlButton = ({ label, onClick, disabled, children, tip = true, size = TAP }: { label: string; onClick: () => void; disabled?: boolean; children: ReactNode; tip?: boolean; size?: number }) => (
+    <Tooltip title={tip ? label : ''} arrow>
         <span>
             <IconButton
                 aria-label={label}
                 onClick={onClick}
                 disabled={disabled}
                 sx={{
-                    width: TAP,
-                    height: TAP,
+                    width: size,
+                    height: size,
                     p: 0,
                     color: 'text.primary',
                     bgcolor: 'rgba(255,255,255,0.05)',
@@ -163,6 +173,24 @@ const ControlButton = ({ label, onClick, disabled, children }: { label: string; 
         </span>
     </Tooltip>
 );
+
+const onResize = (notify: () => void) => {
+    window.addEventListener('resize', notify);
+    return () => window.removeEventListener('resize', notify);
+};
+
+/** The window's width and height, kept up to date. */
+const useWindowSize = () => ({
+    w: useSyncExternalStore(onResize, () => window.innerWidth, () => 0),
+    h: useSyncExternalStore(onResize, () => window.innerHeight, () => 0),
+});
+
+/**
+ * The big view adds one entry to the browser history, so Back closes the view instead of leaving the lesson.
+ * The entry carries the id of the animation that opened it: a page can hold more than one.
+ */
+const BIG_VIEW = 'bigPicture';
+const bigViewInHistory = () => (typeof window === 'undefined' ? undefined : (window.history.state as Record<string, unknown> | null)?.[BIG_VIEW]);
 
 interface View {
     index: number;
@@ -184,6 +212,10 @@ export const AnimatedScene = ({ spec, accent }: { spec: AnimationSpec; accent: s
     /** Once the reader takes control, it never starts by itself again. */
     const touchedRef = useRef(false);
     const boxRef = useRef<HTMLDivElement>(null);
+    const [big, setBig] = useState(false);
+    const viewId = useId();
+    const handheld = useMemo(heldInTheHand, []);
+    const win = useWindowSize();
 
     const width = spec.width ?? DEFAULT_WIDTH;
     const height = spec.height ?? DEFAULT_HEIGHT;
@@ -250,6 +282,29 @@ export const AnimatedScene = ({ spec, accent }: { spec: AnimationSpec; accent: s
     const takeControl = () => {
         touchedRef.current = true;
     };
+
+    // The big view adds one history entry, so the phone's Back button closes it rather than leaving the lesson.
+    useEffect(() => {
+        const onPop = () => setBig(bigViewInHistory() === viewId);
+        window.addEventListener('popstate', onPop);
+        return () => window.removeEventListener('popstate', onPop);
+    }, [viewId]);
+    const openBig = () => {
+        window.history.pushState({ ...(window.history.state as object | null), [BIG_VIEW]: viewId }, '');
+        setBig(true);
+    };
+    const closeBig = () => {
+        // Going back takes our entry off the history again; the listener above then closes the view.
+        if (bigViewInHistory() === viewId) window.history.back();
+        else setBig(false);
+    };
+    // A phone held upright: turn the big view a quarter-turn, so the picture lies along the long side.
+    // Only on a device the reader can turn in their hand: a narrow window on a desk stays upright.
+    const turned = handheld && win.w > 0 && win.w < 600 && win.h > win.w;
+    const bigW = turned ? win.h : win.w;
+    const bigH = turned ? win.w : win.h;
+    // Wide enough for the caption and the buttons to sit beside the picture instead of under it.
+    const beside = bigW > bigH;
     const restart = () => {
         takeControl();
         fromRef.current = frames[0].shapes;
@@ -276,6 +331,142 @@ export const AnimatedScene = ({ spec, accent }: { spec: AnimationSpec; accent: s
         setPlaying(!reduced);
     };
 
+    // The pieces below are drawn twice while the big view is open: once in the lesson, once full-screen.
+    const versions = (sx: SxProps<Theme>) => spec.variants.length > 1 && (
+        <ToggleButtonGroup
+            exclusive
+            size="small"
+            value={variant}
+            onChange={(_, value: number | null) => chooseVariant(value)}
+            aria-label="Choose a version"
+            sx={{ flexWrap: 'wrap', gap: 0.75, '& .MuiToggleButtonGroup-grouped': { border: '1px solid rgba(255,255,255,0.15) !important', borderRadius: '999px !important', m: 0 }, ...sx }}
+        >
+            {spec.variants.map((v, index) => (
+                <ToggleButton
+                    key={v.label}
+                    value={index}
+                    sx={{
+                        minHeight: 36,
+                        px: 1.5,
+                        textTransform: 'none',
+                        fontWeight: 700,
+                        fontSize: px(t.small),
+                        color: 'text.secondary',
+                        '&.Mui-selected': { color: '#0b0f14', bgcolor: accent, '&:hover': { bgcolor: accent } },
+                    }}
+                >
+                    {v.label}
+                </ToggleButton>
+            ))}
+        </ToggleButtonGroup>
+    );
+
+    const picture = (sx: SxProps<Theme>) => (
+        <Box component="svg" viewBox={`0 0 ${width} ${height}`} role="img" aria-label={spec.title} sx={{ display: 'block', fontFamily: 'inherit', ...sx }}>
+            {shown.map(shape => <ShapeView key={shape.id} shape={shape} />)}
+        </Box>
+    );
+
+    const caption = (sx: SxProps<Theme> = {}) => (
+        <Typography variant="body2" aria-live="polite" sx={{ color: 'text.primary', ...sx }}>
+            <Box component="span" sx={{ color: accent, fontWeight: 800, mr: 1 }}>
+                {view.index + 1}/{frames.length}
+            </Box>
+            {current.caption}
+        </Typography>
+    );
+
+    const buttons = (tip: boolean, size = TAP) => (
+        <>
+            <ControlButton label="Back" onClick={() => step(-1)} disabled={view.index === 0} tip={tip} size={size}>
+                <NavigateBeforeRoundedIcon />
+            </ControlButton>
+            <ControlButton label={playing ? 'Pause' : atEnd ? 'Play again' : 'Play'} onClick={togglePlay} tip={tip} size={size}>
+                {playing ? <PauseRoundedIcon /> : atEnd ? <ReplayRoundedIcon /> : <PlayArrowRoundedIcon />}
+            </ControlButton>
+            <ControlButton label="Next" onClick={() => step(1)} disabled={atEnd} tip={tip} size={size}>
+                <NavigateNextRoundedIcon />
+            </ControlButton>
+        </>
+    );
+
+    // One dash per frame: tap one to jump there.
+    const dashes = (tall: number = TAP) => (
+        <Stack direction="row" spacing={0.5} sx={{ flex: 1, minWidth: 0, pl: 0.5 }}>
+            {frames.map((_, index) => (
+                <ButtonBase
+                    key={index}
+                    aria-label={`Go to step ${index + 1}`}
+                    onClick={() => {
+                        takeControl();
+                        setPlaying(false);
+                        go(index);
+                    }}
+                    sx={{
+                        flex: 1,
+                        minWidth: 0,
+                        height: tall,
+                        display: 'flex',
+                        alignItems: 'center',
+                        // The global button style adds padding, a background and a focus ring on click.
+                        p: 0,
+                        border: 'none',
+                        borderRadius: 0,
+                        bgcolor: 'transparent',
+                        '&:focus': { outline: 'none' },
+                        '&.Mui-focusVisible': { outline: `2px solid ${accent}`, outlineOffset: 2 },
+                    }}
+                >
+                    <Box
+                        sx={{
+                            width: '100%',
+                            height: 5,
+                            borderRadius: 3,
+                            bgcolor: index <= view.index ? accent : 'rgba(255,255,255,0.12)',
+                            transition: 'background-color 300ms',
+                        }}
+                    />
+                </ButtonBase>
+            ))}
+        </Stack>
+    );
+
+    const closeButton = (size = TAP) => (
+        <ControlButton label="Close the bigger picture" onClick={closeBig} tip={false} size={size}>
+            <CloseRoundedIcon />
+        </ControlButton>
+    );
+
+    // In the narrow column beside a big picture there is no room for a row of version buttons:
+    // one button names the version on show, and a tap moves on to the next.
+    const nextVersion = spec.variants.length > 1 && (
+        <ButtonBase
+            onClick={() => chooseVariant((variant + 1) % spec.variants.length)}
+            aria-label={`Version ${variant + 1} of ${spec.variants.length}: ${spec.variants[variant].label}. Show the next version`}
+            sx={{
+                minHeight: 36,
+                py: 0,
+                px: 1.5,
+                gap: 1,
+                justifyContent: 'space-between',
+                border: 'none',
+                borderRadius: '999px',
+                bgcolor: accent,
+                color: '#0b0f14',
+                fontWeight: 700,
+                fontSize: px(t.small),
+                '&:hover': { bgcolor: accent },
+                '&:focus': { outline: 'none' },
+                '&.Mui-focusVisible': { outline: '2px solid rgba(255,255,255,0.8)', outlineOffset: 2 },
+            }}
+        >
+            <Box component="span" sx={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{spec.variants[variant].label}</Box>
+            <Box component="span" sx={{ flexShrink: 0, opacity: 0.7 }}>
+                {variant + 1}/{spec.variants.length} ›
+            </Box>
+        </ButtonBase>
+    );
+
     return (
         <Box
             ref={boxRef}
@@ -294,103 +485,71 @@ export const AnimatedScene = ({ spec, accent }: { spec: AnimationSpec; accent: s
                 <Typography sx={{ color: 'text.primary', fontWeight: 700, fontSize: px(t.small) }}>{spec.title}</Typography>
             </Stack>
 
-            {spec.variants.length > 1 && (
-                <ToggleButtonGroup
-                    exclusive
-                    size="small"
-                    value={variant}
-                    onChange={(_, value: number | null) => chooseVariant(value)}
-                    aria-label="Choose a version"
-                    sx={{ px: 2, pt: 1.25, flexWrap: 'wrap', gap: 0.75, '& .MuiToggleButtonGroup-grouped': { border: '1px solid rgba(255,255,255,0.15) !important', borderRadius: '999px !important', m: 0 } }}
-                >
-                    {spec.variants.map((v, index) => (
-                        <ToggleButton
-                            key={v.label}
-                            value={index}
-                            sx={{
-                                minHeight: 36,
-                                px: 1.5,
-                                textTransform: 'none',
-                                fontWeight: 700,
-                                fontSize: px(t.small),
-                                color: 'text.secondary',
-                                '&.Mui-selected': { color: '#0b0f14', bgcolor: accent, '&:hover': { bgcolor: accent } },
-                            }}
-                        >
-                            {v.label}
-                        </ToggleButton>
-                    ))}
-                </ToggleButtonGroup>
-            )}
+            {versions({ px: 2, pt: 1.25 })}
 
-            <Box
-                component="svg"
-                viewBox={`0 0 ${width} ${height}`}
-                role="img"
-                aria-label={spec.title}
-                sx={{ display: 'block', width: '100%', maxWidth: 640, height: 'auto', mx: 'auto', my: 1, px: 1, fontFamily: 'inherit' }}
-            >
-                {shown.map(shape => <ShapeView key={shape.id} shape={shape} />)}
-            </Box>
+            {picture({ width: '100%', maxWidth: 640, height: 'auto', mx: 'auto', my: 1, px: 1 })}
 
-            <Box sx={{ px: 2, pb: 1, minHeight: `${3 * 1.6 * t.body2}px` }}>
-                <Typography variant="body2" aria-live="polite" sx={{ color: 'text.primary' }}>
-                    <Box component="span" sx={{ color: accent, fontWeight: 800, mr: 1 }}>
-                        {view.index + 1}/{frames.length}
-                    </Box>
-                    {current.caption}
-                </Typography>
-            </Box>
+            <Box sx={{ px: 2, pb: 1, minHeight: `${3 * 1.6 * t.body2}px` }}>{caption()}</Box>
 
             <Stack direction="row" alignItems="center" spacing={1} sx={{ px: 1.5, pb: 1.5, pt: 0.5 }}>
-                <ControlButton label="Back" onClick={() => step(-1)} disabled={view.index === 0}>
-                    <NavigateBeforeRoundedIcon />
+                {buttons(true)}
+                {dashes()}
+                <ControlButton label="Bigger picture" onClick={openBig}>
+                    <OpenInFullRoundedIcon fontSize="small" />
                 </ControlButton>
-                <ControlButton label={playing ? 'Pause' : atEnd ? 'Play again' : 'Play'} onClick={togglePlay}>
-                    {playing ? <PauseRoundedIcon /> : atEnd ? <ReplayRoundedIcon /> : <PlayArrowRoundedIcon />}
-                </ControlButton>
-                <ControlButton label="Next" onClick={() => step(1)} disabled={atEnd}>
-                    <NavigateNextRoundedIcon />
-                </ControlButton>
-                {/* One dash per frame: tap one to jump there. */}
-                <Stack direction="row" spacing={0.5} sx={{ flex: 1, minWidth: 0, pl: 0.5 }}>
-                    {frames.map((_, index) => (
-                        <ButtonBase
-                            key={index}
-                            aria-label={`Go to step ${index + 1}`}
-                            onClick={() => {
-                                takeControl();
-                                setPlaying(false);
-                                go(index);
-                            }}
-                            sx={{
-                                flex: 1,
-                                minWidth: 0,
-                                height: TAP,
-                                display: 'flex',
-                                alignItems: 'center',
-                                // The global button style adds padding, a background and a focus ring on click.
-                                p: 0,
-                                border: 'none',
-                                borderRadius: 0,
-                                bgcolor: 'transparent',
-                                '&:focus': { outline: 'none' },
-                                '&.Mui-focusVisible': { outline: `2px solid ${accent}`, outlineOffset: 2 },
-                            }}
-                        >
-                            <Box
-                                sx={{
-                                    width: '100%',
-                                    height: 5,
-                                    borderRadius: 3,
-                                    bgcolor: index <= view.index ? accent : 'rgba(255,255,255,0.12)',
-                                    transition: 'background-color 300ms',
-                                }}
-                            />
-                        </ButtonBase>
-                    ))}
-                </Stack>
             </Stack>
+
+            <Dialog
+                fullScreen
+                open={big}
+                onClose={closeBig}
+                slotProps={{ paper: { 'aria-label': `${spec.title}: bigger picture`, sx: { bgcolor: '#0d1117', backgroundImage: 'none', overflow: 'hidden' } } }}
+            >
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        width: bigW,
+                        height: bigH,
+                        transform: `translate(-50%, -50%)${turned ? ' rotate(90deg)' : ''}`,
+                        display: 'flex',
+                        flexDirection: beside ? 'row' : 'column',
+                    }}
+                >
+                    {!beside && (
+                        <Stack direction="row" alignItems="center" spacing={1} sx={{ px: 1.5, pt: 1 }}>
+                            <Typography sx={{ flex: 1, color: 'text.primary', fontWeight: 700, fontSize: px(t.small) }}>{spec.title}</Typography>
+                            {closeButton()}
+                        </Stack>
+                    )}
+                    <Box sx={{ flex: 1, minWidth: 0, minHeight: 0, p: 1 }}>{picture({ width: '100%', height: '100%' })}</Box>
+                    {beside ? (
+                        // Beside the picture: buttons on top (Close at the far end), then the words, then the dashes.
+                        <Stack sx={{ flexShrink: 0, minHeight: 0, width: 'clamp(200px, 30%, 300px)', gap: 1, p: 1.5, borderLeft: '1px solid rgba(255,255,255,0.1)' }}>
+                            <Stack direction="row" alignItems="center" justifyContent="space-between">
+                                <Stack direction="row" alignItems="center" spacing={0.5}>
+                                    {buttons(false, 40)}
+                                </Stack>
+                                {closeButton(40)}
+                            </Stack>
+                            {nextVersion}
+                            <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>{caption({ fontSize: '0.875rem', lineHeight: 1.45 })}</Box>
+                            <Stack direction="row">{dashes(28)}</Stack>
+                        </Stack>
+                    ) : (
+                        // Under the picture: the same order as in the lesson.
+                        <Stack sx={{ flexShrink: 0, minHeight: 0, maxHeight: '45%', gap: 1, p: 1.5, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                            {versions({})}
+                            <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>{caption()}</Box>
+                            <Stack direction="row" alignItems="center" spacing={1}>
+                                {buttons(false)}
+                                {dashes()}
+                            </Stack>
+                        </Stack>
+                    )}
+                </Box>
+            </Dialog>
         </Box>
     );
 };

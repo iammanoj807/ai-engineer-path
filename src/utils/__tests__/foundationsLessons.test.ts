@@ -72,7 +72,7 @@ describe('foundations animations', () => {
     });
 
     it('builds every frame from valid shapes that fit the picture', () => {
-        expect(animationProblems(foundationAnimations)).toEqual([]);
+        expect(animationProblems(foundationAnimations, { textFit: true })).toEqual([]);
     });
 
     it('keeps every step easy to read: something new each time, nothing cut off, crossed out or overlapping', () => {

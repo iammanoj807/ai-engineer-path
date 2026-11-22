@@ -33,6 +33,8 @@ An animation is a short run of steps: a picture and one caption each. The tests 
 - **A caption has 50 words at most.** If it needs more, it is two steps.
 - **Nothing covers words.** No line through a label or through the name in a box, no label or message chip on top of another. Thin grid lines behind a label are fine.
 - **Nothing is cut off.** Boxes, dots and text stay inside the picture.
+- **Things glide from one step to the next.** A shape keeps its id so that it moves instead of popping. Keep a label's anchor the same, and give a line the same number of points in every step (`growPath` draws a curve partway).
+- **The reader gets time to read.** When an animation plays by itself, each step waits for its caption: about 140 words a minute. A frame's `hold` can add time, never take it away.
 
 ## Practice sessions build themselves
 

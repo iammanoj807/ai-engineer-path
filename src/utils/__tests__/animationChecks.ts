@@ -216,7 +216,8 @@ export const readingProblems = (registry: AnimationRegistry): string[] => {
                 });
 
                 // The words inside a box. A line drawn after the box lies on top of them; a bright line drawn before
-                // a see-through box shows through them; a box or a chip drawn later can cover them.
+                // a see-through box shows through them; a box or a chip drawn later can cover them; and the outline
+                // of another box can run through them.
                 shapes.forEach((box, boxAt) => {
                     if ((box.kind !== 'rect' && box.kind !== 'circle') || (box.opacity ?? 1) <= 0.3) return;
                     const words = labelBox(box, 0.21);
@@ -228,10 +229,19 @@ export const readingProblems = (registry: AnimationRegistry): string[] => {
                             if (alphaOf(other.stroke) === 0 || strokeInside(words, other) < 3) return;
                             if (otherAt < boxAt && (solid || isFaint(other) || shapes.some((cover, coverAt) => coverAt > otherAt && coverAt < boxAt && covers(cover, words, 0.75)))) return;
                             problems.push(`${where}: the line ${other.id} crosses the words "${short(words.value)}" in ${box.id}`);
-                        } else if (other.kind === 'rect' && otherAt > boxAt && alphaOf(other.fill) >= 0.3) {
-                            const overlapW = Math.min(words.x1, other.x + other.w) - Math.max(words.x0, other.x);
-                            const overlapH = Math.min(words.y1, other.y + other.h) - Math.max(words.y0, other.y);
-                            if (overlapW >= 2 && overlapH >= 2) problems.push(`${where}: ${other.id} is drawn over the words "${short(words.value)}" in ${box.id}`);
+                        } else if (other.kind === 'rect') {
+                            if (otherAt > boxAt && alphaOf(other.fill) >= 0.3) {
+                                const overlapW = Math.min(words.x1, other.x + other.w) - Math.max(words.x0, other.x);
+                                const overlapH = Math.min(words.y1, other.y + other.h) - Math.max(words.y0, other.y);
+                                if (overlapW >= 2 && overlapH >= 2) problems.push(`${where}: ${other.id} is drawn over the words "${short(words.value)}" in ${box.id}`);
+                            }
+                            // The outline of another box, such as a dashed frame around a group, running through the words.
+                            if (alphaOf(other.stroke) > 0 && (other.sw ?? 0) > 0 && !(otherAt < boxAt && solid)) {
+                                const { x, y, w: width, h: height } = other;
+                                const outline = lengthInside(words, x, y, x + width, y) + lengthInside(words, x, y + height, x + width, y + height)
+                                    + lengthInside(words, x, y, x, y + height) + lengthInside(words, x + width, y, x + width, y + height);
+                                if (outline >= 3) problems.push(`${where}: the outline of ${other.id} runs through the words "${short(words.value)}" in ${box.id}`);
+                            }
                         }
                     });
                 });
@@ -247,6 +257,35 @@ export const readingProblems = (registry: AnimationRegistry): string[] => {
                         if (overlapW <= 0 || overlapH <= 0) continue;
                         const smaller = Math.min((a.x1 - a.x0) * (a.y1 - a.y0), (b.x1 - b.x0) * (b.y1 - b.y0));
                         if ((overlapW * overlapH) / smaller > 0.25) problems.push(`${where}: the labels "${short(a.value)}" and "${short(b.value)}" overlap`);
+                    }
+                }
+            });
+        }
+    }
+    return problems;
+};
+
+// ============ MOVING BETWEEN STEPS ============
+// A shape keeps its id from one step to the next so that it glides there. Two things break the glide:
+// a label whose anchor changes (it jumps sideways by its own width halfway), and a line whose number
+// of points changes (it snaps to the new shape halfway instead of growing or bending into it).
+
+export const movingProblems = (registry: AnimationRegistry): string[] => {
+    const problems: string[] = [];
+    for (const [topicId, build] of Object.entries(registry)) {
+        for (const variant of build().variants) {
+            variant.frames.forEach((frame, index) => {
+                if (index === 0) return;
+                const where = `${topicId}/${variant.label}#${index + 1}`;
+                const before = new Map(variant.frames[index - 1].shapes.map(shape => [shape.id, shape]));
+                for (const shape of frame.shapes) {
+                    const was = before.get(shape.id);
+                    if (!was || was.kind !== shape.kind || (was.opacity ?? 1) <= 0.05 || (shape.opacity ?? 1) <= 0.05) continue;
+                    if (shape.kind === 'text' && was.kind === 'text' && (was.anchor ?? 'middle') !== (shape.anchor ?? 'middle')) {
+                        problems.push(`${where}: the label ${shape.id} changes its anchor from the step before, so it jumps instead of gliding`);
+                    }
+                    if (shape.kind === 'path' && was.kind === 'path' && was.points.length !== shape.points.length) {
+                        problems.push(`${where}: the line ${shape.id} has ${shape.points.length} points but had ${was.points.length} the step before, so it snaps instead of moving`);
                     }
                 }
             });

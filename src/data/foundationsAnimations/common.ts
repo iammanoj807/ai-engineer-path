@@ -6,6 +6,9 @@ import { C, rect, text } from '../../components/learning/anim/kit';
 export const label = (id: string, x: number, y: number, value: string, color: string = C.ink, o: { size?: number; anchor?: 'start' | 'middle' | 'end'; mono?: boolean } = {}) =>
     text(id, x, y, value, { size: o.size ?? 13, fill: color, weight: 700, anchor: o.anchor ?? 'start', mono: o.mono ?? true });
 
+/** A number as it is written in a caption: with a real minus sign (−), not a hyphen. */
+export const num = (value: number | string) => String(value).replace(/^-/, '−');
+
 /** A dark readout box with one coloured line per entry. */
 export const panel = (lines: [string, string][], x = 8, y = 8, w = 170) => [
     rect('panel', x, y, w, 10 + lines.length * 18, { rx: 8, fill: '#0d1117e6', stroke: C.faint, sw: 1 }),

@@ -349,7 +349,7 @@ const lossCurves = (): AnimationSpec => {
     const rand = seeded(7);
     const spiky = pts(t => 1.3 + 0.5 * Math.sin(t * 0.7) * (0.6 + rand()) + 0.008 * t);
     const tooHighFrames: Frame[] = [
-        frame('With the learning rate set too high, each step jumps over the bottom of the valley.', [axisBits(), growPath('train', spiky, 0, { stroke: C.amber })]),
+        frame('With the learning rate set too high, each step jumps over the bottom of the valley.', [axisBits(), growPath('train', spiky, 0.2, { stroke: C.amber })]),
         frame('The loss bounces up and down instead of falling. Spikes like these are the warning sign.', [axisBits(), growPath('train', spiky, 0.6, { stroke: C.amber })]),
         frame('Often it climbs and finally turns into NaN ("not a number"). The fix: divide the learning rate by 3 to 10 and try again.', [
             axisBits(), growPath('train', spiky, 1, { stroke: C.amber }),

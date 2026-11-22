@@ -253,7 +253,7 @@ const setOps = (): AnimationSpec => {
         frame('Two queries that each return one column of cities. A set operator puts their results together — they need the same number of columns, of matching types.', [sqlBlock(['SELECT location FROM departments ⟨set op⟩ SELECT city …']), sources()]),
         frame('UNION ALL simply stacks the two results, duplicates and all. It is the fast one: no checking.', [sqlBlock(['… UNION ALL …']), sources(true), label('o-t', 286, 44, 'UNION ALL', C.amber, { size: 11 }),
             ...[...locs, ...cities].map((v, i) => chip(`s${i}`, 286, 52 + i * 18, v, C.amber, 0.25, 16))]),
-        frame(`UNION stacks them, then removes duplicate rows: ${union.length} different cities are left. Removing duplicates costs a sort or a hash.`, [sqlBlock(['… UNION …']), sources(true), out('UNION', union, C.green)]),
+        frame(`UNION stacks them, then removes duplicate rows: ${union.length} different values are left (the NULL of the customer with no city counts as one). Removing duplicates costs a sort or a hash.`, [sqlBlock(['… UNION …']), sources(true), out('UNION', union, C.green)]),
         frame(`INTERSECT keeps the rows found in both results: ${inter.join(' and ')}.`, [sqlBlock(['… INTERSECT …']), sources(true), out('INTERSECT', inter, C.green)]),
         frame(`EXCEPT keeps rows of the first result that are not in the second: ${except.join(', ')} has a department but no customer.`, [sqlBlock(['SELECT location FROM departments EXCEPT SELECT city …']), sources(true), out('EXCEPT', except, C.green)]),
     ];
