@@ -47,6 +47,7 @@ If it helps you, a ⭐ helps the next learner find it.
 | Code you hope still works | Every code example has been run, and a test runs every SQL query and checks the rows it returns |
 | You read it, then forget it | Practice from memory after each lesson, then reviews after 1, 3, 7, 14, 30 and 60 days |
 | Theory, or interview prep | Both: every course has interview questions with a spoken answer, the traps and the follow-ups |
+| Diagrams you can only look at | A **System Design Lab**: build a system, run a whole day of traffic through it, and see which part breaks and why |
 
 ## Who it is for
 
@@ -62,6 +63,7 @@ If it helps you, a ⭐ helps the next learner find it.
 - **Every lesson in full.** An animation, the idea step by step, a worked example, and exercises with answers.
 - **Practice that feels like a game.** Five-minute sessions after each lesson, with hearts, XP, a streak and two friendly coaches, Ada and Alan, who read each question aloud.
 - **SQL that runs in your browser.** A real SQLite engine and six practice tables, with nothing to install.
+- **A System Design Lab.** Nine missions: build a system, run a day of traffic through it, with a crash or a spike on the way, and find the part that breaks.
 - **Ready for interviews.** Every course has interview questions with full spoken answers, the traps, and the follow-ups.
 
 ## Choose your course
@@ -132,6 +134,16 @@ The site follows what learning research shows works best:
 [![A SQL lesson's practice box: a GROUP BY query and its result table](docs/images/sql-run.png)](https://learn.hamropedia.com/sql/group-by-one-result-row-per-group/)
 
 Write a query, press **Run**, and see the rows straight away.
+
+### Build it, break it, fix it: the System Design Lab
+
+[![The System Design Lab: on Black Friday the database gets 5,280 queries a second and can handle 2,000, so 62% of requests fail](docs/images/lab.png)](https://learn.hamropedia.com/system-design/lab/)
+
+Reading about a cache is not the same as watching one save your database at 8 pm. In the **[System Design Lab](https://learn.hamropedia.com/system-design/lab/)** you change a design (servers, load balancing, health checks, a cache, replicas, shards, a queue, a CDN, a rate limit), then run 24 hours of traffic through it. The diagram shows how busy every part is, hour by hour, and the Lab tells you the first hour that broke, which part was the bottleneck, the numbers that show it, and what to try next.
+
+- **Nine missions, no lessons needed to start:** each one explains the idea it needs, then links to the full lessons. They are one server for tonight's traffic, a server that dies at lunchtime, an old machine in the pool, a database drowning in reads, too many writes for one database, photo uploads that freeze the site, customers on the other side of the world, a client's runaway script, and Black Friday.
+- **Traps on purpose:** read replicas for a write problem, more servers for a slow network. They fail, and the Lab says why.
+- **Real numbers, not a script:** waiting times come from queueing theory (Erlang C), so a server at 90% busy is slower than one at 60%, and above 100% requests fail. The same model gives the numbers above each System Design lesson's animation.
 
 ### Practise for interviews
 

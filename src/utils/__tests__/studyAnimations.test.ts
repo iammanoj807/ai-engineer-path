@@ -2,10 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { allSqlTopics } from '../../data/sql';
 import { sqlAnimationChecks, sqlAnimations, sqlNoAnimation, sqlSolutionAnimations, sqlSolutionChecks } from '../../data/sqlAnimations';
 import { systemDesignPhases } from '../../data/systemDesign';
-import { systemDesignAnimations, systemDesignForbidden, systemDesignNoAnimation } from '../../data/systemDesignAnimations';
-import { holdFor, type AnimationSpec } from '../../components/learning/anim/scene';
+import { systemDesignAnimations, systemDesignForbidden, systemDesignNoAnimation, systemDesignNoMetrics } from '../../data/systemDesignAnimations';
+import { holdFor, readingOf, type AnimationSpec } from '../../components/learning/anim/scene';
 import { foundationAnimations } from '../../data/foundationsAnimations';
-import { animationProblems, movingProblems, readingProblems } from './animationChecks';
+import { animationProblems, metricProblems, movingProblems, readingProblems } from './animationChecks';
 
 describe('SQL animations', () => {
     it('animates every topic, or says why not — and nothing else', () => {
@@ -73,10 +73,18 @@ describe('SQL solution walk-throughs', () => {
     });
 });
 
-/** Every piece of text an animation shows: title, variant names, captions and labels. */
+/** Every piece of text an animation shows: title, variant names, captions, labels, numbers and changes. */
 const textsOf = (spec: AnimationSpec): string[] => [
     spec.title,
-    ...spec.variants.flatMap(v => [v.label, ...v.frames.flatMap(f => [f.caption, ...f.shapes.flatMap(s => ('text' in s && typeof s.text === 'string' ? [s.text] : []))])]),
+    ...spec.variants.flatMap(v => [
+        v.label,
+        ...v.frames.flatMap(f => [
+            f.caption,
+            ...f.shapes.flatMap(s => ('text' in s && typeof s.text === 'string' ? [s.text] : [])),
+            ...(f.metrics ?? []).flatMap(m => [m.label, m.value]),
+            ...(f.changes ?? []),
+        ]),
+    ]),
 ];
 
 describe('System Design animations', () => {
@@ -95,6 +103,18 @@ describe('System Design animations', () => {
 
     it('keeps every step easy to read: something new each time, nothing cut off, crossed out or overlapping', () => {
         expect(readingProblems(systemDesignAnimations)).toEqual([]);
+    });
+
+    it('keeps the numbers above each picture steady and short: the same labels on every step', () => {
+        expect([foundationAnimations, sqlAnimations, sqlSolutionAnimations, systemDesignAnimations].flatMap(metricProblems)).toEqual([]);
+    });
+
+    it('shows numbers above the picture wherever they move, or says why not', () => {
+        const measuredIds = Object.keys(systemDesignAnimations).filter(id => systemDesignAnimations[id]().variants.some(v => v.frames.some(f => f.metrics?.length)));
+        const unmeasured = Object.keys(systemDesignAnimations).filter(id => !measuredIds.includes(id) && !systemDesignNoMetrics[id]);
+        expect(unmeasured).toEqual([]);
+        expect(measuredIds.filter(id => systemDesignNoMetrics[id])).toEqual([]);
+        for (const reason of Object.values(systemDesignNoMetrics)) expect(reason.length).toBeGreaterThan(20);
     });
 
     it('never shows what a practice question asks the learner to work out', () => {
@@ -181,6 +201,9 @@ describe('time on a step when the animation plays by itself', () => {
         // …and a longer one is kept.
         expect(holdFor({ caption: 'Watch.', shapes: [], hold: 6000 })).toBe(6000);
         expect(holdFor({ caption: 'word '.repeat(200), shapes: [] })).toBe(30000);
+        // What changed is read too, so it adds to the time.
+        const changes = ['+ A cache', '~ Each server: 60% → 90% busy'];
+        expect(holdFor({ caption: long, shapes: [], changes })).toBe(1200 + `${long} ${changes.join(' ')}`.length * 65);
     });
 
     it('never asks a beginner to read faster than 260 words a minute', () => {
@@ -189,7 +212,7 @@ describe('time on a step when the animation plays by itself', () => {
             for (const [id, build] of Object.entries(registry)) {
                 for (const variant of build().variants) {
                     variant.frames.forEach((frame, index) => {
-                        const perMinute = words(frame.caption) / (holdFor(frame) / 60000);
+                        const perMinute = words(readingOf(frame)) / (holdFor(frame) / 60000);
                         if (perMinute > 260) rushed.push(`${id}/${variant.label}#${index + 1}: ${Math.round(perMinute)} words a minute`);
                     });
                 }

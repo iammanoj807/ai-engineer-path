@@ -5,6 +5,8 @@ import PauseRoundedIcon from '@mui/icons-material/PauseRounded';
 import NavigateBeforeRoundedIcon from '@mui/icons-material/NavigateBeforeRounded';
 import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
 import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
+import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
 import OpenInFullRoundedIcon from '@mui/icons-material/OpenInFullRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { TAP, px, useTextSize } from '../learning';
@@ -15,6 +17,7 @@ import {
     holdFor,
     tweenShapes,
     type AnimationSpec,
+    type Frame,
     type Shape,
 } from './scene';
 
@@ -149,6 +152,56 @@ const ShapeView = ({ shape }: { shape: Shape }) => {
     }
 };
 
+const GOOD = '#66bb6a';
+const BAD = '#ef5350';
+
+/**
+ * The frame's numbers above the picture. A number that changed since the step
+ * before is outlined in the accent colour, so the eye goes to it; a number
+ * past a limit is red with a cross, one that was fixed is green with a tick
+ * (never colour alone).
+ */
+const MetricStrip = ({ frame, before, accent, size }: { frame: Frame; before?: Frame; accent: string; size: number }) => (
+    <Box role="group" aria-label="This step's numbers" sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(104px, 1fr))', gap: 0.75 }}>
+        {(frame.metrics ?? []).map((metric, index) => {
+            const was = before?.metrics?.[index];
+            const changed = was !== undefined && was.label === metric.label && was.value !== metric.value;
+            const border = metric.tone === 'bad' ? `${BAD}aa` : metric.tone === 'good' ? `${GOOD}aa` : changed ? accent : 'rgba(255,255,255,0.08)';
+            return (
+                <Box
+                    key={metric.label}
+                    sx={{ px: 1, py: 0.5, borderRadius: 1.5, bgcolor: 'rgba(255,255,255,0.04)', border: '1px solid', borderColor: border, transition: 'border-color 400ms', minWidth: 0 }}
+                >
+                    <Typography sx={{ color: 'text.secondary', fontSize: px(size * 0.85), fontWeight: 700, lineHeight: 1.25, overflowWrap: 'anywhere' }}>{metric.label}</Typography>
+                    <Stack direction="row" alignItems="center" spacing={0.5}>
+                        <Typography sx={{ color: 'text.primary', fontWeight: 800, fontSize: px(size * 1.05), fontVariantNumeric: 'tabular-nums', lineHeight: 1.35, minWidth: 0, overflowWrap: 'anywhere' }}>{metric.value}</Typography>
+                        {metric.tone === 'bad' && <CancelRoundedIcon aria-label="too high" sx={{ fontSize: 15, color: BAD }} />}
+                        {metric.tone === 'good' && <CheckCircleRoundedIcon aria-label="fixed" sx={{ fontSize: 15, color: GOOD }} />}
+                    </Stack>
+                </Box>
+            );
+        })}
+    </Box>
+);
+
+const CHANGE_MARKS: Record<string, [string, string]> = { '+': ['+', GOOD], '~': ['~', '#ffb74d'], '−': ['−', BAD] };
+
+/** What this step changed in the system: one line each, marked + added, ~ changed, − removed. */
+const ChangeList = ({ changes, size }: { changes: string[]; size: number }) => (
+    <Box component="ul" aria-label="What changed" sx={{ listStyle: 'none', m: 0, p: 0 }}>
+        {changes.map(change => {
+            const [mark, color] = CHANGE_MARKS[change[0]] ?? ['•', '#90a4ae'];
+            const rest = CHANGE_MARKS[change[0]] ? change.slice(1).trim() : change;
+            return (
+                <Box component="li" key={change} sx={{ display: 'flex', gap: 1, fontSize: px(size), lineHeight: 1.5, color: 'text.primary' }}>
+                    <Box component="span" aria-hidden="true" sx={{ color, fontWeight: 800, width: 12, flexShrink: 0, textAlign: 'center', fontFamily: MONO }}>{mark}</Box>
+                    <span>{rest}</span>
+                </Box>
+            );
+        })}
+    </Box>
+);
+
 /** `tip`: show the label as a tooltip too. Off in the big view, where a turned picture would get an upright tooltip. */
 const ControlButton = ({ label, onClick, disabled, children, tip = true, size = TAP }: { label: string; onClick: () => void; disabled?: boolean; children: ReactNode; tip?: boolean; size?: number }) => (
     <Tooltip title={tip ? label : ''} arrow>
@@ -224,6 +277,24 @@ export const AnimatedScene = ({ spec, accent }: { spec: AnimationSpec; accent: s
     const shown = settled ? current.shapes : tweenShapes(fromRef.current, current.shapes, easeInOut(view.t));
     shownRef.current = shown;
     const atEnd = view.index >= frames.length - 1;
+    const hasMetrics = frames.some(f => f.metrics?.length);
+    const hasChanges = frames.some(f => f.changes?.length);
+    const before = view.index > 0 ? frames[view.index - 1] : undefined;
+    const shownIndex = Math.min(view.index, frames.length - 1);
+    // Every step's numbers (and changes) are drawn in the same place, and only the current one is
+    // visible: the space always fits the tallest step, so nothing below jumps as the steps go by.
+    const stacked = (sx: SxProps<Theme>, part: (frame: Frame, index: number) => ReactNode) => (
+        <Box sx={{ display: 'grid', ...sx }}>
+            {frames.map((frame, index) => (
+                <Box key={index} aria-hidden={index !== shownIndex} sx={{ gridArea: '1 / 1', minWidth: 0, visibility: index === shownIndex ? 'visible' : 'hidden' }}>
+                    {part(frame, index)}
+                </Box>
+            ))}
+        </Box>
+    );
+    const metrics = (sx: SxProps<Theme> = {}) =>
+        hasMetrics && stacked(sx, (frame, index) => <MetricStrip frame={frame} before={index === shownIndex ? before : undefined} accent={accent} size={t.small} />);
+    const changeList = (sx: SxProps<Theme> = {}) => hasChanges && stacked(sx, frame => <ChangeList changes={frame.changes ?? []} size={t.small} />);
 
     const go = (index: number) => {
         fromRef.current = shownRef.current;
@@ -487,9 +558,13 @@ export const AnimatedScene = ({ spec, accent }: { spec: AnimationSpec; accent: s
 
             {versions({ px: 2, pt: 1.25 })}
 
+            {metrics({ px: 2, pt: 1.25 })}
+
             {picture({ width: '100%', maxWidth: 640, height: 'auto', mx: 'auto', my: 1, px: 1 })}
 
             <Box sx={{ px: 2, pb: 1, minHeight: `${3 * 1.6 * t.body2}px` }}>{caption()}</Box>
+
+            {changeList({ px: 2, pb: 1 })}
 
             <Stack direction="row" alignItems="center" spacing={1} sx={{ px: 1.5, pb: 1.5, pt: 0.5 }}>
                 {buttons(true)}
@@ -534,14 +609,22 @@ export const AnimatedScene = ({ spec, accent }: { spec: AnimationSpec; accent: s
                                 {closeButton(40)}
                             </Stack>
                             {nextVersion}
-                            <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>{caption({ fontSize: '0.875rem', lineHeight: 1.45 })}</Box>
+                            <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+                                {metrics({ mb: 1 })}
+                                {caption({ fontSize: '0.875rem', lineHeight: 1.45 })}
+                                {changeList({ mt: 1 })}
+                            </Box>
                             <Stack direction="row">{dashes(28)}</Stack>
                         </Stack>
                     ) : (
                         // Under the picture: the same order as in the lesson.
                         <Stack sx={{ flexShrink: 0, minHeight: 0, maxHeight: '45%', gap: 1, p: 1.5, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
                             {versions({})}
-                            <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>{caption()}</Box>
+                            <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+                                {metrics({ mb: 1 })}
+                                {caption()}
+                                {changeList({ mt: 1 })}
+                            </Box>
                             <Stack direction="row" alignItems="center" spacing={1}>
                                 {buttons(false)}
                                 {dashes()}

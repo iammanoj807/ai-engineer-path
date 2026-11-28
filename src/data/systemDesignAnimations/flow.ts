@@ -1,5 +1,5 @@
-import type { Frame, Shape } from '../../components/learning/anim/scene';
-import { C, flat, frame, line, rect, text, tint, type Part } from '../../components/learning/anim/kit';
+import type { Frame, FrameMetric, Shape } from '../../components/learning/anim/scene';
+import { C, flat, frame, line, measured, rect, text, tint, type Part } from '../../components/learning/anim/kit';
 
 export { label } from '../foundationsAnimations/common';
 
@@ -63,6 +63,10 @@ export interface Step {
     notes?: [string, string?][];
     extra?: Part[];
     hold?: number;
+    /** Numbers above the picture for this step (see FrameMetric). */
+    metrics?: FrameMetric[];
+    /** What this step changed: "+ added", "~ changed", "− removed". */
+    changes?: string[];
 }
 
 export interface FlowOptions {
@@ -225,6 +229,7 @@ export const flow = (nodes: FNode[], edges: FEdge[], steps: Step[], o: FlowOptio
             return chips.some(chip => shape.x + half > chip.x - 2 && shape.x - half < chip.x + chip.w + 2 && shape.y + 6 > chip.y - 2 && shape.y - 6 < chip.y + chip.h + 2);
         };
 
-        return frame(step.caption, [edgeShapes.filter(shape => !hidden(shape)), nodeShapes, badgeShapes, flat(step.extra ?? []), packetShapes, noteShapes], step.hold);
+        const drawn = frame(step.caption, [edgeShapes.filter(shape => !hidden(shape)), nodeShapes, badgeShapes, flat(step.extra ?? []), packetShapes, noteShapes], step.hold);
+        return step.metrics ? measured(drawn, step.metrics, step.changes) : drawn;
     });
 };

@@ -1,4 +1,4 @@
-import type { CircleShape, Frame, LineShape, PathShape, RectShape, Shape, TextShape } from './scene';
+import type { CircleShape, Frame, FrameMetric, LineShape, PathShape, RectShape, Shape, TextShape } from './scene';
 
 // Small builders for animation frames, so a spec reads like a description of
 // the picture instead of a pile of coordinates. Everything returns plain shapes.
@@ -74,6 +74,9 @@ export const flat = (parts: Part[]): Shape[] => {
 
 export const frame = (caption: string, parts: Part[], hold?: number): Frame =>
     hold === undefined ? { caption, shapes: flat(parts) } : { caption, shapes: flat(parts), hold };
+
+/** The same frame with numbers above the picture, and what changed (see FrameMetric). */
+export const measured = (f: Frame, metrics: FrameMetric[], changes?: string[]): Frame => ({ ...f, metrics, ...(changes?.length ? { changes } : {}) });
 
 /** Numbers from `from` to `to`, `count` of them, ends included. */
 export const range = (from: number, to: number, count: number) =>

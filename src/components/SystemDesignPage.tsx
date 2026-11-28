@@ -95,6 +95,7 @@ import { StudyStrip } from './learning/StudyStrip';
 import { useTracksProgress } from '../services/account';
 import { useCourseNav, useLessonOpen } from '../game/useCourseNav';
 import { courseById } from '../game/courses';
+import { LabButton, LessonLabMissions } from './lab/LabLinks';
 
 const SD_COURSE = courseById('system_design');
 const PHASES = systemDesignPhases;
@@ -477,6 +478,7 @@ const TopicCard = ({
                     <SectionLabel color={accent} id={stepId(topic.id, 3)}>{STEPS[2].label}</SectionLabel>
                     <Stack spacing={2} sx={{ maxWidth: 760 }}>
                         <QuickPracticePanel course="system_design" topicId={topic.id} accent={accent} />
+                        <LessonLabMissions topicId={topic.id} />
                         <Typography color="text.secondary" sx={{ fontSize: px(t.small) }}>
                             Then the four exercises below. Try each one yourself first: out loud, or on paper. Then tap Show answer to check.
                         </Typography>
@@ -787,6 +789,7 @@ const SystemDesignPage = () => {
                         >
                             Glossary
                         </Button>
+                        <LabButton />
                     </Stack>
                     <GlossaryDrawer open={glossaryOpen} onClose={() => setGlossaryOpen(false)} onOpenTopic={openTopic} />
 

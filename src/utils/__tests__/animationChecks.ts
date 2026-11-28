@@ -97,6 +97,41 @@ export const animationProblems = (registry: AnimationRegistry, o: AnimationCheck
     return problems;
 };
 
+// ============ NUMBERS ABOVE THE PICTURE ============
+
+/**
+ * A variant's numbers are one panel the eye follows from step to step: every
+ * frame shows the same labels in the same order, or none of them does.
+ * Changes are short lines marked + (added), ~ (changed) or − (removed, with a
+ * real minus sign).
+ */
+export const metricProblems = (registry: AnimationRegistry): string[] => {
+    const problems: string[] = [];
+    for (const [topicId, build] of Object.entries(registry)) {
+        for (const variant of build().variants) {
+            const where = `${topicId}/${variant.label}`;
+            const labels = variant.frames.map(f => (f.metrics ?? []).map(m => m.label).join(' | '));
+            if (labels.some(l => l !== '') && new Set(labels).size !== 1) problems.push(`${where}: the numbers' labels change between steps (${[...new Set(labels)].join(' / ')})`);
+            variant.frames.forEach((frame, index) => {
+                const at = `${where}#${index + 1}`;
+                const metrics = frame.metrics ?? [];
+                if (metrics.length > 5) problems.push(`${at}: more than 5 numbers`);
+                for (const m of metrics) {
+                    if (!m.label.trim() || !m.value.trim()) problems.push(`${at}: a number with no label or value`);
+                    if (m.value.length > 14) problems.push(`${at}: "${m.value}" is too long for a number tile`);
+                    if (/undefined|NaN|Infinity/.test(m.value)) problems.push(`${at}: "${m.label}" shows ${m.value}`);
+                }
+                for (const change of frame.changes ?? []) {
+                    if (!/^[+~−] \S/.test(change)) problems.push(`${at}: change "${change}" must start with +, ~ or − and a space`);
+                    if (change.length > 60) problems.push(`${at}: change "${change}" is longer than 60 characters`);
+                }
+                if ((frame.changes ?? []).length > 3) problems.push(`${at}: more than 3 changes`);
+            });
+        }
+    }
+    return problems;
+};
+
 // ============ EASY TO READ ============
 // What a learner would trip over even though every shape is valid: a step that shows nothing new,
 // a caption too long to hold in mind, a box cut off at the edge, a label with a line through it,

@@ -1,5 +1,5 @@
-import type { AnimationSpec, Frame } from '../../components/learning/anim/scene';
-import { C, circle, frame, line, path, rect, text, tint, type Part } from '../../components/learning/anim/kit';
+import type { AnimationSpec, Frame, FrameMetric } from '../../components/learning/anim/scene';
+import { C, circle, frame, line, measured, path, rect, text, tint, type Part } from '../../components/learning/anim/kit';
 import { flow, label, type FEdge, type FNode } from './flow';
 
 // System Design Phase 3 (data) and Phase 4 (distributed systems). Hash
@@ -100,13 +100,25 @@ const indexing = (): AnimationSpec => {
     const hitRow = emails.indexOf(target);
     // Down out of the middle leaf, under the last leaf, then up to the row.
     const pointer = path('ptr', [[135, 160], [135, 176], [266, 176], [266, 26 + hitRow * 22 + 9], [270, 26 + hitRow * 22 + 9]], { stroke: C.amber, sw: 2, arrow: true });
+    const cost = (here: string, big: string, write: string, tone?: 'good' | 'bad'): FrameMetric[] => [
+        { label: 'Reads here', value: here },
+        { label: 'Reads at 100 M rows', value: big, tone },
+        { label: 'Each write updates', value: write },
+    ];
     const frames: Frame[] = [
         frame(`WHERE email = '${target}' with no index: the database reads every row and checks it — a full table scan.`, [title, rows(() => [C.amber, 0.35]), label('scan', 10, 110, `read all ${emails.length} rows`, C.red, { size: 13 })]),
         frame('CREATE INDEX on email builds a B-tree: the emails, sorted, in a shallow tree. Leaves hold every email with a pointer to its row; the root holds signposts.', [title, rows(() => [C.blue, 0.12]), tree('none')]),
         frame(`Start at the root: "${target}" sorts between the signposts, so take the middle branch. Each step down cuts the search space enormously.`, [title, rows(() => [C.blue, 0.12]), tree('root')]),
         frame('In the leaf, find the email, and follow its pointer to the row. With 100 million rows the tree is only 3–4 levels deep: a handful of reads instead of millions.', [title, rows((e) => (e === target ? [C.green, 0.5] : [C.blue, 0.12])), tree('leaf'), pointer]),
         frame('The cost: every INSERT — and every UPDATE of an email — must also update the tree. Indexes make reads fast and writes slower, and they take space.', [title, rows((e) => (e === target ? [C.green, 0.5] : [C.blue, 0.12])), tree('none'), label('cost', 10, 200, 'each write updates every index', C.amber, { size: 12 })]),
-    ];
+    ].map((f, i) => measured(f, [
+        // Root, leaf, then the row itself: 3 reads here; a 3–4 level tree plus the row at 100 million rows.
+        cost(`${emails.length} (every row)`, '100 million', 'the table', 'bad'),
+        cost('…', '…', 'table + index'),
+        cost('1 so far', '…', 'table + index'),
+        cost('3', 'about 5', 'table + index', 'good'),
+        cost('3', 'about 5', 'table + index', 'good'),
+    ][i], [[], ['+ An index on email (a B-tree)'], [], [], ['~ Writes: the table, then the index']][i]));
     return { title: 'An index: a sorted tree that finds a row in a few steps', variants: [{ label: 'Find one email', frames }] };
 };
 
@@ -148,25 +160,37 @@ const sharding = (): AnimationSpec => {
     ];
     const edges: FEdge[] = [0, 1, 2].map(k => ({ from: 'app', to: `s${k}` }));
     const counts = new Map<number, number[]>();
+    const asked = (shards: string, placed: number, tone?: 'good' | 'bad'): FrameMetric[] => [
+        { label: 'Shards this query asks', value: shards, tone },
+        { label: 'Users placed', value: `${placed}` },
+    ];
+    let placed = 0;
     const route = flow(nodes, edges, [
-        { caption: `One database can't hold all the writes, so the data is split into shards by a key — user_id. A routing rule picks the shard: hash(user_id) % ${shardCount}.` },
+        { caption: `One database can't hold all the writes, so the data is split into shards by a key — user_id. A routing rule picks the shard: hash(user_id) % ${shardCount}.`, metrics: asked('—', 0) },
         ...users.map(u => {
             const k = shardOf(u);
             counts.set(k, [...(counts.get(k) ?? []), u]);
             const badges = Object.fromEntries([...counts.entries()].map(([s, ids]) => [`s${s}`, ids.map(i => `#${i}`).join(' ')]));
-            return { caption: `User ${u}: hash(${u}) % ${shardCount} = ${k}, so all of user ${u}'s data lives on shard ${k}.`, hot: [`app>s${k}`], lit: [`s${k}`], packets: [{ id: 'q', label: `user ${u}`, at: ['app', `s${k}`, 0.55] as [string, string, number] }], badges, hold: 2600 };
+            placed += 1;
+            return { caption: `User ${u}: hash(${u}) % ${shardCount} = ${k}, so all of user ${u}'s data lives on shard ${k}.`, hot: [`app>s${k}`], lit: [`s${k}`], packets: [{ id: 'q', label: `user ${u}`, at: ['app', `s${k}`, 0.55] as [string, string, number] }], badges, hold: 2600, metrics: asked(`1 of ${shardCount}`, placed) };
         }),
-        { caption: `"Show user 42's profile" goes to exactly one shard — fast. That is why the shard key should match the main query.`, hot: [`app>s${shardOf(42)}`], ok: [`s${shardOf(42)}`], packets: [{ id: 'q', label: 'profile 42', at: ['app', `s${shardOf(42)}`, 0.55] }] },
-        { caption: '"Count all users who signed up today" has no single key, so it must ask EVERY shard and merge the answers. Cross-shard queries are slow.', hot: ['app>s0', 'app>s1', 'app>s2'], lit: ['s0', 's1', 's2'], packets: [0, 1, 2].map(k => ({ id: `fan${k}`, label: 'count?', at: ['app', `s${k}`, 0.55] as [string, string, number] })) },
+        { caption: `"Show user 42's profile" goes to exactly one shard — fast. That is why the shard key should match the main query.`, hot: [`app>s${shardOf(42)}`], ok: [`s${shardOf(42)}`], packets: [{ id: 'q', label: 'profile 42', at: ['app', `s${shardOf(42)}`, 0.55] }], metrics: asked(`1 of ${shardCount}`, users.length, 'good') },
+        { caption: '"Count all users who signed up today" has no single key, so it must ask EVERY shard and merge the answers. Cross-shard queries are slow.', hot: ['app>s0', 'app>s1', 'app>s2'], lit: ['s0', 's1', 's2'], packets: [0, 1, 2].map(k => ({ id: `fan${k}`, label: 'count?', at: ['app', `s${k}`, 0.55] as [string, string, number] })), metrics: asked(`${shardCount} of ${shardCount}`, users.length, 'bad') },
     ]);
     const bars = (counts_: number[], hot: number | null) => counts_.map((c, k) => [
         text(`rk${k}`, 80, 70 + k * 50, ['A–H', 'I–Q', 'R–Z'][k], { size: 12, fill: C.ink, weight: 700, mono: true, anchor: 'end' }),
         rect(`rb${k}`, 90, 58 + k * 50, Math.max(4, c * 2), 24, { rx: 4, fill: tint(k === hot ? C.red : C.cyan, 0.5), stroke: 'none' }),
         text(`rv${k}`, 96 + Math.max(4, c * 2), 70 + k * 50, `${c} writes/s`, { size: 10, fill: C.grey, weight: 700, anchor: 'start' }),
     ]);
+    const busiest = (counts_: number[], hot = false): FrameMetric[] => [
+        { label: 'Busiest shard', value: `${Math.max(...counts_)} writes/s`, tone: hot ? 'bad' : undefined },
+        { label: 'Its share of writes', value: `${Math.round((Math.max(...counts_) / counts_.reduce((a, b) => a + b, 0)) * 100)}%`, tone: hot ? 'bad' : undefined },
+    ];
+    const even = [30, 34, 32];
+    const skewed = [24, 106, 22];
     const range: Frame[] = [
-        frame('Range sharding instead: names A–H on shard 0, I–Q on shard 1, R–Z on shard 2. Neighbouring keys stay together, so range queries are easy.', [bars([30, 34, 32], null)]),
-        frame('But traffic is rarely even. A popular stretch of keys — say, new sign-ups whose ids all sort together — lands on one shard: a hot spot. Hash sharding spreads keys evenly, at the cost of range queries.', [bars([24, 106, 22], 1), label('hot', 90, 206, 'one shard does most of the work', C.red, { size: 12 })]),
+        measured(frame('Range sharding instead: names A–H on shard 0, I–Q on shard 1, R–Z on shard 2. Neighbouring keys stay together, so range queries are easy.', [bars(even, null)]), busiest(even)),
+        measured(frame('But traffic is rarely even. A popular stretch of keys — say, new sign-ups whose ids all sort together — lands on one shard: a hot spot. Hash sharding spreads keys evenly, at the cost of range queries.', [bars(skewed, 1), label('hot', 90, 206, 'one shard does most of the work', C.red, { size: 12 })]), busiest(skewed, true)),
     ];
     return { title: 'Sharding: split the data by a key, and route each query', variants: [{ label: 'Hash routing', frames: route }, { label: 'Range: hot spots', frames: range }] };
 };
@@ -218,14 +242,18 @@ const consistentHashing = (): AnimationSpec => {
         });
     });
     const gridMoved = shown.filter(h => h % 4 !== h % 5).length;
+    const moving = (servers_: number, moved: number | null, good = false): FrameMetric[] => [
+        { label: 'Servers', value: `${servers_}` },
+        { label: 'Keys that move', value: moved === null ? '—' : `${Math.round(moved * 100)}%`, tone: moved === null ? undefined : good ? 'good' : 'bad' },
+    ];
     const modFrames: Frame[] = [
-        frame('The simple way to pick a server: hash(key) % N. With 4 servers, each key gets server 0, 1, 2 or 3 — shown on each key.', [grid(4, false), side([['hash(key) % 4', C.ink]], 30).map(sh => ({ ...sh, y: sh.y + 110 }))]),
-        frame(`Add one server and N becomes 5: hash(key) % 5 gives most keys a DIFFERENT server (${gridMoved} of these ${shown.length}, outlined). Measured on 1,000 keys: ${Math.round(movedMod * 100)}% move — for a cache, nearly every entry lost at once.`, [grid(5, true), side([['hash(key) % 5', C.ink], [`${Math.round(movedMod * 100)}% of keys move`, C.red]], 30).map(sh => ({ ...sh, y: sh.y + 110 }))]),
+        measured(frame('The simple way to pick a server: hash(key) % N. With 4 servers, each key gets server 0, 1, 2 or 3 — shown on each key.', [grid(4, false), side([['hash(key) % 4', C.ink]], 30).map(sh => ({ ...sh, y: sh.y + 110 }))]), moving(4, null)),
+        measured(frame(`Add one server and N becomes 5: hash(key) % 5 gives most keys a DIFFERENT server (${gridMoved} of these ${shown.length}, outlined). Measured on 1,000 keys: ${Math.round(movedMod * 100)}% move — for a cache, nearly every entry lost at once.`, [grid(5, true), side([['hash(key) % 5', C.ink], [`${Math.round(movedMod * 100)}% of keys move`, C.red]], 30).map(sh => ({ ...sh, y: sh.y + 110 }))]), moving(5, movedMod), ['+ Server 5']),
     ];
     const ringFrames: Frame[] = [
-        frame('Consistent hashing puts servers AND keys on a ring. Each key belongs to the next server clockwise — its colour shows which.', [ring(servers, false), side([['4 servers on the ring', C.ink]])]),
-        frame('Add server E. It only takes the keys between itself and the server before it (A). Outlined keys are the ones that moved; every other key stays put.', [ring([...servers, added], true), side([['add server E', C.green], [`${Math.round(movedRing * 100)}% of keys move`, C.green], ['(roughly 1 in 5)', C.grey]])]),
-        frame(`Measured on 1,000 keys: ${Math.round(movedRing * 100)}% move with the ring, against ${Math.round(movedMod * 100)}% with % N. Virtual nodes — each server placed at many points — keep the load even.`, [ring([...servers, added], true), side([[`ring: ${Math.round(movedRing * 100)}% move`, C.green], [`% N: ${Math.round(movedMod * 100)}% move`, C.red]])]),
+        measured(frame('Consistent hashing puts servers AND keys on a ring. Each key belongs to the next server clockwise — its colour shows which.', [ring(servers, false), side([['4 servers on the ring', C.ink]])]), moving(4, null)),
+        measured(frame('Add server E. It only takes the keys between itself and the server before it (A). Outlined keys are the ones that moved; every other key stays put.', [ring([...servers, added], true), side([['add server E', C.green], [`${Math.round(movedRing * 100)}% of keys move`, C.green], ['(roughly 1 in 5)', C.grey]])]), moving(5, movedRing, true), ['+ Server E, between D and A']),
+        measured(frame(`Measured on 1,000 keys: ${Math.round(movedRing * 100)}% move with the ring, against ${Math.round(movedMod * 100)}% with % N. Virtual nodes — each server placed at many points — keep the load even.`, [ring([...servers, added], true), side([[`ring: ${Math.round(movedRing * 100)}% move`, C.green], [`% N: ${Math.round(movedMod * 100)}% move`, C.red]])]), moving(5, movedRing, true)),
     ];
     return { title: 'Consistent hashing: adding a server moves only a few keys', variants: [{ label: 'hash % N', frames: modFrames }, { label: 'The ring', frames: ringFrames }] };
 };
@@ -241,12 +269,18 @@ const objectStorage = (): AnimationSpec => {
         { id: 'cdn', x: 304, y: 170, w: 90, label: 'CDN', color: C.teal },
     ];
     const edges: FEdge[] = [{ from: 'client', to: 'api' }, { from: 'api', to: 's3' }, { from: 'client', to: 's3' }, { from: 'api', to: 'db' }, { from: 'cdn', to: 's3' }];
+    // Where each part of the photo ends up: the bytes, the row about them, and who serves the downloads.
+    const where = (photo: string, db: string, downloads: string): FrameMetric[] => [
+        { label: 'The photo is in', value: photo },
+        { label: 'The database holds', value: db },
+        { label: 'Downloads come from', value: downloads },
+    ];
     const frames = flow(nodes, edges, [
-        { caption: 'Databases are bad at holding big files. The app asks your API: "I want to upload a profile photo."', hot: ['client>api'], packets: [{ id: 'p', label: 'upload?', at: ['client', 'api', 0.5] }] },
-        { caption: 'The API checks the user, then asks object storage for a pre-signed URL: a link that allows ONE upload, to ONE key, for a few minutes.', hot: ['api>s3'], lit: ['api'], packets: [{ id: 'p', label: 'signed URL', at: ['api', 's3', 0.5] }] },
-        { caption: 'The app uploads the file straight to that URL. Your servers never touch the bytes.', hot: ['client>s3'], ok: ['s3'], packets: [{ id: 'f', label: 'avatar.jpg', at: ['client', 's3', 0.55] }] },
-        { caption: 'The API saves only a small row: users/42/avatar.jpg, the owner, size and time. The database keeps the key; the storage keeps the file.', hot: ['api>db'], ok: ['db'], badges: { db: 'users/42/avatar.jpg' } },
-        { caption: 'To show the photo, the app uses a CDN URL for that key (or a short-lived signed link for private files). Fast downloads, and no load on your servers.', hot: ['cdn>s3'], lit: ['cdn'], packets: [{ id: 'f', label: 'avatar.jpg', at: ['cdn', 's3', 0.5] }] },
+        { caption: 'Databases are bad at holding big files. The app asks your API: "I want to upload a profile photo."', hot: ['client>api'], packets: [{ id: 'p', label: 'upload?', at: ['client', 'api', 0.5] }] , metrics: where('not yet', 'nothing', '—') },
+        { caption: 'The API checks the user, then asks object storage for a pre-signed URL: a link that allows ONE upload, to ONE key, for a few minutes.', hot: ['api>s3'], lit: ['api'], packets: [{ id: 'p', label: 'signed URL', at: ['api', 's3', 0.5] }] , metrics: where('not yet', 'nothing', '—') },
+        { caption: 'The app uploads the file straight to that URL. Your servers never touch the bytes.', hot: ['client>s3'], ok: ['s3'], packets: [{ id: 'f', label: 'avatar.jpg', at: ['client', 's3', 0.55] }] , metrics: where('object storage', 'nothing', '—') },
+        { caption: 'The API saves only a small row: users/42/avatar.jpg, the owner, size and time. The database keeps the key; the storage keeps the file.', hot: ['api>db'], ok: ['db'], badges: { db: 'users/42/avatar.jpg' } , metrics: where('object storage', 'its key', '—') },
+        { caption: 'To show the photo, the app uses a CDN URL for that key (or a short-lived signed link for private files). Fast downloads, and no load on your servers.', hot: ['cdn>s3'], lit: ['cdn'], packets: [{ id: 'f', label: 'avatar.jpg', at: ['cdn', 's3', 0.5] }] , metrics: where('object storage', 'its key', 'the CDN') },
     ]);
     return { title: 'Big files go to object storage; the database keeps only the key', variants: [{ label: 'Profile photo upload', frames }] };
 };
@@ -268,13 +302,23 @@ const search = (): AnimationSpec => {
         text(`p${w}`, 274, 46 + k * 30, `→ ${ids.join(', ')}`, { size: 11, fill: C.ink, weight: 700, mono: true, anchor: 'start' }),
     ]);
     const n = index.size;
+    const work = (perSearch: string, results: string, tone?: 'good' | 'bad'): FrameMetric[] => [
+        { label: 'Work per search', value: perSearch, tone },
+        { label: 'Results', value: results },
+    ];
     const frames: Frame[] = [
         frame(`LIKE '%shoe%' would read every row. A search engine does the work in advance. Three product titles:`, [docList([])]),
         frame('Indexing: split each title into words, lowercase them, and reduce them to stems — "Running" → "run", "Shoes" → "shoe".', [docList([]), postings(3, [])]),
         frame('For each word, keep a posting list: the documents it appears in. This is the inverted index — like a cookbook\'s index of ingredients.', [docList([]), postings(n, [])]),
         frame(`Search "${query}": stem the query the same way (${terms.join(', ')}), then look up each word's list — no scan at all.`, [docList([]), postings(n, terms)]),
         frame(`Intersect the lists: documents with both words → ${hits.join(', ')}. Each match is then scored — rare words that are frequent in this document score higher (TF-IDF, BM25).`, [docList(hits), postings(n, terms)]),
-    ];
+    ].map((f, i) => measured(f, [
+        work('read every row', '…', 'bad'),
+        work('building index', '…'),
+        work('building index', '…'),
+        work(`${terms.length} list lookups`, '…', 'good'),
+        work(`${terms.length} list lookups`, `document ${hits.join(', ')}`, 'good'),
+    ][i], [[], ['+ Words, lowercased and stemmed'], ['+ A posting list for each word'], [], []][i]));
     return { title: 'An inverted index: from each word to the documents that contain it', variants: [{ label: 'Three products', frames }] };
 };
 

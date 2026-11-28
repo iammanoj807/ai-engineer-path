@@ -15,6 +15,7 @@ const HomePage = lazy(() => import('./components/app/HomePage'));
 const FoundationsPage = lazy(() => import('./components/FoundationsPage'));
 const SqlPage = lazy(() => import('./components/SqlPage'));
 const SystemDesignPage = lazy(() => import('./components/SystemDesignPage'));
+const LabPage = lazy(() => import('./components/lab/LabPage'));
 
 /** The same Buy Me a Coffee page that hamropedia.com links to. */
 const SUPPORT_URL = 'https://buymeacoffee.com/manojthapa';
@@ -64,6 +65,7 @@ const App = () => (
                     <Route path="/" element={<Page><HomePage /></Page>} />
                     <Route path="/foundations/*" element={<Page><FoundationsPage /></Page>} />
                     <Route path="/sql/*" element={<Page><SqlPage /></Page>} />
+                    <Route path="/system-design/lab/*" element={<Page><LabPage /></Page>} />
                     <Route path="/system-design/*" element={<Page><SystemDesignPage /></Page>} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>

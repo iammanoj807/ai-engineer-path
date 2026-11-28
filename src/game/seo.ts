@@ -2,8 +2,10 @@
 // writes them into every page's HTML (vite.config.ts), and the app sets the
 // same title as you move between pages, so the two never disagree.
 
-import { COURSES, type CourseInfo, type PathTopic, type PathUnit } from './courses';
+import { COURSES, courseById, type CourseInfo, type PathTopic, type PathUnit } from './courses';
 import { SITE_URL, coursePath, placeOf, topicPath, unitPath } from './addresses';
+import { LAB_PATH, isLabPath, labMissionPath } from './labAddresses';
+import { MISSIONS, type Mission } from '../data/systemDesignLab/missions';
 
 export const SITE_NAME = 'AI Engineer Path';
 
@@ -52,8 +54,34 @@ export const unitMeta = (course: CourseInfo, unit: PathUnit): PageMeta => ({
     trail: [...courseMeta(course).trail, { name: `Unit ${unit.number}: ${unit.title}`, path: unitPath(course, unit.id) }],
 });
 
+const LAB_NAME = 'System Design Lab';
+
+export const labMeta = (): PageMeta => {
+    const course = courseById('system_design');
+    return {
+        path: LAB_PATH,
+        title: `${LAB_NAME}: build a system, run a day of traffic, see it break | ${SITE_NAME}`,
+        description: shorten(
+            `Free interactive system design practice: build a system, send a whole day of traffic through it, and see where and why it breaks. ${MISSIONS.length} missions: load balancing, caching, sharding, queues, CDNs and more.`,
+        ),
+        trail: [...courseMeta(course).trail, { name: LAB_NAME, path: LAB_PATH }],
+    };
+};
+
+export const missionMeta = (mission: Mission): PageMeta => ({
+    path: labMissionPath(mission.id),
+    title: `${mission.title} | ${LAB_NAME} | ${SITE_NAME}`,
+    description: shorten(mission.story),
+    trail: [...labMeta().trail, { name: mission.title, path: labMissionPath(mission.id) }],
+});
+
 /** The page an address shows. Unknown lessons fall back to their course. */
 export const metaFor = (pathname: string): PageMeta => {
+    if (isLabPath(pathname)) {
+        const id = pathname.slice(LAB_PATH.length).split('/').filter(Boolean);
+        const mission = id.length === 1 ? MISSIONS.find(m => m.id === id[0]) : undefined;
+        return mission ? missionMeta(mission) : labMeta();
+    }
     const place = placeOf(pathname);
     if (!place) return homeMeta();
     const { course, topicId, unitId } = place;
@@ -65,7 +93,7 @@ export const metaFor = (pathname: string): PageMeta => {
 };
 
 /** Every page the site has, for the build and the sitemap. */
-export const allPages = (): { meta: PageMeta; course?: CourseInfo; unit?: PathUnit; topic?: PathTopic }[] => [
+export const allPages = (): { meta: PageMeta; course?: CourseInfo; unit?: PathUnit; topic?: PathTopic; lab?: 'missions' | Mission }[] => [
     { meta: homeMeta() },
     ...COURSES.flatMap(course => [
         { meta: courseMeta(course), course },
@@ -74,6 +102,8 @@ export const allPages = (): { meta: PageMeta; course?: CourseInfo; unit?: PathUn
             ...unit.topics.map(topic => ({ meta: topicMeta(course, topic), course, unit, topic })),
         ]),
     ]),
+    { meta: labMeta(), lab: 'missions' as const },
+    ...MISSIONS.map(mission => ({ meta: missionMeta(mission), lab: mission })),
 ];
 
 export const absoluteUrl = (path: string) => `${SITE_URL}${path}`;

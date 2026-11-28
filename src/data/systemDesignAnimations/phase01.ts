@@ -1,5 +1,5 @@
-import type { AnimationSpec, Frame, Shape } from '../../components/learning/anim/scene';
-import { C, arrow, frame, line, rect, text, tint, type Part } from '../../components/learning/anim/kit';
+import type { AnimationSpec, Frame, FrameMetric, Shape } from '../../components/learning/anim/scene';
+import { C, arrow, frame, line, measured, rect, text, tint, type Part } from '../../components/learning/anim/kit';
 import { flow, label, type FEdge, type FNode } from './flow';
 
 // System Design Phase 0 (how the interviews work) and Phase 1 (the web's
@@ -169,12 +169,16 @@ const typeUrl = (): AnimationSpec => {
         { id: 'ns', x: 304, y: 170, w: 90, label: 'example.com\nname server', h: 40, color: C.grey, size: 10 },
     ];
     const dnsEdges: FEdge[] = [{ from: 'browser', to: 'resolver' }, { from: 'resolver', to: 'root' }, { from: 'resolver', to: 'tld' }, { from: 'resolver', to: 'ns' }];
+    const lookup = ([asked, answer]: [string, string]): FrameMetric[] => [
+        { label: 'Servers asked', value: asked },
+        { label: 'IP address', value: answer, tone: answer === 'not yet' ? undefined : 'good' },
+    ];
     const dns = flow(dnsNodes, dnsEdges, [
-        { caption: 'You type example.com. The browser checks its own DNS cache, then the operating system\'s. Both miss.', lit: ['browser'], badges: { browser: 'cache miss' } },
-        { caption: 'It asks a resolver, usually run by your internet provider.', hot: ['browser>resolver'], packets: [{ id: 'q', label: 'example.com?', at: ['browser', 'resolver', 0.5] }], lit: ['resolver'] },
-        { caption: 'The resolver asks a root server: "who handles .com?" The root points it at the .com servers.', hot: ['resolver>root'], packets: [{ id: 'q', label: '.com?', at: ['resolver', 'root', 0.6] }], lit: ['root'] },
-        { caption: 'It asks a .com server: "who handles example.com?" It is pointed at example.com\'s own name server.', hot: ['resolver>tld'], packets: [{ id: 'q', label: 'example.com?', at: 'tld' }], lit: ['tld'] },
-        { caption: 'The name server returns the IP address: 203.0.113.10. Every answer along the way is cached for its TTL, so next time is much quicker.', hot: ['resolver>ns', 'browser>resolver'], packets: [{ id: 'q', label: '203.0.113.10', at: ['browser', 'resolver', 0.5] }], ok: ['ns', 'resolver'], badges: { resolver: 'cached (TTL)' } },
+        { caption: 'You type example.com. The browser checks its own DNS cache, then the operating system\'s. Both miss.', lit: ['browser'], badges: { browser: 'cache miss' } , metrics: lookup(['0', 'not yet']) },
+        { caption: 'It asks a resolver, usually run by your internet provider.', hot: ['browser>resolver'], packets: [{ id: 'q', label: 'example.com?', at: ['browser', 'resolver', 0.5] }], lit: ['resolver'] , metrics: lookup(['1', 'not yet']) },
+        { caption: 'The resolver asks a root server: "who handles .com?" The root points it at the .com servers.', hot: ['resolver>root'], packets: [{ id: 'q', label: '.com?', at: ['resolver', 'root', 0.6] }], lit: ['root'] , metrics: lookup(['2', 'not yet']) },
+        { caption: 'It asks a .com server: "who handles example.com?" It is pointed at example.com\'s own name server.', hot: ['resolver>tld'], packets: [{ id: 'q', label: 'example.com?', at: 'tld' }], lit: ['tld'] , metrics: lookup(['3', 'not yet']) },
+        { caption: 'The name server returns the IP address: 203.0.113.10. Every answer along the way is cached for its TTL, so next time is much quicker.', hot: ['resolver>ns', 'browser>resolver'], packets: [{ id: 'q', label: '203.0.113.10', at: ['browser', 'resolver', 0.5] }], ok: ['ns', 'resolver'], badges: { resolver: 'cached (TTL)' } , metrics: lookup(['4', '203.0.113.10']) },
     ]);
     const netNodes: FNode[] = [
         { id: 'browser', x: 6, y: 100, w: 70, label: 'Browser', kind: 'client', color: C.cyan },
@@ -185,12 +189,17 @@ const typeUrl = (): AnimationSpec => {
         { id: 'cdn', x: 150, y: 196, w: 80, label: 'CDN', color: C.teal },
     ];
     const netEdges: FEdge[] = [{ from: 'browser', to: 'lb' }, { from: 'lb', to: 'app' }, { from: 'app', to: 'db' }, { from: 'app', to: 'cache' }, { from: 'browser', to: 'cdn' }];
+    // Round trips are what make a far-away server slow: each one crosses the network twice.
+    const trips = ([n, shown]: [string, string]): FrameMetric[] => [
+        { label: 'Round trips', value: n },
+        { label: 'On screen', value: shown },
+    ];
     const connect = flow(netNodes, netEdges, [
-        { caption: 'With the IP address, the browser opens a TCP connection on port 443: a three-step handshake — SYN, SYN-ACK, ACK.', hot: ['browser>lb'], packets: [{ id: 'm', label: 'SYN', at: ['browser', 'lb', 0.5] }], lit: ['lb'] },
-        { caption: 'TLS handshake: the server shows a certificate proving it really is example.com, and both sides agree on encryption keys.', hot: ['browser>lb'], packets: [{ id: 'm', label: 'cert', at: ['browser', 'lb', 0.5] }], badges: { lb: 'TLS' } },
-        { caption: 'Now the request: "GET /", with "Host: example.com". The load balancer passes it to one of many app servers.', hot: ['browser>lb', 'lb>app'], packets: [{ id: 'm', label: 'GET /', at: ['lb', 'app', 0.5] }], lit: ['app'] },
-        { caption: 'The app server reads the cache or database, builds the page and sends it back.', hot: ['app>cache', 'app>db'], packets: [{ id: 'm', label: '200 OK', at: ['browser', 'lb', 0.5] }], ok: ['app'] },
-        { caption: 'The browser then requests the images, CSS and scripts — often from a CDN close to you.', hot: ['browser>cdn'], packets: [{ id: 'm', label: 'logo.png', at: ['browser', 'cdn', 0.5] }], lit: ['cdn'] },
+        { caption: 'With the IP address, the browser opens a TCP connection on port 443: a three-step handshake — SYN, SYN-ACK, ACK.', hot: ['browser>lb'], packets: [{ id: 'm', label: 'SYN', at: ['browser', 'lb', 0.5] }], lit: ['lb'] , metrics: trips(['1', 'nothing']) },
+        { caption: 'TLS handshake: the server shows a certificate proving it really is example.com, and both sides agree on encryption keys: one more round trip (with TLS 1.3).', hot: ['browser>lb'], packets: [{ id: 'm', label: 'cert', at: ['browser', 'lb', 0.5] }], badges: { lb: 'TLS' } , metrics: trips(['2', 'nothing']) },
+        { caption: 'Now the request: "GET /", with "Host: example.com". The load balancer passes it to one of many app servers.', hot: ['browser>lb', 'lb>app'], packets: [{ id: 'm', label: 'GET /', at: ['lb', 'app', 0.5] }], lit: ['app'] , metrics: trips(['3', 'nothing']) },
+        { caption: 'The app server reads the cache or database, builds the page and sends it back.', hot: ['app>cache', 'app>db'], packets: [{ id: 'm', label: '200 OK', at: ['browser', 'lb', 0.5] }], ok: ['app'] , metrics: trips(['3', 'the page']) },
+        { caption: 'The browser then requests the images, CSS and scripts — often from a CDN close to you.', hot: ['browser>cdn'], packets: [{ id: 'm', label: 'logo.png', at: ['browser', 'cdn', 0.5] }], lit: ['cdn'] , metrics: trips(['4', 'page + images']) },
     ]);
     return { title: 'Typing a URL: find the server, connect, ask, answer', variants: [{ label: 'DNS lookup', frames: dns }, { label: 'Connect and request', frames: connect }] };
 };
@@ -205,18 +214,26 @@ const restApi = (): AnimationSpec => {
         { id: 'orders', x: 300, y: 150, w: 94, label: 'orders', kind: 'store', color: C.green },
     ];
     const edges: FEdge[] = [{ from: 'client', to: 'api' }, { from: 'api', to: 'keys' }, { from: 'api', to: 'orders' }];
+    const orders = ([sent, made]: [string, string], safe = false): FrameMetric[] => [
+        { label: 'Requests sent', value: sent },
+        { label: 'Orders created', value: made, tone: safe ? 'good' : undefined },
+    ];
     const retry = flow(nodes, edges, [
-        { caption: 'The app creates an order: POST /v1/orders, with an Idempotency-Key header — a random id for this one attempt.', hot: ['client>api'], packets: [{ id: 'r', label: 'POST  key=k7', at: ['client', 'api', 0.5] }] },
-        { caption: 'The server creates order 981 and stores the key with the result. It replies 201 Created…', hot: ['api>orders', 'api>keys'], ok: ['orders'], badges: { keys: 'k7 → 981', orders: '981' }, packets: [{ id: 'r', label: 'create', at: ['api', 'orders', 0.5] }] },
-        { caption: '…but the reply is lost on a bad network. The app cannot tell whether the order was made, so it retries with the SAME key.', bad: ['client'], badges: { keys: 'k7 → 981', orders: '981' }, packets: [{ id: 'r', label: 'POST  key=k7', at: ['client', 'api', 0.5] }] },
-        { caption: 'The server finds k7 already stored and returns the same result: order 981. No second order. POST isn\'t idempotent by itself — the key makes the retry safe.', hot: ['api>keys'], ok: ['keys'], badges: { keys: 'k7 → 981', orders: '981' }, packets: [{ id: 'r', label: '201  order 981', at: ['client', 'api', 0.4] }] },
+        { caption: 'The app creates an order: POST /v1/orders, with an Idempotency-Key header — a random id for this one attempt.', hot: ['client>api'], packets: [{ id: 'r', label: 'POST  key=k7', at: ['client', 'api', 0.5] }] , metrics: orders(['1', '0']) },
+        { caption: 'The server creates order 981 and stores the key with the result. It replies 201 Created…', hot: ['api>orders', 'api>keys'], ok: ['orders'], badges: { keys: 'k7 → 981', orders: '981' }, packets: [{ id: 'r', label: 'create', at: ['api', 'orders', 0.5] }] , metrics: orders(['1', '1']) },
+        { caption: '…but the reply is lost on a bad network. The app cannot tell whether the order was made, so it retries with the SAME key.', bad: ['client'], badges: { keys: 'k7 → 981', orders: '981' }, packets: [{ id: 'r', label: 'POST  key=k7', at: ['client', 'api', 0.5] }] , metrics: orders(['2', '1']) },
+        { caption: 'The server finds k7 already stored and returns the same result: order 981. No second order. POST isn\'t idempotent by itself — the key makes the retry safe.', hot: ['api>keys'], ok: ['keys'], badges: { keys: 'k7 → 981', orders: '981' }, packets: [{ id: 'r', label: '201  order 981', at: ['client', 'api', 0.4] }] , metrics: orders(['2', '1'], true) },
     ]);
     const pageNodes: FNode[] = [{ id: 'client', x: 8, y: 96, w: 70, label: 'App', kind: 'client', color: C.cyan }, { id: 'api', x: 294, y: 96, w: 100, label: 'Orders API', color: C.blue }];
     const pageEdges: FEdge[] = [{ from: 'client', to: 'api' }];
+    const loaded = ([requests, rows]: [string, string]): FrameMetric[] => [
+        { label: 'Requests', value: requests },
+        { label: 'Orders on screen', value: rows },
+    ];
     const pages = flow(pageNodes, pageEdges, [
-        { caption: 'Lists are paginated. GET /v1/orders?limit=20 returns 20 orders and a cursor pointing at where the page ended.', hot: ['client>api'], packets: [{ id: 'r', label: 'GET ?limit=20', at: ['client', 'api', 0.5] }] },
-        { caption: '200 OK: 20 orders plus cursor=abc.', packets: [{ id: 'r', label: '20 orders · cursor=abc', at: ['client', 'api', 0.5] }], ok: ['api'] },
-        { caption: 'The app sends the cursor back for the next 20. Methods mean what they say (GET reads), and the URL names a resource (/orders), not a verb.', hot: ['client>api'], packets: [{ id: 'r', label: 'GET ?cursor=abc', at: ['client', 'api', 0.5] }] },
+        { caption: 'Lists are paginated. GET /v1/orders?limit=20 returns 20 orders and a cursor pointing at where the page ended.', hot: ['client>api'], packets: [{ id: 'r', label: 'GET ?limit=20', at: ['client', 'api', 0.5] }] , metrics: loaded(['1', '0']) },
+        { caption: '200 OK: 20 orders plus cursor=abc.', packets: [{ id: 'r', label: '20 orders · cursor=abc', at: ['client', 'api', 0.5] }], ok: ['api'] , metrics: loaded(['1', '20']) },
+        { caption: 'The app sends the cursor back for the next 20. Methods mean what they say (GET reads), and the URL names a resource (/orders), not a verb.', hot: ['client>api'], packets: [{ id: 'r', label: 'GET ?cursor=abc', at: ['client', 'api', 0.5] }] , metrics: loaded(['2', '20']) },
     ]);
     return { title: 'A predictable API: clear resources, honest status codes, safe retries', variants: [{ label: 'Safe retry', frames: retry }, { label: 'Pagination', frames: pages }] };
 };
@@ -243,12 +260,18 @@ const realTime = (): AnimationSpec => {
     const ws: Part = [msg('up', 80, 90, false, C.grey, 'Upgrade', true), rect('pipe', 96, cy + 14, 290, sy - cy - 28, { rx: 8, fill: tint(C.teal, 0.12), stroke: C.teal, sw: 1.5, dash: '5 4' }),
         msg('w1', 150, 160, true, C.teal), msg('w2', 210, 220, false, C.teal), msg('w3', 270, 280, true, C.teal), msg('w4', 330, 340, true, C.teal), text('ws-t', 230, 196, 'one open connection, both directions', { size: 10, fill: C.teal })];
     const sse: Part = [msg('s0', 80, 90, false, C.grey, 'GET'), msg('e1', 150, 160, true, C.pink), msg('e2', 220, 230, true, C.pink), msg('e3', 290, 300, true, C.pink), text('sse-t', 230, 196, 'server → client events only', { size: 10, fill: C.pink })];
+    // One piece of news, four ways: how many requests it costs, when the client sees it, and who can send.
+    const way = (requests: string, seen: string, sends: string): FrameMetric[] => [
+        { label: 'Requests per news item', value: requests },
+        { label: 'Client sees it', value: seen },
+        { label: 'Who can send', value: sends },
+    ];
     const frames: Frame[] = [
-        frame('Normal HTTP: the client asks, the server answers. For chat, live scores or notifications, the server needs a way to push.', [lanes]),
-        frame('Short polling: ask "anything new?" every few seconds. Simple — but most answers are "no", and each one costs a full request.', [lanes, short]),
-        frame('Long polling: ask, and the server holds the request open until there is news (or about 30 s pass). The client immediately asks again.', [lanes, long]),
-        frame('WebSocket: starts as an HTTP request with an Upgrade header; then the same connection stays open and either side can send at any time.', [lanes, ws]),
-        frame('SSE (server-sent events): one HTTP request, and the server keeps sending events down it. One-way, simpler, and the browser reconnects by itself.', [lanes, sse]),
+        measured(frame('Normal HTTP: the client asks, the server answers. For chat, live scores or notifications, the server needs a way to push.', [lanes]), way('—', 'when it asks', 'client asks')),
+        measured(frame('Short polling: ask "anything new?" every few seconds. Simple — but most answers are "no", and each one costs a full request.', [lanes, short]), way('4 (3 wasted)', 'at next poll', 'client asks')),
+        measured(frame('Long polling: ask, and the server holds the request open until there is news (or about 30 s pass). The client immediately asks again.', [lanes, long]), way('1', 'at once', 'client asks')),
+        measured(frame('WebSocket: starts as an HTTP request with an Upgrade header; then the same connection stays open and either side can send at any time.', [lanes, ws]), way('0 (one link)', 'at once', 'both sides')),
+        measured(frame('SSE (server-sent events): one HTTP request, and the server keeps sending events down it. One-way, simpler, and the browser reconnects by itself.', [lanes, sse]), way('0 (one link)', 'at once', 'server only')),
     ];
     const nodes: FNode[] = [
         { id: 'a', x: 8, y: 40, w: 72, label: 'User A', kind: 'client', color: C.cyan },
@@ -277,12 +300,17 @@ const cdn = (): AnimationSpec => {
         { id: 'origin', x: 300, y: 100, w: 92, h: 40, label: 'Your origin\n(London)', color: C.violet, size: 10 },
     ];
     const edges: FEdge[] = [{ from: 'u1', to: 'edge' }, { from: 'u2', to: 'edge' }, { from: 'edge', to: 'origin' }];
+    // Tokyo to London and back takes about a quarter of a second; to an edge server in the same city, a few milliseconds.
+    const served = ([took, origin]: [string, string]): FrameMetric[] => [
+        { label: 'This request', value: took, tone: took === '~5 ms' ? 'good' : undefined },
+        { label: 'Requests to London', value: origin },
+    ];
     const frames = flow(nodes, edges, [
-        { caption: 'cdn.example.com points at the CDN. A user\'s request goes to the nearest edge server, found through DNS or anycast routing.', hot: ['u1>edge'], packets: [{ id: 'r', label: 'video.mp4', at: ['u1', 'edge', 0.5] }] },
-        { caption: 'Cache miss: the edge doesn\'t have the file yet, so it fetches it from your origin — once — across the world.', bad: ['edge'], hot: ['edge>origin'], packets: [{ id: 'r', label: 'video.mp4', at: ['edge', 'origin', 0.5] }], badges: { edge: 'miss' } },
-        { caption: 'It stores a copy and returns it. This first request was slow, but it paid for everyone after it.', ok: ['edge'], hot: ['u1>edge'], packets: [{ id: 'r', label: 'video.mp4', at: ['u1', 'edge', 0.4] }], badges: { edge: 'stored' } },
-        { caption: 'Cache hit: the next user in Tokyo gets the file from the edge in a few milliseconds. Your servers never see the request.', ok: ['edge'], dim: ['origin'], hot: ['u2>edge'], packets: [{ id: 'r2', label: 'video.mp4', at: ['u2', 'edge', 0.5] }], badges: { edge: 'hit · ~5 ms' } },
-        { caption: 'The copy stays until its TTL runs out. Less latency for users, less load on you, and spikes are absorbed at the edge.', ok: ['edge'], badges: { edge: 'until TTL' } },
+        { caption: 'cdn.example.com points at the CDN. A user\'s request goes to the nearest edge server, found through DNS or anycast routing.', hot: ['u1>edge'], packets: [{ id: 'r', label: 'video.mp4', at: ['u1', 'edge', 0.5] }] , metrics: served(['…', '0']) },
+        { caption: 'Cache miss: the edge doesn\'t have the file yet, so it fetches it from your origin — once — across the world: about a quarter of a second.', bad: ['edge'], hot: ['edge>origin'], packets: [{ id: 'r', label: 'video.mp4', at: ['edge', 'origin', 0.5] }], badges: { edge: 'miss' } , metrics: served(['~250 ms', '1']) },
+        { caption: 'It stores a copy and returns it. This first request was slow, but it paid for everyone after it.', ok: ['edge'], hot: ['u1>edge'], packets: [{ id: 'r', label: 'video.mp4', at: ['u1', 'edge', 0.4] }], badges: { edge: 'stored' } , metrics: served(['~250 ms', '1']) },
+        { caption: 'Cache hit: the next user in Tokyo gets the file from the edge in a few milliseconds. Your servers never see the request.', ok: ['edge'], dim: ['origin'], hot: ['u2>edge'], packets: [{ id: 'r2', label: 'video.mp4', at: ['u2', 'edge', 0.5] }], badges: { edge: 'hit · ~5 ms' } , metrics: served(['~5 ms', '1']) },
+        { caption: 'The copy stays until its TTL runs out. Less latency for users, less load on you, and spikes are absorbed at the edge.', ok: ['edge'], badges: { edge: 'until TTL' } , metrics: served(['~5 ms', '1']) },
     ]);
     return { title: 'A CDN serves copies from somewhere near the user', variants: [{ label: 'Miss, then hit', frames }] };
 };

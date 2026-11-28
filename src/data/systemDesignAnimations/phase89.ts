@@ -1,5 +1,5 @@
-import type { AnimationSpec, Frame } from '../../components/learning/anim/scene';
-import { C, circle, frame, line, rect, text, tint, type Part } from '../../components/learning/anim/kit';
+import type { AnimationSpec, Frame, FrameMetric } from '../../components/learning/anim/scene';
+import { C, circle, frame, line, measured, rect, text, tint, type Part } from '../../components/learning/anim/kit';
 import { flow, label, type FEdge, type FNode } from './flow';
 
 // System Design Phase 8 (high-level design questions) and Phase 9 (AI/ML
@@ -29,17 +29,26 @@ const urlShortener = (): AnimationSpec => {
     const edges: FEdge[] = [
         { from: 'client', to: 'lb' }, { from: 'lb', to: 'api' }, { from: 'api', to: 'ids' }, { from: 'api', to: 'cache' }, { from: 'api', to: 'db' }, { from: 'api', to: 'q' },
     ];
+    const coordination = (allocator: string, check: string, good = false): FrameMetric[] => [
+        { label: 'Allocator calls', value: allocator },
+        { label: 'Uniqueness check', value: check, tone: good ? 'good' : undefined },
+    ];
     const write = flow(nodes, edges, [
-        { caption: 'Shorten a URL: POST /urls with the long URL. Many stateless API servers sit behind a load balancer.', hot: ['client>lb', 'lb>api'], packets: [{ id: 'r', label: 'POST long URL', at: 'api' }] },
-        { caption: 'Each server reserves a whole RANGE of IDs from the allocator in advance — 125,000,000 to 125,999,999 — so there is no single counter to queue on.', hot: ['api>ids'], lit: ['ids'], badges: { api: 'range 125 M…' } },
-        { caption: `It takes the next ID from its own range, ${id.toLocaleString('en-GB')}, and turns it into Base62 (0–9, a–z, A–Z): "${code}". Short, and unique without any check.`, lit: ['api'], badges: { api: `→ ${code}` } },
-        { caption: `Store "${code}" → the long URL in the links table, keyed by the code, and reply with the short link.`, hot: ['api>db'], ok: ['db'], packets: [{ id: 'r', label: `${code} → URL`, at: ['api', 'db', 0.55] }] },
+        { caption: 'Shorten a URL: POST /urls with the long URL. Many stateless API servers sit behind a load balancer.', hot: ['client>lb', 'lb>api'], packets: [{ id: 'r', label: 'POST long URL', at: 'api' }] , metrics: coordination('—', '—') },
+        { caption: 'Each server reserves a whole RANGE of IDs from the allocator in advance — 125,000,000 to 125,999,999 — so there is no single counter to queue on.', hot: ['api>ids'], lit: ['ids'], badges: { api: 'range 125 M…' } , metrics: coordination('1 per 1 M IDs', '—') },
+        { caption: `It takes the next ID from its own range, ${id.toLocaleString('en-GB')}, and turns it into Base62 (0–9, a–z, A–Z): "${code}". Short, and unique without any check.`, lit: ['api'], badges: { api: `→ ${code}` } , metrics: coordination('1 per 1 M IDs', 'none needed', true) },
+        { caption: `Store "${code}" → the long URL in the links table, keyed by the code, and reply with the short link.`, hot: ['api>db'], ok: ['db'], packets: [{ id: 'r', label: `${code} → URL`, at: ['api', 'db', 0.55] }] , metrics: coordination('1 per 1 M IDs', 'none needed', true) },
     ]);
+    // About 4,000 redirects a second on average: each one should wait for as little as possible.
+    const redirect = (takes: string, waits: string, tone?: 'good' | 'bad'): FrameMetric[] => [
+        { label: 'Redirect takes', value: takes, tone },
+        { label: 'It waits for', value: waits },
+    ];
     const read = flow(nodes, edges, [
-        { caption: `Someone opens /${code}. Reads far outnumber writes, so the redirect path must be fast.`, hot: ['client>lb', 'lb>api'], packets: [{ id: 'r', label: `GET /${code}`, at: 'api' }] },
-        { caption: 'Check Redis first. Popular codes are almost always there: a hit, and the API replies 301 straight away.', hot: ['api>cache'], ok: ['cache'], packets: [{ id: 'r', label: 'hit', at: ['api', 'cache', 0.55], color: C.green }] },
-        { caption: 'On a miss, read the links table, put the result in Redis for next time, then redirect.', hot: ['api>db', 'api>cache'], bad: ['cache'], packets: [{ id: 'r', label: 'miss → DB', at: ['api', 'db', 0.55] }] },
-        { caption: 'The click is recorded by dropping an event on a queue, so counting never slows the redirect. When the table outgrows one database, shard it by code.', hot: ['api>q'], packets: [{ id: 'r', label: 'click', at: ['api', 'q', 0.55] }] },
+        { caption: `Someone opens /${code}. Reads far outnumber writes, so the redirect path must be fast.`, hot: ['client>lb', 'lb>api'], packets: [{ id: 'r', label: `GET /${code}`, at: 'api' }] , metrics: redirect('…', '…') },
+        { caption: 'Check Redis first. Popular codes are almost always there: a hit, and the API replies 301 straight away.', hot: ['api>cache'], ok: ['cache'], packets: [{ id: 'r', label: 'hit', at: ['api', 'cache', 0.55], color: C.green }] , metrics: redirect('< 1 ms (hit)', 'the cache', 'good') },
+        { caption: 'On a miss, read the links table, put the result in Redis for next time, then redirect.', hot: ['api>db', 'api>cache'], bad: ['cache'], packets: [{ id: 'r', label: 'miss → DB', at: ['api', 'db', 0.55] }] , metrics: redirect('5–20 ms (miss)', 'cache + DB') },
+        { caption: 'The click is recorded by dropping an event on a queue, so the redirect never waits for the counting. When the table outgrows one database, shard it by code.', hot: ['api>q'], packets: [{ id: 'r', label: 'click', at: ['api', 'q', 0.55] }] , metrics: redirect('< 1 ms (hit)', 'the cache', 'good') },
     ]);
     return { title: 'A URL shortener: unique codes on the write path, a cache on the read path', variants: [{ label: 'Write path', frames: write }, { label: 'Read path', frames: read }] };
 };
@@ -141,15 +150,20 @@ const newsFeed = (): AnimationSpec => {
         { from: 'alice', to: 'posts' }, { from: 'posts', to: 'fan' }, { from: 'fan', to: 'f1' }, { from: 'fan', to: 'f2' }, { from: 'fan', to: 'f3' }, { from: 'bob', to: 'f1' },
         { from: 'celeb', to: 'posts' }, { from: 'bob', to: 'posts', dashed: true },
     ];
+    // What one post costs to write, and one feed to read. Here 3 followers; a celebrity has millions.
+    const cost = (writes: string, reads: string, readTone?: 'good' | 'bad', writeTone?: 'good' | 'bad'): FrameMetric[] => [
+        { label: 'Writes for one post', value: writes, tone: writeTone },
+        { label: 'Reads for one feed', value: reads, tone: readTone },
+    ];
     const push = flow(nodes, edges, [
-        { caption: 'Fan-out on write: Alice posts. The post is saved once in the post store.', hide: ['celeb'], hot: ['alice>posts'], packets: [{ id: 'p', label: 'post 77', at: ['alice', 'posts', 0.5] }] },
-        { caption: 'Workers copy the post\'s ID into each follower\'s ready-made feed list (in Redis). Writing costs one entry per follower.', hide: ['celeb'], hot: ['fan>f1', 'fan>f2', 'fan>f3'], packets: ['f1', 'f2', 'f3'].map(f => ({ id: `p${f}`, label: '77', at: ['fan', f, 0.6] as [string, string, number] })) },
-        { caption: 'Reading is then trivial: Bob\'s feed is one list read, already in order. Post content comes from a cache, and photos from a CDN.', hide: ['celeb'], hot: ['bob>f1'], ok: ['f1'], packets: [{ id: 'r', label: 'read feed', at: 'bob' }] },
+        { caption: 'Fan-out on write: Alice posts. The post is saved once in the post store.', hide: ['celeb'], hot: ['alice>posts'], packets: [{ id: 'p', label: 'post 77', at: ['alice', 'posts', 0.5] }] , metrics: cost('1 (the post)', '—') },
+        { caption: 'Workers copy the post\'s ID into each follower\'s ready-made feed list (in Redis). Writing costs one entry per follower.', hide: ['celeb'], hot: ['fan>f1', 'fan>f2', 'fan>f3'], packets: ['f1', 'f2', 'f3'].map(f => ({ id: `p${f}`, label: '77', at: ['fan', f, 0.6] as [string, string, number] })) , metrics: cost('1 + 3 copies', '—') },
+        { caption: 'Reading is then trivial: Bob\'s feed is one list read, already in order. Post content comes from a cache, and photos from a CDN.', hide: ['celeb'], hot: ['bob>f1'], ok: ['f1'], packets: [{ id: 'r', label: 'read feed', at: 'bob' }] , metrics: cost('1 + 3 copies', '1 list read', 'good') },
     ]);
     const hybrid = flow(nodes, edges, [
-        { caption: 'The celebrity problem: someone with millions of followers posts. Copying the ID into every feed would mean a huge burst of writes for one post.', lit: ['celeb'], hot: ['celeb>posts'], packets: [{ id: 'c', label: 'post 90', at: ['celeb', 'posts', 0.5] }] },
-        { caption: 'Hybrid: push as normal for ordinary users, but DON\'T fan out celebrity posts. They are only saved once.', dim: ['fan', 'f2', 'f3'], ok: ['posts'] },
-        { caption: 'When Bob reads, his ready-made feed is merged with the latest posts of the few celebrities he follows, pulled at read time. A ranking service can then reorder the result.', hot: ['bob>f1', 'bob>posts'], ok: ['f1', 'posts'], dim: ['fan', 'f2', 'f3'], packets: [{ id: 'r', label: 'merge', at: 'bob' }] },
+        { caption: 'The celebrity problem: someone with millions of followers posts. Copying the ID into every feed would mean a huge burst of writes for one post.', lit: ['celeb'], hot: ['celeb>posts'], packets: [{ id: 'c', label: 'post 90', at: ['celeb', 'posts', 0.5] }] , metrics: cost('1 + millions', '—', undefined, 'bad') },
+        { caption: 'Hybrid: push as normal for ordinary users, but DON\'T fan out celebrity posts. They are only saved once.', dim: ['fan', 'f2', 'f3'], ok: ['posts'] , metrics: cost('1', '—', undefined, 'good') },
+        { caption: 'When Bob reads, his ready-made feed is merged with the latest posts of the few celebrities he follows, pulled at read time. A ranking service can then reorder the result.', hot: ['bob>f1', 'bob>posts'], ok: ['f1', 'posts'], dim: ['fan', 'f2', 'f3'], packets: [{ id: 'r', label: 'merge', at: 'bob' }] , metrics: cost('1', '1 list + merge', 'good', 'good') },
     ]);
     return { title: 'A news feed: push to followers\' lists, pull for celebrities', variants: [{ label: 'Fan-out on write', frames: push }, { label: 'Hybrid', frames: hybrid }] };
 };
@@ -209,13 +223,20 @@ const rideHailing = (): AnimationSpec => {
     const riderDot = circle('rider', gx + rx * cell, gy + ry * cell, 10, { fill: tint(C.pink, 0.9), stroke: C.bg, sw: 1.5, text: 'R', size: 10, weight: 800 });
     const note = (value: string, color: string) => label('note', 50, 232, value, color, { size: 11 });
     const [best, second] = ranked;
+    // The search covers the rider's cell and its neighbours, wherever those are on the map.
+    const searched = Array.from({ length: rows * cols }, (_, k) => [k % cols, Math.floor(k / cols)]).filter(([c, r]) => Math.abs(c - rider[0]) <= 1 && Math.abs(r - rider[1]) <= 1).length;
+    const search = (cells: boolean, rankedToo: boolean, offers: number, locked = false): FrameMetric[] => [
+        { label: 'Cells searched', value: cells ? `${searched} of ${rows * cols}` : '—', tone: cells ? 'good' : undefined },
+        { label: 'Drivers ranked', value: rankedToo ? `${ranked.length} of ${drivers.length}` : '—' },
+        { label: 'Offers sent', value: `${offers}`, tone: locked ? 'good' : undefined },
+    ];
     const frames: Frame[] = [
         frame('Drivers send their location every few seconds. Only the LATEST position is kept, in an in-memory geo index that splits the city into cells (geohashes).', [grid(false), dots({})]),
         frame('A rider (R) asks for a car. Instead of measuring the distance to every driver in the city, search only the rider\'s cell and its neighbours.', [grid(true), dots({}), riderDot]),
         frame(`Drivers in those cells are ranked by estimated arrival time: ${ranked.map(d => `driver ${d[0].slice(1)}`).join(', ')}. The rest of the city is never looked at.`, [grid(true), dots(Object.fromEntries(drivers.map(d => [d[0], near(d) ? C.amber : C.grey]))), riderDot]),
         frame(`The trip is offered to driver ${best[0].slice(1)} first, with a timeout. No answer in time…`, [grid(true), dots({ [best[0]]: C.red, ...(second ? { [second[0]]: C.amber } : {}) }), riderDot, note(`offer → driver ${best[0].slice(1)}: no answer`, C.red)]),
         frame(`…so it is offered to driver ${second[0].slice(1)}, who accepts. Their status is set to "on a trip" in one atomic update, so they can't be double-booked. A trip state machine takes over from here.`, [grid(true), dots({ [best[0]]: C.grey, [second[0]]: C.green }), riderDot, note(`driver ${second[0].slice(1)} accepted · locked`, C.green)]),
-    ];
+    ].map((f, i) => measured(f, [search(false, false, 0), search(true, false, 0), search(true, true, 0), search(true, true, 1), search(true, true, 2, true)][i]));
     return { title: 'Ride hailing: search nearby cells, offer, lock', variants: [{ label: 'Find a driver', frames }] };
 };
 
@@ -231,13 +252,19 @@ const payments = (): AnimationSpec => {
         { id: 'recon', x: 296, y: 190, w: 98, label: 'reconciliation', color: C.amber, size: 9 },
     ];
     const edges: FEdge[] = [{ from: 'client', to: 'pay' }, { from: 'pay', to: 'db' }, { from: 'pay', to: 'psp' }, { from: 'pay', to: 'orders', dashed: true }, { from: 'recon', to: 'db' }, { from: 'recon', to: 'psp', dashed: true }];
+    // Checkout asks twice; the provider is only ever asked once.
+    const charged = (asked: string, sent: string, card: string, tone?: 'good' | 'bad'): FrameMetric[] => [
+        { label: 'Requests from checkout', value: asked },
+        { label: 'Charges sent to provider', value: sent },
+        { label: 'Card charged', value: card, tone },
+    ];
     const frames = flow(nodes, edges, [
-        { caption: 'Checkout asks to charge £30, sending an idempotency key, k-91. The payment service creates a PENDING record; a UNIQUE constraint on the key means there can only ever be one.', hot: ['client>pay', 'pay>db'], packets: [{ id: 'r', label: '£30 · k-91', at: 'pay' }], badges: { db: 'k-91 PENDING' } },
-        { caption: 'It calls the payment provider, which handles the card details — you never store raw card numbers.', hot: ['pay>psp'], packets: [{ id: 'r', label: 'charge £30', at: ['pay', 'psp', 0.5] }], badges: { db: 'k-91 PENDING' } },
-        { caption: 'The call times out. Was the card charged or not? Unknown. Checkout retries — with the SAME key.', bad: ['psp'], hot: ['client>pay'], packets: [{ id: 'r', label: 'retry · k-91', at: 'pay', color: C.red }], badges: { db: 'k-91 PENDING' } },
-        { caption: 'The unique key finds the existing payment, so the service does NOT charge again — it returns the current status. No double charge.', hot: ['pay>db'], ok: ['db'], packets: [{ id: 'r', label: 'already k-91', at: ['pay', 'db', 0.5] }], badges: { db: 'k-91 PENDING' } },
-        { caption: 'The provider\'s webhook arrives: succeeded. In ONE transaction the status becomes SUCCEEDED and balanced double-entry ledger rows are written. An outbox event tells the order service.', ok: ['psp', 'db'], hot: ['pay>orders'], packets: [{ id: 'w', label: 'succeeded', at: ['pay', 'psp', 0.5], color: C.green }], badges: { db: 'k-91 SUCCEEDED' } },
-        { caption: 'Every night a reconciliation job compares your ledger with the provider\'s settlement file, and flags anything that doesn\'t match.', hot: ['recon>db', 'recon>psp'], lit: ['recon'], badges: { db: 'ledger balanced ✓' } },
+        { caption: 'Checkout asks to charge £30, sending an idempotency key, k-91. The payment service creates a PENDING record; a UNIQUE constraint on the key means there can only ever be one.', hot: ['client>pay', 'pay>db'], packets: [{ id: 'r', label: '£30 · k-91', at: 'pay' }], badges: { db: 'k-91 PENDING' } , metrics: charged('1', '0', 'not yet') },
+        { caption: 'It calls the payment provider, which handles the card details — you never store raw card numbers.', hot: ['pay>psp'], packets: [{ id: 'r', label: 'charge £30', at: ['pay', 'psp', 0.5] }], badges: { db: 'k-91 PENDING' } , metrics: charged('1', '1', 'not yet') },
+        { caption: 'The call times out. Was the card charged or not? Unknown. Checkout retries — with the SAME key.', bad: ['psp'], hot: ['client>pay'], packets: [{ id: 'r', label: 'retry · k-91', at: 'pay', color: C.red }], badges: { db: 'k-91 PENDING' } , metrics: charged('2', '1', 'unknown') },
+        { caption: 'The unique key finds the existing payment, so the service does NOT charge again — it returns the current status. No double charge.', hot: ['pay>db'], ok: ['db'], packets: [{ id: 'r', label: 'already k-91', at: ['pay', 'db', 0.5] }], badges: { db: 'k-91 PENDING' } , metrics: charged('2', '1', 'at most once', 'good') },
+        { caption: 'The provider\'s webhook arrives: succeeded. In ONE transaction the status becomes SUCCEEDED and balanced double-entry ledger rows are written. An outbox event tells the order service.', ok: ['psp', 'db'], hot: ['pay>orders'], packets: [{ id: 'w', label: 'succeeded', at: ['pay', 'psp', 0.5], color: C.green }], badges: { db: 'k-91 SUCCEEDED' } , metrics: charged('2', '1', 'once', 'good') },
+        { caption: 'Every night a reconciliation job compares your ledger with the provider\'s settlement file, and flags anything that doesn\'t match.', hot: ['recon>db', 'recon>psp'], lit: ['recon'], badges: { db: 'ledger balanced ✓' } , metrics: charged('2', '1', 'once, checked', 'good') },
     ]);
     return { title: 'Payments: idempotency keys, a ledger, and reconciliation', variants: [{ label: 'A timeout, safely', frames }] };
 };
@@ -322,11 +349,16 @@ const rag = (): AnimationSpec => {
         text: s, size: 10, weight: 700,
     }));
     const ingestSteps = ['parse document', 'clean', 'chunk (with overlap)', 'embed each chunk', 'store + permissions', 're-run on change'];
+    // One document of a typical size: about 20 chunks (the lesson's estimate), each embedded as 1,536 numbers.
+    const doc = (now: string, access: string, good = false): FrameMetric[] => [
+        { label: 'This document is', value: now },
+        { label: 'Who may see it', value: access, tone: good ? 'good' : undefined },
+    ];
     const ingest: Frame[] = [
-        frame('Ingestion runs whenever a document changes. First, parse it — PDF, wiki page, slides — into plain text.', [chain(ingestSteps, 0)]),
-        frame('Clean it, then split it into chunks of a few hundred words, overlapping a little so no idea is cut in half.', [chain(ingestSteps, 2)]),
-        frame('Turn each chunk into an embedding — a vector of numbers where similar meanings sit close together.', [chain(ingestSteps, 3)]),
-        frame('Store the vectors in a vector store, WITH metadata: the source, and who is allowed to see it. When the document changes, the whole pipeline runs again for it.', [chain(ingestSteps, 4)]),
+        measured(frame('Ingestion runs whenever a document changes. First, parse it — PDF, wiki page, slides — into plain text.', [chain(ingestSteps, 0)]), doc('plain text', '—')),
+        measured(frame('Clean it, then split it into chunks of a few hundred words, overlapping a little so no idea is cut in half.', [chain(ingestSteps, 2)]), doc('~20 chunks', '—')),
+        measured(frame('Turn each chunk into an embedding — a vector of numbers (here 1,536 of them) where similar meanings sit close together.', [chain(ingestSteps, 3)]), doc('20 vectors', '—')),
+        measured(frame('Store the vectors in a vector store, WITH metadata: the source, and who is allowed to see it. When the document changes, the whole pipeline runs again for it.', [chain(ingestSteps, 4)]), doc('searchable', 'stored with it', true)),
     ];
     const querySteps = ['rewrite question', 'hybrid search', 'filter: permissions', 're-rank', 'prompt + top chunks', 'LLM answers + cites'];
     const query: Frame[] = [
@@ -350,12 +382,16 @@ const recommendations = (): AnimationSpec => {
     const funnel = (upTo: number): Part => stages.slice(0, upTo + 1).map(([name, n, w, color], i) => rect(`f${i}`, 200 - w / 2, 30 + i * 46, w, 36, {
         rx: 8, fill: tint(color, i === upTo ? 0.45 : 0.2), stroke: color, sw: i === upTo ? 2.5 : 1.2, text: `${name} · ${n}`, size: 11, weight: 800,
     }));
+    const inPlay = (items: string, by: string): FrameMetric[] => [
+        { label: 'Items in play', value: items },
+        { label: 'Chosen by', value: by },
+    ];
     const frames: Frame[] = [
         frame('Scoring millions of items for every request with a heavy model is far too slow. So recommendations come in stages.', [funnel(0)]),
         frame('Candidate generation: quickly gather about 1,000 items from several cheap sources — embedding similarity (approximate nearest neighbours), "bought together", popular items.', [funnel(1)]),
         frame('Ranking: a richer model scores just those candidates, using user, item and context features from a feature store.', [funnel(2)]),
         frame('Re-ranking applies business rules — variety, freshness, nothing already seen — and the top 10 are shown. Every impression and click is logged to train the next model, and A/B tests measure the real effect.', [funnel(3)]),
-    ];
+    ].map((f, i) => measured(f, [inPlay('millions', '—'), inPlay('~1,000', 'cheap sources'), inPlay('~1,000, scored', 'a rich model'), inPlay('10 shown', 'business rules')][i]));
     return { title: 'Recommendations: a cheap wide net, then a careful ranking', variants: [{ label: 'The funnel', frames }] };
 };
 
@@ -372,12 +408,17 @@ const fraud = (): AnimationSpec => {
         { id: 'log', x: 120, y: 186, w: 96, label: 'decision log', kind: 'store', color: C.green, size: 10 },
     ];
     const edges: FEdge[] = [{ from: 'txn', to: 'score' }, { from: 'score', to: 'fs' }, { from: 'stream', to: 'fs' }, { from: 'score', to: 'decide' }, { from: 'decide', to: 'review' }, { from: 'score', to: 'log' }];
+    const scored = (score: string, decision: string, truth: string, blocked = false): FrameMetric[] => [
+        { label: 'Risk score', value: score },
+        { label: 'Decision', value: decision, tone: blocked ? 'bad' : undefined },
+        { label: 'True label', value: truth },
+    ];
     const frames = flow(nodes, edges, [
-        { caption: 'A £950 card payment must be approved or stopped in milliseconds. It goes to a scoring service.', hot: ['txn>score'], packets: [{ id: 't', label: '£950', at: ['txn', 'score', 0.5] }] },
-        { caption: 'Real-time features are fetched from a feature store, kept fresh by a stream processor: 6 payments in the last 10 minutes, 4,000 km from the usual place, a new device.', hot: ['score>fs', 'stream>fs'], lit: ['fs', 'stream'], badges: { stream: '6 in 10 min' } },
-        { caption: 'Hand-written rules and an ML model (often gradient-boosted trees) both look at the features. The model scores this one 0.91.', hot: ['score>decide'], lit: ['decide'], badges: { decide: 'score 0.91' } },
-        { caption: 'Thresholds turn the score into a decision, tuned by what each mistake costs: above 0.9 block; 0.6–0.9 send to an analyst; below that approve. This one is blocked and queued for review.', bad: ['decide'], hot: ['decide>review'], lit: ['review'], badges: { decide: 'block' } },
-        { caption: 'Every decision and its features are logged. Weeks later, chargebacks arrive as the true labels; they are joined to the log to retrain the model, and drift is watched.', hot: ['score>log'], ok: ['log'], badges: { log: '+ labels later' } },
+        { caption: 'A £950 card payment must be approved or stopped in milliseconds. It goes to a scoring service.', hot: ['txn>score'], packets: [{ id: 't', label: '£950', at: ['txn', 'score', 0.5] }] , metrics: scored('—', 'waiting', '—') },
+        { caption: 'Real-time features are fetched from a feature store, kept fresh by a stream processor: 6 payments in the last 10 minutes, 4,000 km from the usual place, a new device.', hot: ['score>fs', 'stream>fs'], lit: ['fs', 'stream'], badges: { stream: '6 in 10 min' } , metrics: scored('—', 'waiting', '—') },
+        { caption: 'Hand-written rules and an ML model (often gradient-boosted trees) both look at the features. The model scores this one 0.91.', hot: ['score>decide'], lit: ['decide'], badges: { decide: 'score 0.91' } , metrics: scored('0.91', 'waiting', '—') },
+        { caption: 'Thresholds turn the score into a decision, tuned by what each mistake costs: above 0.9 block; 0.6–0.9 send to an analyst; below that approve. This one is blocked and queued for review.', bad: ['decide'], hot: ['decide>review'], lit: ['review'], badges: { decide: 'block' } , metrics: scored('0.91', 'block', '—', true) },
+        { caption: 'Every decision and its features are logged. Weeks later, chargebacks arrive as the true labels; they are joined to the log to retrain the model, and drift is watched.', hot: ['score>log'], ok: ['log'], badges: { log: '+ labels later' } , metrics: scored('0.91', 'block', 'weeks later') },
     ]);
     return { title: 'Fraud scoring in real time, and learning from the outcomes', variants: [{ label: 'One payment', frames }] };
 };
@@ -425,12 +466,19 @@ const llmServing = (): AnimationSpec => {
     };
     const { total: tStatic } = schedule(false);
     const { total: tCont } = schedule(true);
+    const work = lengths.reduce((sum, [, len]) => sum + len, 0);
+    // The share of the GPU's slots, step by step, that hold no request: the waste continuous batching removes.
+    const idle = (total: number) => `${Math.round(((total * slots - work) / (total * slots)) * 100)}%`;
+    const gpu = (steps: string, wasted: string, tone?: 'good' | 'bad'): FrameMetric[] => [
+        { label: 'Steps until all done', value: steps, tone },
+        { label: 'GPU time wasted', value: wasted, tone },
+    ];
     const batching: Frame[] = [
         frame('A GPU serves several requests at once, in a batch — here 4 slots. Each answer takes a different number of decoding steps.', [lanes(false, 0)]),
         frame('Static batching: requests A–D start together. Short ones finish early, but their slots sit idle until the LONGEST one is done.', [lanes(false, 4)]),
         frame(`Only then can E and F start. Everything is done after ${tStatic} steps, with a lot of wasted GPU time.`, [lanes(false, 6)]),
         frame(`Continuous batching: the moment any request finishes, a waiting one takes its slot. Same work, done after ${tCont} steps — and short requests aren't stuck behind long ones. A paged KV cache makes the memory side of this work.`, [lanes(true, 6)]),
-    ];
+    ].map((f, i) => measured(f, [gpu('—', '—'), gpu('…', '…'), gpu(`${tStatic}`, idle(tStatic), 'bad'), gpu(`${tCont}`, idle(tCont), 'good')][i]));
     const nodes: FNode[] = [
         { id: 'apps', x: 6, y: 100, w: 64, label: 'teams', kind: 'client', color: C.cyan, size: 10 },
         { id: 'gw', x: 100, y: 94, w: 86, h: 46, label: 'gateway\n+ router', color: C.blue, size: 10 },

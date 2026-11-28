@@ -263,5 +263,15 @@
 "/system-design/design-a-recommendation-system/": ["a5fc1cd6c44a","2026-11-21"],
 "/system-design/design-a-real-time-fraud-detection-system/": ["4e53e51f8b67","2026-11-21"],
 "/system-design/design-an-llm-serving-platform/": ["d0a933e3eef8","2026-11-21"],
-"/system-design/design-an-ml-training-and-feature-pipeline/": ["79d5ba33ce49","2026-11-21"]
+"/system-design/design-an-ml-training-and-feature-pipeline/": ["79d5ba33ce49","2026-11-21"],
+"/system-design/lab/": ["194f51bb2975","2026-11-28"],
+"/system-design/lab/more-or-bigger/": ["1218399bac27","2026-11-28"],
+"/system-design/lab/lunchtime-crash/": ["4c7e10077c72","2026-11-28"],
+"/system-design/lab/old-machine/": ["4a2507f58e82","2026-11-28"],
+"/system-design/lab/busy-database/": ["469f78fc6e99","2026-11-28"],
+"/system-design/lab/too-many-writes/": ["174df86fea70","2026-11-28"],
+"/system-design/lab/photo-uploads/": ["b8b1cadc0010","2026-11-28"],
+"/system-design/lab/far-away-users/": ["45af7c07385d","2026-11-28"],
+"/system-design/lab/runaway-script/": ["0c0077b97b0c","2026-11-28"],
+"/system-design/lab/black-friday/": ["98c992e32377","2026-11-28"]
 }

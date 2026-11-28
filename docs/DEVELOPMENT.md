@@ -104,6 +104,14 @@ print(k.tokenizer.phonemize('Why use RAG instead of fine-tuning?', 'en-us'))"
 
 Check the whole sentence, not the word alone. By itself "RAG" comes out as "rag", but inside that sentence the model spells it out, R, A, G, which is why the table writes it in lower case. Try a respelling the same way before you add it.
 
+## The System Design Lab
+
+The Lab (`/system-design/lab/`) runs a day of traffic through a design the learner builds. Everything it shows comes from one model, `src/data/systemDesignLab/model.ts`: each part is a queue with a number of workers, and the waits come from Erlang C. The lesson animations' number panels use the same model, so a lesson and its mission always agree.
+
+- Missions are in `src/data/systemDesignLab/missions.ts`. Each one names the lessons it uses, the levers it offers, its goals, one design that solves it and a few traps.
+- `src/utils/__tests__/systemDesignLab.test.ts` checks the model against hand-worked queueing results, and checks that every mission's starting design fails, its solution passes and every trap fails. Add a mission there and the tests cover it.
+- Completed missions are kept in the browser only (`aep:v1:lab-done`).
+
 ## Welcome and reminder emails
 
 Signed-in learners get a welcome email, and a reminder when they have been away a week. A scheduled GitHub Action sends them, and it stays off until it is set up: see [emails/README.md](../emails/README.md).

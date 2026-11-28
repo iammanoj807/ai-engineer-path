@@ -18,6 +18,8 @@ import { SITE_URL, coursePath, topicPath, unitPath } from '../addresses';
 import { allPages, metaFor, type PageMeta } from '../seo';
 import { SITE_LINK } from '../../utils/glossaryEngine';
 import { HERO, HERO_GRADIENT, HERO_STATS } from '../homeCopy';
+import { labMissionPath } from '../labAddresses';
+import { LEVER_NAMES, MISSIONS, goalText, GOAL_LABELS, type Mission } from '../../data/systemDesignLab/missions';
 
 const OUT = fileURLToPath(new URL('../../../generated/site-pages.json', import.meta.url));
 // The day each page's text last changed, for <lastmod> in the sitemap. Kept in the repository,
@@ -122,7 +124,44 @@ const homeBody = () => {
     return `<article class="seo-page seo-home">${hero}${courses}</article>`;
 };
 
-const body = (meta: PageMeta, course?: CourseInfo, unit?: PathUnit, topic?: PathTopic): string => {
+// The Lab's pages: what each mission asks, never how to solve it (the app keeps
+// the solution until every goal is met, and so do these pages).
+const LAB_HOW = [
+    'Each mission explains the one idea it needs, in plain words, and links to the full lessons.',
+    'Build the system: add servers, a cache, replicas, a queue. Every part says what it does and what it costs.',
+    'Run a whole day: 24 hours of traffic go through your design, with a crash or a spike on the way, and you see the hour it breaks.',
+    'Fix what broke: the Lab says which part broke, why, and what to try next. Change it and run again.',
+];
+const LAB_MODEL = [
+    'A small server works on 10 requests at once, 20 ms each, so it handles about 500 requests a second. A database node handles about 2,000 queries a second.',
+    'When every worker is busy, requests wait in line. Queueing theory (Erlang C) gives the wait: tiny at half load, then very steep near 100% busy. Above 100%, the extra requests fail.',
+    'Response time is shown as p95, the time 95 requests in 100 beat. A cache answers a share of the reads; a read replica takes a share of the reads but applies every write; a shard takes its share of both.',
+];
+const sdCourse = COURSES.find(c => c.id === 'system_design')!;
+const lessonName = (id: string) => sdCourse.units.flatMap(u => u.topics).find(t => t.id === id)?.name ?? id;
+
+const labBody = (meta: PageMeta, lab: 'missions' | Mission): string => {
+    if (lab === 'missions') {
+        return `<article class="seo-page">${trail(meta)}<h1>System Design Lab: build it, break it, fix it</h1><p class="seo-lead">Design a system, send a whole day of traffic through it, and see exactly where and why it breaks. Free, in your browser.</p>${section('How it works', list(LAB_HOW, true))}${section(
+            'The missions',
+            `<ol>${MISSIONS.map(m => `<li>${link(labMissionPath(m.id), m.title)}: ${esc(m.story)}</li>`).join('')}</ol>`,
+        )}${section('How the Lab works out the numbers', list(LAB_MODEL))}<p>Part of the free ${link(coursePath(sdCourse), 'System Design course')}.</p></article>`;
+    }
+    const at = MISSIONS.indexOf(lab);
+    const next = MISSIONS[at + 1];
+    return `<article class="seo-page">${trail(meta)}<h1>${esc(lab.title)}</h1><p class="seo-lead">${esc(lab.story)}</p>${section('The idea you need', para(lab.idea))}${section(
+        'The full lessons',
+        `<ul>${lab.lessons.map(id => `<li>${link(topicPath(sdCourse, id), lessonName(id))}</li>`).join('')}</ul>`,
+    )}${section('The goals', list(lab.goals.map(g => `${GOAL_LABELS[g.kind]}: ${goalText(g)}.`)))}${section(
+        'What you can change',
+        list(lab.levers.map(lever => `${LEVER_NAMES[lever][0].toUpperCase()}${LEVER_NAMES[lever].slice(1)}.`)),
+    )}${section('How it works', list(LAB_HOW, true))}${section('How the Lab works out the numbers', list(LAB_MODEL))}<nav class="seo-next">${
+        next ? link(labMissionPath(next.id), `Next mission: ${next.title} →`) : ''
+    }</nav><p>Mission ${at + 1} of ${MISSIONS.length} in the ${link('/system-design/lab/', 'System Design Lab')}.</p></article>`;
+};
+
+const body = (meta: PageMeta, course?: CourseInfo, unit?: PathUnit, topic?: PathTopic, lab?: 'missions' | Mission): string => {
+    if (lab) return labBody(meta, lab);
     if (course && unit && topic) {
         const full = fullTopics.get(topic.id);
         if (!full) throw new Error(`No lesson text for ${topic.id}`);
@@ -145,7 +184,7 @@ const body = (meta: PageMeta, course?: CourseInfo, unit?: PathUnit, topic?: Path
     return homeBody();
 };
 
-const pages = allPages().map(({ meta, course, unit, topic }) => ({ ...meta, body: body(meta, course, unit, topic) }));
+const pages = allPages().map(({ meta, course, unit, topic, lab }) => ({ ...meta, body: body(meta, course, unit, topic, lab) }));
 
 /** For each page: a stamp of its text, and the day that text last changed. */
 type PageDates = Record<string, [stamp: string, day: string]>;
@@ -172,10 +211,10 @@ const datesFor = (saved: PageDates, today: string): PageDates =>
 const pageDates = datesFor(savedDates(), new Date().toISOString().slice(0, 10));
 
 describe('site pages', () => {
-    it('has a page for the home page, every course, unit and lesson', () => {
+    it('has a page for the home page, every course, unit and lesson, and the Lab and its missions', () => {
         const units = COURSES.reduce((n, c) => n + c.units.length, 0);
         const lessons = COURSES.reduce((n, c) => n + c.units.reduce((m, u) => m + u.topics.length, 0), 0);
-        expect(pages.length).toBe(1 + COURSES.length + units + lessons);
+        expect(pages.length).toBe(1 + COURSES.length + units + lessons + 1 + MISSIONS.length);
         expect(new Set(pages.map(p => p.path)).size).toBe(pages.length);
         expect(new Set(pages.map(p => p.title)).size).toBe(pages.length);
     });

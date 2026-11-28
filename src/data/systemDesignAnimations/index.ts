@@ -21,6 +21,66 @@ export const systemDesignAnimations: AnimationRegistry = {
 /** Topics left without an animation on purpose, and why. */
 export const systemDesignNoAnimation: Record<string, string> = {};
 
+/** Why a low-level design animation has no numbers above it. */
+const CLASSES = 'A low-level design lesson: classes and code, with no load, time or failure to measure.';
+
+/**
+ * Animations with no numbers above the picture, and why. The others show the
+ * numbers each step changes (time, load, failures, work done); a test checks
+ * that every animation is in one group or the other.
+ */
+export const systemDesignNoMetrics: Record<string, string> = {
+    'sd0-t4': 'A tour of the parts, with a different request at each step: no one number runs through it.',
+    'sd0-t1': 'An interview method: its estimates are written on the whiteboard in the picture itself.',
+    'sd0-t2': 'Every step is a calculation drawn in the picture, so a panel would only repeat it.',
+    'sd1-t5': 'One request passing a series of checks: nothing in it gets faster, slower or fails.',
+    'sd2-t6': 'The two balances, the numbers that matter here, are drawn on the copies themselves.',
+    'sd2-t7': 'The tokens in the bucket and each 200 or 429 reply are drawn in the picture.',
+    'sd2-t9': 'It is about reading metrics: the latency chart and the trace bars are the picture.',
+    'sd3-t1': 'A choice between kinds of database: no load or time changes from step to step.',
+    'sd3-t2': 'The balances are drawn on the accounts, and the point is all-or-nothing, not a number.',
+    'sd3-t4': 'It follows one write through the log, and each follower\'s place in the log is drawn as it moves.',
+    'sd3-t9': 'The ID\'s bits are the picture: time, machine and counter, drawn as they are filled in.',
+    'sd4-t1': 'About where to draw the boundaries between services: nothing is measured.',
+    'sd4-t2': 'Steps and the steps that undo them: success or failure is drawn on each one.',
+    'sd4-t3': 'The votes and log entries are drawn on the nodes as they are counted.',
+    'sd4-t4': 'A login and the checks on each request: about who may do what, not how fast or how much.',
+    'sd8-t2': 'The shared counter is drawn on the store as it counts up to the limit.',
+    'sd8-t3': 'One message through the queues and a retry: its status is drawn at each step.',
+    'sd8-t4': 'One message routed to wherever the recipient is: nothing is measured along the way.',
+    'sd8-t6': 'Its practice question asks the learner to work out the bit rates and sizes, so they stay out of the picture.',
+    'sd8-t9': 'The trie walk is the picture: each keystroke is one step down the drawn tree.',
+    'sd8-t10': 'The scores and ranks are drawn in the sorted set itself.',
+    'sd8-t11': 'About where keys live and where they move, shown by the keys drawn on each node.',
+    'sd9-t5': 'A pipeline\'s stages and checks, run once: no load or time is compared between steps.',
+    'sd5-t1': CLASSES,
+    'sd5-t2': CLASSES,
+    'sd5-t3': CLASSES,
+    'sd5-t4': CLASSES,
+    'sd5-t5': CLASSES,
+    'sd5-t6': CLASSES,
+    'sd5-t7': CLASSES,
+    'sd5-t8': CLASSES,
+    'sd5-t9': CLASSES,
+    'sd6-t1': CLASSES,
+    'sd6-t2': CLASSES,
+    'sd6-t3': CLASSES,
+    'sd6-t4': CLASSES,
+    'sd6-t5': CLASSES,
+    'sd6-t6': CLASSES,
+    'sd6-t7': CLASSES,
+    'sd6-t8': CLASSES,
+    'sd6-t9': CLASSES,
+    'sd6-t10': CLASSES,
+    'sd7-t1': CLASSES,
+    'sd7-t2': CLASSES,
+    'sd7-t3': CLASSES,
+    'sd7-t4': CLASSES,
+    'sd7-t5': CLASSES,
+    'sd7-t6': CLASSES,
+    'sd0-t3': CLASSES,
+};
+
 /**
  * Words and numbers an animation must never show, because a practice question
  * asks the learner to work them out. A test checks every caption and label.

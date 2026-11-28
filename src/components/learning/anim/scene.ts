@@ -86,12 +86,28 @@ export interface TextShape extends ShapeBase {
 
 export type Shape = RectShape | CircleShape | LineShape | PathShape | TextShape;
 
+/**
+ * A number shown above the picture, such as "p95 latency: 140 ms". Every frame
+ * of a variant shows the same labels in the same order, so the eye can watch
+ * one number change from step to step.
+ */
+export interface FrameMetric {
+    label: string;
+    value: string;
+    /** `bad`: past a limit (red, with a cross). `good`: fixed (green, with a tick). Neither: neutral. */
+    tone?: 'good' | 'bad';
+}
+
 export interface Frame {
     /** What to notice in this frame. Shown under the picture. */
     caption: string;
     shapes: Shape[];
     /** The least time to stay on this frame when playing, in ms. It always stays long enough to read the caption. */
     hold?: number;
+    /** The numbers this step changes. */
+    metrics?: FrameMetric[];
+    /** What this step changed in the system, one line each: "+ added", "~ changed", "− removed". */
+    changes?: string[];
 }
 
 /** One version of the animation, e.g. "learning rate too big". */
@@ -112,13 +128,16 @@ export interface AnimationSpec {
 export const DEFAULT_WIDTH = 400;
 export const DEFAULT_HEIGHT = 240;
 
+/** Everything a frame asks the reader to read: its caption, then the lines saying what changed. */
+export const readingOf = (frame: Frame) => [frame.caption, ...(frame.changes ?? [])].join(' ');
+
 /**
  * Time on a frame before it moves on by itself: long enough for a beginner to read the caption
- * (65 ms a letter is about 140 words a minute) and to look at the picture. A frame's own `hold`
- * can make it longer, never shorter: a caption nobody had time to read teaches nothing.
+ * and what changed (65 ms a letter is about 140 words a minute) and to look at the picture. A
+ * frame's own `hold` can make it longer, never shorter: a caption nobody had time to read teaches nothing.
  */
 export const holdFor = (frame: Frame) =>
-    Math.min(30000, Math.max(frame.hold ?? 2500, 1200 + frame.caption.length * 65));
+    Math.min(30000, Math.max(frame.hold ?? 2500, 1200 + readingOf(frame).length * 65));
 
 // ============ TWEENING ============
 
