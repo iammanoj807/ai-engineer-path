@@ -18,7 +18,7 @@ import { SITE_URL, coursePath, topicPath, unitPath } from '../addresses';
 import { allPages, metaFor, type PageMeta } from '../seo';
 import { SITE_LINK } from '../../utils/glossaryEngine';
 import { HERO, HERO_GRADIENT, HERO_STATS } from '../homeCopy';
-import { labMissionPath } from '../labAddresses';
+import { LAB_PATH, labMissionPath } from '../labAddresses';
 import { LEVER_NAMES, MISSIONS, goalText, GOAL_LABELS, type Mission } from '../../data/systemDesignLab/missions';
 
 const OUT = fileURLToPath(new URL('../../../generated/site-pages.json', import.meta.url));
@@ -169,7 +169,11 @@ const body = (meta: PageMeta, course?: CourseInfo, unit?: PathUnit, topic?: Path
         const at = all.findIndex(t => t.id === topic.id);
         const previous = all[at - 1];
         const next = all[at + 1];
-        return `<article class="seo-page">${trail(meta)}<h1>${esc(topic.name)}</h1><p class="seo-lead">${prose(topic.definition)}</p>${lessonText(full)}<nav class="seo-next">${
+        const missions = MISSIONS.filter(m => m.lessons.includes(topic.id));
+        const lab = missions.length
+            ? section('Try it in the Lab', `<ul>${missions.map(m => `<li>${link(labMissionPath(m.id), `Mission ${MISSIONS.indexOf(m) + 1}: ${m.title}`)}</li>`).join('')}</ul>`)
+            : '';
+        return `<article class="seo-page">${trail(meta)}<h1>${esc(topic.name)}</h1><p class="seo-lead">${prose(topic.definition)}</p>${lessonText(full)}${lab}<nav class="seo-next">${
             previous ? link(topicPath(course, previous.id), `← ${previous.name}`) : ''
         }${next ? link(topicPath(course, next.id), `Next: ${next.name} →`) : ''}</nav><p>Part of ${link(unitPath(course, unit.id), `Unit ${unit.number}: ${unit.title}`)} in the free ${link(coursePath(course), `${course.title} course`)}.</p></article>`;
     }
@@ -179,7 +183,11 @@ const body = (meta: PageMeta, course?: CourseInfo, unit?: PathUnit, topic?: Path
     if (course) {
         return `<article class="seo-page">${trail(meta)}<h1>${esc(course.title)}</h1><p class="seo-lead">${esc(course.tagline)} Free, step by step: every lesson is complete, with an animation, a worked example and exercises with answers.</p>${course.units
             .map(u => `<h2>${link(unitPath(course, u.id), `Unit ${u.number}: ${u.title}`)}</h2><p>${esc(u.goal)}</p>${lessonLinks(course, u.topics)}`)
-            .join('')}</article>`;
+            .join('')}${
+            course.id === 'system_design'
+                ? section('The System Design Lab', `<p>Build a system, run a whole day of traffic through it, and see where and why it breaks: ${link(LAB_PATH, `${MISSIONS.length} missions`)}.</p>`)
+                : ''
+        }</article>`;
     }
     return homeBody();
 };
